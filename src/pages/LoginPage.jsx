@@ -18,7 +18,7 @@ export default function LoginPage() {
     }
 
     if (!email.includes("@")){
-      setError("Email nije validan");
+      setMessage("Email nije validan");
       return;
     }
 
@@ -31,6 +31,8 @@ export default function LoginPage() {
       setMessage("Uspešno logovanje");
 
       console.log("Mock login success:", data);
+
+      navigate("/employees");
 
     } catch (err) {
       setMessage(err.message);
