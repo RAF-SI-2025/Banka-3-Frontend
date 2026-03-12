@@ -1,9 +1,24 @@
 .page-bg{
+  position: relative;
   min-height:100vh;
   background-image:url("/bank_bg.jpg");
   background-size:cover;
   background-position:center;
   padding-top:120px;
+}
+
+.page-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.25) 60%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-bg > * {
+  position: relative;
+  z-index: 1;
 }
 
 .bank-logo{
