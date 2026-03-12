@@ -1,0 +1,139 @@
+/* ── shared layout reused from EmployeesPage ── */
+.profile-page {
+    display: flex;
+    justify-content: center;
+    padding: 40px 24px 60px;
+}
+
+/* ── card ── */
+.profile-card {
+    background: #cdbca9;
+    border-radius: 12px;
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 860px;
+}
+
+.profile-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c2c2c;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+/* ── two-column body ── */
+.profile-body {
+    display: grid;
+    grid-template-columns: 210px 1px 1fr;
+    gap: 0 32px;
+    align-items: start;
+}
+
+/* ── left column ── */
+.profile-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #b59c81;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    margin-bottom: 10px;
+}
+
+.profile-avatar svg {
+    width: 100%;
+    height: 100%;
+}
+
+.profile-role {
+    font-size: 0.85rem;
+    color: #6b5748;
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.profile-left-fields {
+    width: 100%;
+}
+
+/* ── divider ── */
+.profile-divider {
+    width: 1px;
+    background: rgba(114, 56, 61, 0.25);
+    align-self: stretch;
+    min-height: 300px;
+}
+
+/* ── right column ── */
+.profile-right {
+    display: flex;
+    flex-direction: column;
+    padding-top: 4px;
+}
+
+/* ── field ── */
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 14px;
+}
+
+.pf-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #2c2c2c;
+    margin-bottom: 2px;
+}
+
+.pf-value {
+    font-size: 0.88rem;
+    color: #6b5748;
+}
+
+.profile-field-active {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.pf-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+/* ── action buttons ── */
+.profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-uredi {
+    background: #a8927a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 26px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-uredi:hover {
+    background: #9d8468;
+}
+
+.btn-uredi:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
