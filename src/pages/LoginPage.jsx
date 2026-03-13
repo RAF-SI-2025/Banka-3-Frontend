@@ -35,7 +35,17 @@ export default function LoginPage() {
       navigate("/employees");
 
     } catch (err) {
-      setMessage(err.message);
+      if (err.response) {
+        if (err.response.status === 401) {
+          setMessage("Pogrešan email ili lozinka");
+        } else {
+          setMessage("Greška pri prijavljivanju. Pokušajte ponovo.");
+        }
+      } else if (err.request) {
+        setMessage("Greška u konekciji sa serverom");
+      } else {
+        setMessage(err.message || "Nepoznata greška");
+      }
     }
   };
 

@@ -1,34 +1,19 @@
-export const login = (email, password) => {
-  return new Promise((resolve, reject) => {
+import api from "./api.js";
 
-    setTimeout(() => {
-
-      // mock user
-      if (email === "admin@bank.com" && password === "admin123") {
-        resolve({
-          accessToken: "mock_access_token_123",
-          refreshToken: "mock_refresh_token_123",
-          permissions: ["admin"]
-        });
-      } else {
-        reject(new Error("Pogrešan email ili lozinka"));
-      }
-
-    }, 500);
-
-  });
+export const login = async (email, password) => {
+  const response = await api.post("/auth/login", { email, password });
+  return {
+    accessToken: response.data.access_token,
+    refreshToken: response.data.refresh_token,
+  };
 };
 
 export const requestPasswordReset = (email) => {
+  // TODO: Backend nema ovaj endpoint jos — ostaje mock
   return new Promise((resolve) => {
-
     setTimeout(() => {
-      console.log("Password reset request for:", email);
-
-      resolve({
-        message: "Email za reset lozinke je poslat"
-      });
+      console.log("Mock: password reset request for:", email);
+      resolve({ message: "Email za reset lozinke je poslat" });
     }, 500);
-
   });
 };
