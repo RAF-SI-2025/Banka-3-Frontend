@@ -8,6 +8,7 @@ import EditEmployeePage from "../pages/EditEmployeePage.jsx";
 import ChangePasswordPage from "../pages/ChangePasswordPage.jsx";
 import CardsPage from "../pages/CardsPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import AccountDetailsPage from "../pages/AccountDetailsPage.jsx";
 
 export default function AppRouter() {
   return (
