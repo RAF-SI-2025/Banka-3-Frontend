@@ -1,7 +1,22 @@
 describe("Izmena zaposlenog", () => {
   beforeEach(() => {
     cy.loginBypass();
+    cy.intercept("GET", "**/api/employees/1", {
+      body: {
+        id: 1,
+        first_name: "Petar",
+        last_name: "Petrović",
+        email: "petar@primer.rs",
+        position: "Menadžer",
+        active: true,
+        gender: "Muški",
+        phone_number: "+381601234567",
+        address: "Knez Mihailova 1, Beograd",
+        department: "Menadžment",
+      },
+    }).as("getEmployee");
     cy.visit("/employees/edit/1");
+    cy.wait("@getEmployee");
   });
 
   it("forma je popunjena postojecim podacima", () => {

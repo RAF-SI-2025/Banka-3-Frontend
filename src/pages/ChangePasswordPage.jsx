@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { changePassword } from "../services/EmployeeService";
+import { confirmPasswordReset } from "../services/AuthService";
 import { validatePasswordStrength } from "../utils/validators";
 import "./ChangePasswordPage.css";
 
@@ -33,7 +33,9 @@ export default function ChangePasswordPage() {
 
     try {
       setSubmitting(true);
-      await changePassword("", newPassword);
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token") || "";
+      await confirmPasswordReset(token, newPassword);
       setSuccessMessage("Lozinka uspešno promenjena.");
       setNewPassword("");
       setConfirmPassword("");

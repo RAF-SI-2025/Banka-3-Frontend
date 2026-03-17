@@ -27,6 +27,10 @@ describe("Promena lozinke", () => {
   });
 
   it("uspesna promena lozinke", () => {
+    cy.intercept("POST", "**/api/password-reset/confirm", {
+      statusCode: 200,
+    }).as("passwordReset");
+
     cy.get('input.cp-input[type="password"]').first().type("NewPass1!");
     cy.get('input.cp-input[type="password"]').last().type("NewPass1!");
     cy.get('button[type="submit"]').click();
