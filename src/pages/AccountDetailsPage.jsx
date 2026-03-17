@@ -109,7 +109,7 @@ export default function AccountDetailsPage() {
                                 </div>
                                 <div className="ad-txn-info">
                                     <p className="ad-txn-desc">{tx.desc}</p>
-                                    <p className="ad-txn-date">{tx.date}</p>
+                                    <p className="ad-txn-date">{new Date(tx.date).toLocaleDateString("sr-RS")}</p>
                                 </div>
                                 <p className={`ad-txn-amount ${tx.amount > 0 ? "ad-txn-amount--credit" : ""}`}>
                                     {tx.amount > 0 ? "+" : ""}{fmt(tx.amount, account.currency)}

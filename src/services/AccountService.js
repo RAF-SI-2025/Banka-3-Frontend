@@ -9,13 +9,13 @@ const MOCK_ACCOUNTS = [
 ];
 
 const MOCK_TRANSACTIONS = [
-    { id: 1, accountId: 1, desc: "Mesečna rata kredita", date: "05.03.2025", amount: -15420 },
-    { id: 2, accountId: 1, desc: "Uplata plate - IT Solutions doo", date: "01.03.2025", amount: 185000 },
-    { id: 3, accountId: 1, desc: "Maxi Market - kupovina", date: "28.02.2025", amount: -3240.5 },
-    { id: 4, accountId: 1, desc: "EPS - račun za struju", date: "25.02.2025", amount: -4580 },
-    { id: 5, accountId: 1, desc: "Povraćaj poreza", date: "20.02.2025", amount: 12500 },
-    { id: 6, accountId: 1, desc: "Telenor - mesečni račun", date: "18.02.2025", amount: -2890 },
-    { id: 7, accountId: 2, desc: "Devizna uplata", date: "03.03.2025", amount: 500 },
+    { id: 1, accountId: 1, desc: "Mesečna rata kredita", date: "2025-03-05", amount: -15420 },
+    { id: 2, accountId: 1, desc: "Uplata plate - IT Solutions doo", date: "2025-03-01", amount: 185000 },
+    { id: 3, accountId: 1, desc: "Maxi Market - kupovina", date: "2025-02-28", amount: -3240.5 },
+    { id: 4, accountId: 1, desc: "EPS - račun za struju", date: "2025-02-25", amount: -4580 },
+    { id: 5, accountId: 1, desc: "Povraćaj poreza", date: "2025-02-20", amount: 12500 },
+    { id: 6, accountId: 1, desc: "Telenor - mesečni račun", date: "2025-02-18", amount: -2890 },
+    { id: 7, accountId: 2, desc: "Devizna uplata", date: "2025-03-03", amount: 500 },
 ];
 
 export async function getAccounts() {
