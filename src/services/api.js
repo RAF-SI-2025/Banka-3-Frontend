@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// U dev modu (Vite): VITE_API_URL=http://localhost:8080 iz .env → direktno na backend
-// U Docker modu: VITE_API_URL nije setovan pri buildu → "/api" → nginx prosledjuje na gateway:8080
 const baseURL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : "/api";
@@ -13,5 +11,46 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/login") &&
+      !originalRequest.url.includes("/token/refresh")
+    ) {
+      originalRequest._retry = true;
+
+      const storedRefresh = localStorage.getItem("refreshToken");
+      if (!storedRefresh) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      try {
+        const { data } = await api.post("/token/refresh", {
+          refresh_token: storedRefresh,
+        });
+        localStorage.setItem("accessToken", data.access_token);
+        localStorage.setItem("refreshToken", data.refresh_token);
+        originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
+        return api(originalRequest);
+      } catch {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

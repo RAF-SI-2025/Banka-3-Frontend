@@ -1,16 +1,7 @@
 import { useState } from "react";
+import { createEmployee } from "../services/EmployeeService";
 import "./CreateEmployeePage.css";
 import "../pages/EmployeesPage.css";
-
-// Mock API call — simulates a successful server response
-async function mockCreateEmployee(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Employee created:", data);
-      resolve({ success: true, message: "Zaposleni uspešno kreiran." });
-    }, 600);
-  });
-}
 
 function validate(form) {
   const errors = {};
@@ -83,12 +74,34 @@ export default function CreateEmployeePage() {
       return;
     }
     setLoading(true);
-    const result = await mockCreateEmployee(form);
-    setLoading(false);
-    if (result.success) {
-      setSuccessMsg(result.message);
+    try {
+      // Parse DD.MM.YYYY to Unix timestamp
+      let dateOfBirth = 0;
+      if (form.datum) {
+        const [dd, mm, yyyy] = form.datum.split(".");
+        dateOfBirth = Math.floor(new Date(`${yyyy}-${mm}-${dd}`).getTime() / 1000);
+      }
+
+      await createEmployee({
+        firstName: form.ime,
+        lastName: form.prezime,
+        dateOfBirth,
+        gender: form.pol,
+        email: form.email,
+        phoneNumber: form.telefon,
+        address: form.adresa,
+        username: form.username,
+        position: form.pozicija,
+        department: "",
+        password: form.lozinka,
+      });
+      setSuccessMsg("Zaposleni uspešno kreiran.");
       setForm(EMPTY);
       setErrors({});
+    } catch (err) {
+      setErrors({ submit: err.response?.data?.error || "Greška pri kreiranju zaposlenog." });
+    } finally {
+      setLoading(false);
     }
   }
 

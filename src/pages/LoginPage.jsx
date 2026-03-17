@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, requestPasswordReset } from "../services/AuthService";
+import { login } from "../services/AuthService";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
@@ -30,9 +30,6 @@ export default function LoginPage() {
       localStorage.setItem("userId", data.userId);
 
       setMessage("Uspešno logovanje");
-
-      console.log("Mock login success:", data);
-
       navigate("/employees");
 
     } catch (err) {

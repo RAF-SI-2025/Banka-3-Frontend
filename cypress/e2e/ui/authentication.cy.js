@@ -18,7 +18,7 @@ describe("Autentifikacija", () => {
   });
 
   it("uspesna prijava cuva token i preusmerava na /employees", () => {
-    cy.intercept("POST", "**/auth/login", {
+    cy.intercept("POST", "**/login", {
       statusCode: 200,
       body: {
         access_token: "mock_access_token_123",
@@ -40,7 +40,7 @@ describe("Autentifikacija", () => {
   });
 
   it("neuspesna prijava prikazuje gresku", () => {
-    cy.intercept("POST", "**/auth/login", {
+    cy.intercept("POST", "**/login", {
       statusCode: 401,
       body: "invalid credentials",
     }).as("loginFail");

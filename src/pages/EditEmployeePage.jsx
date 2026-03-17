@@ -2,17 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./CreateEmployeePage.css";
 import "./EmployeesPage.css";
-import { getEmployees } from "../services/EmployeeService";
-
-// Mock API call — simulates a successful update response
-async function mockUpdateEmployee(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Employee updated:", data);
-      resolve({ success: true, message: "Profil uspešno izmenjen." });
-    }, 600);
-  });
-}
+import { getEmployeeById, updateEmployee } from "../services/EmployeeService";
 
 function validate(form) {
   const errors = {};
@@ -45,22 +35,21 @@ export default function EditEmployeePage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    getEmployees().then((employees) => {
-      const employee = employees.find((e) => e.id === Number(id));
-      if (!employee) {
+    getEmployeeById(Number(id))
+      .then((employee) => {
+        setForm({
+          prezime: employee.lastName ?? "",
+          pol: employee.gender ?? "",
+          telefon: employee.phone ?? "",
+          adresa: employee.address ?? "",
+          pozicija: employee.position ?? "",
+          departman: employee.department ?? "",
+          aktivan: employee.active ?? true,
+        });
+      })
+      .catch(() => {
         setNotFound(true);
-        return;
-      }
-      setForm({
-        prezime: employee.last_name ?? "",
-        pol: employee.gender ?? "",
-        telefon: employee.phone ?? "",
-        adresa: employee.address ?? "",
-        pozicija: employee.position ?? "",
-        departman: employee.department ?? "",
-        aktivan: employee.active ?? true,
       });
-    });
   }, [id]);
 
   function handleChange(e) {
@@ -78,11 +67,22 @@ export default function EditEmployeePage() {
       return;
     }
     setLoading(true);
-    const result = await mockUpdateEmployee({ id: Number(id), ...form });
-    setLoading(false);
-    if (result.success) {
-      setSuccessMsg(result.message);
+    try {
+      await updateEmployee(Number(id), {
+        lastName: form.prezime,
+        gender: form.pol,
+        phoneNumber: form.telefon,
+        address: form.adresa,
+        position: form.pozicija,
+        department: form.departman,
+        active: form.aktivan,
+      });
+      setSuccessMsg("Profil uspešno izmenjen.");
       setErrors({});
+    } catch (err) {
+      setErrors({ submit: err.response?.data?.error || "Greška pri izmeni profila." });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -126,6 +126,7 @@ export default function EditEmployeePage() {
           <h2>Uredi profil</h2>
 
           {successMsg && <div className="success-msg">{successMsg}</div>}
+          {errors.submit && <div className="error-msg">{errors.submit}</div>}
 
           {/* Prezime — full width */}
           <div style={{ marginBottom: "14px" }}>

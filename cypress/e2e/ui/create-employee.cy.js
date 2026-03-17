@@ -28,6 +28,11 @@ describe("Kreiranje zaposlenog", () => {
   });
 
   it("uspesno kreiranje prikazuje poruku", () => {
+    cy.intercept("POST", "**/api/employees", {
+      statusCode: 201,
+      body: { valid: true },
+    }).as("createEmployee");
+
     cy.get('input[name="ime"]').type("Marko");
     cy.get('input[name="prezime"]').type("Marković");
     cy.get('input[name="pol"]').type("Muški");

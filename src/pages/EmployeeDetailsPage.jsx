@@ -84,7 +84,7 @@ export default function EmployeeDetailsPage() {
                 <div className="profile-left-fields">
                   <ProfileField label="Ime:" value={employee.firstName} />
                   <ProfileField label="Prezime:" value={employee.lastName} />
-                  <ProfileField label="Datum rodjenja:" value={formatDate(employee.birthDate)} />
+                  <ProfileField label="Datum rodjenja:" value={formatDate(employee.dateOfBirth)} />
                   <ProfileField label="Pol:" value={employee.gender === "Male" ? "M" : "Ž"} />
                   <ProfileField label="JMBG:" value={employee.jmbg} />
                 </div>
@@ -147,8 +147,8 @@ function ProfileField({ label, value }) {
   );
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
+function formatDate(timestamp) {
+  if (!timestamp) return "—";
+  const d = new Date(timestamp * 1000);
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
