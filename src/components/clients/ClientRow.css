@@ -1,0 +1,25 @@
+.client-row{
+    border-bottom:1px solid #bcbcbc;
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+}
+
+.icon-btn{
+    border:none;
+    background:#eee;
+    padding:6px 8px;
+    border-radius:4px;
+    cursor:pointer;
+}
+
+.icon-btn:hover{
+    background:#ddd;
+}
+
+.actions-header{
+    width:80px;
+}
