@@ -1,8 +1,4 @@
 describe("Auth integracija", () => {
-  // NAPOMENA: user servis ima bug (nil pointer panic na server.go:253) koji crashuje
-  // servis na nekim requestima. Testovi koji zahtevaju login su grupisani na pocetku
-  // da se izvrse dok je servis jos aktivan.
-
   describe("Login - uspesna prijava (POST /api/login)", () => {
     it("uspesna prijava vraca access_token i refresh_token", () => {
       cy.request("POST", "/api/login", {
@@ -23,6 +19,50 @@ describe("Auth integracija", () => {
       cy.url().should("include", "/employees");
       cy.window().then((win) => {
         expect(win.localStorage.getItem("accessToken")).to.not.be.null;
+      });
+    });
+
+    it("pogresan password vraca 401", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/login",
+        body: { email: "admin@banka.raf", password: "pogresna" },
+        failOnStatusCode: false,
+      }).then((resp) => {
+        expect(resp.status).to.eq(401);
+      });
+    });
+
+    it("nepostojeci email vraca 401", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/login",
+        body: { email: "nepostojeci@email.com", password: "Test1234!" },
+        failOnStatusCode: false,
+      }).then((resp) => {
+        expect(resp.status).to.eq(401);
+      });
+    });
+
+    it("prazan body vraca 400", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/login",
+        body: {},
+        failOnStatusCode: false,
+      }).then((resp) => {
+        expect(resp.status).to.be.oneOf([400, 401]);
+      });
+    });
+
+    it("nedostaje password polje vraca 400", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/login",
+        body: { email: "admin@banka.raf" },
+        failOnStatusCode: false,
+      }).then((resp) => {
+        expect(resp.status).to.be.oneOf([400, 401]);
       });
     });
   });
@@ -87,14 +127,14 @@ describe("Auth integracija", () => {
       });
     });
 
-    it("refresh sa nevalidnim tokenom vraca gresku", () => {
+    it("refresh sa nevalidnim tokenom vraca 401", () => {
       cy.request({
         method: "POST",
         url: "/api/token/refresh",
         body: { refresh_token: "nevalidan_refresh_token" },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 401, 500]);
+        expect(resp.status).to.eq(401);
       });
     });
 
@@ -103,52 +143,6 @@ describe("Auth integracija", () => {
         method: "POST",
         url: "/api/token/refresh",
         body: {},
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 401]);
-      });
-    });
-  });
-
-  describe("Login - negativni scenariji (POST /api/login)", () => {
-    it("pogresan password vraca 401", () => {
-      cy.request({
-        method: "POST",
-        url: "/api/login",
-        body: { email: "admin@banka.raf", password: "pogresna" },
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([401, 500]);
-      });
-    });
-
-    it("nepostojeci email vraca gresku", () => {
-      cy.request({
-        method: "POST",
-        url: "/api/login",
-        body: { email: "nepostojeci@email.com", password: "Test1234!" },
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([401, 500]);
-      });
-    });
-
-    it("prazan body vraca 400", () => {
-      cy.request({
-        method: "POST",
-        url: "/api/login",
-        body: {},
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 401]);
-      });
-    });
-
-    it("nedostaje password polje vraca 400", () => {
-      cy.request({
-        method: "POST",
-        url: "/api/login",
-        body: { email: "admin@banka.raf" },
         failOnStatusCode: false,
       }).then((resp) => {
         expect(resp.status).to.be.oneOf([400, 401]);

@@ -6,7 +6,6 @@ describe("Employee API integracija", () => {
       method: "POST",
       url: "/api/login",
       body: { email: "admin@banka.raf", password: "Admin123!" },
-      retryOnStatusCodeFailure: true,
     }).then((resp) => {
       accessToken = resp.body.access_token;
       cy.window().then((win) => {
@@ -61,7 +60,7 @@ describe("Employee API integracija", () => {
       });
     });
 
-    it("gender koji nije M/F vraca gresku", () => {
+    it("gender koji nije M/F vraca 400", () => {
       cy.request({
         method: "POST",
         url: "/api/employees",
@@ -81,7 +80,7 @@ describe("Employee API integracija", () => {
         },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 422, 500]);
+        expect(resp.status).to.eq(400);
       });
     });
 
@@ -148,7 +147,7 @@ describe("Employee API integracija", () => {
           },
           failOnStatusCode: false,
         }).then((resp) => {
-          expect(resp.status).to.be.oneOf([409, 400, 500]);
+          expect(resp.status).to.eq(409);
         });
       });
     });
@@ -160,14 +159,14 @@ describe("Employee API integracija", () => {
       cy.contains("admin@banka.raf").should("be.visible");
     });
 
-    it("nepostojeci ID vraca gresku", () => {
+    it("nepostojeci ID vraca 404", () => {
       cy.request({
         method: "GET",
         url: "/api/employees/999999",
         headers: { Authorization: `Bearer ${accessToken}` },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([404, 500]);
+        expect(resp.status).to.eq(404);
       });
     });
 
@@ -178,7 +177,7 @@ describe("Employee API integracija", () => {
         headers: { Authorization: `Bearer ${accessToken}` },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 404, 500]);
+        expect(resp.status).to.eq(400);
       });
     });
 

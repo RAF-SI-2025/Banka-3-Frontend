@@ -31,18 +31,18 @@ describe("Password reset integracija", () => {
       body: {},
       failOnStatusCode: false,
     }).then((resp) => {
-      expect(resp.status).to.be.oneOf([400, 422, 500]);
+      expect(resp.status).to.eq(400);
     });
   });
 
-  it("confirm sa nevalidnim tokenom vraca gresku", () => {
+  it("confirm sa nevalidnim tokenom vraca 400", () => {
     cy.request({
       method: "POST",
       url: "/api/password-reset/confirm",
       body: { token: "nevalidan_token_12345", password: "NovaLozinka123!" },
       failOnStatusCode: false,
     }).then((resp) => {
-      expect(resp.status).to.be.oneOf([400, 422, 500]);
+      expect(resp.status).to.eq(400);
     });
   });
 });

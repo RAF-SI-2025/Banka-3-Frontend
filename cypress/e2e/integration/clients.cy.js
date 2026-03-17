@@ -6,7 +6,6 @@ describe("Client API integracija", () => {
       method: "POST",
       url: "/api/login",
       body: { email: "admin@banka.raf", password: "Admin123!" },
-      retryOnStatusCodeFailure: true,
     }).then((resp) => {
       accessToken = resp.body.access_token;
     });
@@ -36,7 +35,7 @@ describe("Client API integracija", () => {
       });
     });
 
-    it("gender koji nije M/F vraca gresku", () => {
+    it("gender koji nije M/F vraca 400", () => {
       cy.request({
         method: "POST",
         url: "/api/clients",
@@ -54,11 +53,11 @@ describe("Client API integracija", () => {
         },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 422, 500]);
+        expect(resp.status).to.eq(400);
       });
     });
 
-    it("nedostaje obavezno polje vraca 422", () => {
+    it("nedostaje obavezno polje vraca 400", () => {
       cy.request({
         method: "POST",
         url: "/api/clients",
@@ -76,7 +75,7 @@ describe("Client API integracija", () => {
         },
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 422, 500]);
+        expect(resp.status).to.eq(400);
       });
     });
 
@@ -115,7 +114,7 @@ describe("Client API integracija", () => {
           },
           failOnStatusCode: false,
         }).then((resp) => {
-          expect(resp.status).to.be.oneOf([409, 400, 500]);
+          expect(resp.status).to.eq(409);
         });
       });
     });
@@ -128,7 +127,7 @@ describe("Client API integracija", () => {
         body: {},
         failOnStatusCode: false,
       }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 422, 500]);
+        expect(resp.status).to.eq(400);
       });
     });
   });

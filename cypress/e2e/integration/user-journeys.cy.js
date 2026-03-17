@@ -5,7 +5,6 @@ describe("User Journeys - End-to-end scenariji", () => {
       method: "POST",
       url: "/api/login",
       body: { email: "admin@banka.raf", password: "Admin123!" },
-      retryOnStatusCodeFailure: true,
     }).then((loginResp) => {
       expect(loginResp.status).to.eq(200);
       const accessToken = loginResp.body.access_token;
@@ -57,7 +56,6 @@ describe("User Journeys - End-to-end scenariji", () => {
       method: "POST",
       url: "/api/login",
       body: { email: "admin@banka.raf", password: "Admin123!" },
-      retryOnStatusCodeFailure: true,
     }).then((loginResp) => {
       expect(loginResp.status).to.eq(200);
       const refreshToken = loginResp.body.refresh_token;
