@@ -1,0 +1,87 @@
+.loan-page{
+  padding:40px;
+  background:#0f172a;
+  min-height:100vh;
+  color:white;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+
+.loan-title{
+  font-size:28px;
+  font-weight:600;
+  margin-bottom:32px;
+}
+
+.loan-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:24px;
+}
+
+.loan-card{
+  background:#1e293b;
+  padding:26px;
+  border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  transition:all 0.2s ease;
+}
+
+.loan-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 30px rgba(0,0,0,0.45);
+}
+
+.loan-status{
+  align-self:flex-start;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.3px;
+}
+
+.loan-status.APPROVED{
+  background:#064e3b;
+  color:#34d399;
+}
+
+.loan-status.PENDING{
+  background:#78350f;
+  color:#fbbf24;
+}
+
+.loan-status.REJECTED{
+  background:#7f1d1d;
+  color:#f87171;
+}
+
+.loan-amount{
+  font-size:30px;
+  font-weight:700;
+  letter-spacing:0.5px;
+}
+
+.loan-info{
+  display:flex;
+  justify-content:space-between;
+  margin-top:4px;
+}
+
+.loan-info div{
+  display:flex;
+  flex-direction:column;
+}
+
+.loan-info span{
+  font-size:12px;
+  color:#94a3b8;
+}
+
+.loan-info strong{
+  font-size:15px;
+  font-weight:600;
+  color:#e2e8f0;
+}
