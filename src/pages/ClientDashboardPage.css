@@ -1,0 +1,339 @@
+.dash-shell {
+    min-height: 100vh;
+    background-color: #0A0E17;
+    display: flex;
+    flex-direction: column;
+    font-family: 'DM Sans', sans-serif;
+    color: #e6edf3;
+    overflow-x: hidden;
+}
+
+.dash-state-msg {
+    text-align: center;
+    padding: 80px 24px;
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+.dash-state-msg--error { color: #ef4444; }
+
+.dash-bell {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    color: #7d8590;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.dash-bell:hover {
+    border-color: #3b6ef5;
+    color: #e6edf3;
+}
+
+.dash-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    padding: 24px 32px 60px;
+    box-sizing: border-box;
+}
+
+/* ── Header ── */
+.dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.dash-greeting {
+    color: #7d8590;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+}
+
+.dash-name {
+    color: #e6edf3;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+/* ── Balance card ── */
+.dash-balance-card {
+    position: relative;
+    background: #3b6ef5;
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dash-bc-circle1 {
+    position: absolute;
+    top: -36px;
+    right: -36px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    pointer-events: none;
+}
+
+.dash-bc-circle2 {
+    position: absolute;
+    bottom: -24px;
+    left: -24px;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+}
+
+.dash-bc-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.dash-bc-amount {
+    color: #fff;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin-bottom: 4px;
+}
+
+.dash-bc-avail {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.82rem;
+    margin-bottom: 0;
+}
+
+.dash-quick-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.dash-quick-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 8px;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dash-quick-btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* ── Section headers ── */
+.dash-section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.dash-section-title {
+    color: #e6edf3;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.dash-section-link {
+    background: none;
+    border: none;
+    color: #3b6ef5;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+
+.dash-section-link:hover { opacity: 0.75; }
+
+/* ── Account pills ── */
+.dash-accounts-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+    min-width: 0;
+    width: 100%;
+}
+
+.dash-accounts-scroll::-webkit-scrollbar { display: none; }
+
+.dash-account-pill {
+    min-width: 180px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+
+.dash-account-pill:hover {
+    border-color: #3b6ef5;
+    background: #1c2230;
+}
+
+.dash-pill-name {
+    color: #7d8590;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.dash-pill-number {
+    color: #475569;
+    font-size: 0.72rem;
+    font-family: monospace;
+    margin-bottom: 8px;
+}
+
+.dash-pill-bal {
+    color: #e6edf3;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* ── Quick menu grid ── */
+.dash-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.dash-menu-item {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.dash-menu-item:hover {
+    border-color: #3b6ef5;
+    background: #1c2230;
+}
+
+.dash-menu-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    background: rgba(59, 110, 245, 0.15);
+    color: #3b6ef5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dash-menu-label {
+    color: #7d8590;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+/* ── Transactions ── */
+.dash-tx-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dash-tx-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    transition: background 0.15s;
+}
+
+.dash-tx-row:hover { background: #1c2230; }
+
+.dash-tx-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dash-tx-icon--in  { background: rgba(6, 214, 160, 0.15); color: #06d6a0; }
+.dash-tx-icon--out { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }
+
+.dash-tx-info { flex: 1; min-width: 0; }
+
+.dash-tx-desc {
+    color: #e6edf3;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-tx-date {
+    color: #475569;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.dash-tx-amt {
+    color: #e6edf3;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.dash-tx-amt--in { color: #06d6a0; }
+
+@media (max-width: 600px) {
+    .dash-content { padding: 16px 14px 48px; }
+    .dash-bc-amount { font-size: 1.7rem; }
+    .dash-menu-grid { gap: 8px; }
+    .dash-menu-item { padding: 14px 8px; }
+    .dash-menu-icon { width: 38px; height: 38px; }
+}

@@ -49,6 +49,37 @@ export default function AccountDetailsPage() {
         return () => { cancelled = true; };
     }, [id]);
 
+    const quickActions = [
+        {
+            label: "Uplata",
+            target: "/deposit",
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
+                </svg>
+            ),
+        },
+        {
+            label: "Plaćanje",
+            target: "/payment",
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+            ),
+        },
+        {
+            label: "Prenos",
+            target: "/transfer",
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                    <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+            ),
+        },
+    ];
+
     if (loading) {
         return (
             <div className="ad-page">
@@ -93,6 +124,14 @@ export default function AccountDetailsPage() {
                             <p className="ad-balance-reserved">{fmt(reserved, account.currency)}</p>
                         </div>
                     </div>
+                    <div className="dash-quick-row">
+                        {quickActions.map(({label, icon, target}) => (
+                            <button key={label} className="dash-quick-btn" onClick={() => navigate(target)}>
+                                {icon}
+                                <span>{label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* ── TRANSACTIONS ── */}
@@ -104,7 +143,7 @@ export default function AccountDetailsPage() {
                     <div className="ad-txn-list">
                         {transactions.map((tx) => (
                             <div key={tx.id} className="ad-txn-row">
-                                <div className={`ad-txn-icon ${tx.amount > 0 ? "ad-txn-icon--credit" : "ad-txn-icon--debit"}`}>
+                            <div className={`ad-txn-icon ${tx.amount > 0 ? "ad-txn-icon--credit" : "ad-txn-icon--debit"}`}>
                                     {tx.amount > 0 ? <ArrowDownIcon /> : <ArrowUpIcon />}
                                 </div>
                                 <div className="ad-txn-info">
