@@ -11,6 +11,7 @@
     padding: 32px 24px 60px;
 }
 
+/* ── Header ── */
 .ca-header {
     display: flex;
     align-items: center;
@@ -51,19 +52,21 @@
     letter-spacing: -0.3px;
 }
 
+/* ── Section ── */
 .ca-section {
     margin-bottom: 24px;
 }
 
 .ca-section-label {
-    color: #94a3b8;
-    font-size: 0.78rem;
+    color: #f1f5f9;
+    font-size: 0.88rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 12px;
 }
 
+/* ── Account type cards ── */
 .ca-type-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -136,6 +139,7 @@
     justify-content: center;
 }
 
+/* ── Currency locked (RSD) ── */
 .ca-currency-locked {
     display: flex;
     align-items: center;
@@ -159,6 +163,7 @@
     border-radius: 20px;
 }
 
+/* ── Currency grid ── */
 .ca-currency-grid {
     display: flex;
     flex-direction: column;
@@ -205,6 +210,7 @@
     font-size: 0.85rem;
 }
 
+/* ── Summary ── */
 .ca-summary {
     background: #111827;
     border: 1px solid #1e293b;
@@ -238,6 +244,7 @@
 .ca-summary-row span:first-child { color: #475569; }
 .ca-summary-row span:last-child  { color: #f1f5f9; font-weight: 500; }
 
+/* ── Errors ── */
 .ca-error {
     color: #ef4444;
     font-size: 0.82rem;
@@ -249,6 +256,7 @@
     margin-bottom: 16px;
 }
 
+/* ── Actions ── */
 .ca-actions {
     display: flex;
     gap: 12px;
@@ -290,3 +298,108 @@
 
 .ca-btn-submit:hover { background: #2563eb; }
 .ca-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Company form ── */
+.ca-company-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ca-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.ca-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ca-field-label {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ca-input {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: #f1f5f9;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.ca-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.ca-input::placeholder { color: #475569; }
+
+.ca-input--error { border-color: #ef4444; }
+
+/* ── Limits & card toggle ── */
+.ca-card-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.ca-card-toggle-label {
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.ca-card-toggle-desc {
+    color: #475569;
+    font-size: 0.78rem;
+}
+
+.ca-toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: #1e293b;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.ca-toggle--on {
+    background: #3b82f6;
+}
+
+.ca-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+    display: block;
+}
+
+.ca-toggle--on .ca-toggle-knob {
+    transform: translateX(20px);
+}
