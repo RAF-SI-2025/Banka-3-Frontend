@@ -27,6 +27,7 @@ export default function LoginPage() {
 
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("userId", data.userId);
 
       setMessage("Uspešno logovanje");
       navigate("/employees");

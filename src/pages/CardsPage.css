@@ -1,0 +1,115 @@
+.cards-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1629 100%);
+  padding-top: 120px;
+  padding-bottom: 40px;
+}
+
+.cards-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(15, 22, 41, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cards-container h1 {
+  color: #ffffff;
+  margin-bottom: 30px;
+  font-size: 28px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.message {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.message.success {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.message.error {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ff6f6f;
+  border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.message.warning {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #FFD54F;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  color: #b0b8c8;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #1e90ff 0%, #0066ff 100%);
+  border-color: #1e90ff;
+  color: white;
+  box-shadow: 0 0 20px rgba(30, 144, 255, 0.3);
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+  color: #b0b8c8;
+}
+
+@media (max-width: 1200px) {
+  .cards-container {
+    width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-page {
+    padding-top: 80px;
+  }
+
+  .cards-container {
+    padding: 20px;
+  }
+
+  .cards-container h1 {
+    font-size: 20px;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+}

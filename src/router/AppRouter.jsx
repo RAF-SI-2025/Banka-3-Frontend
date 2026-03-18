@@ -6,9 +6,15 @@ import EmployeeDetailsPage from "../pages/EmployeeDetailsPage.jsx";
 import CreateEmployeePage from "../pages/CreateEmployeePage.jsx";
 import EditEmployeePage from "../pages/EditEmployeePage.jsx";
 import ChangePasswordPage from "../pages/ChangePasswordPage.jsx";
+import CardsPage from "../pages/CardsPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+<<<<<<< main
 import ClientsPage from "../pages/ClientsPage.jsx";
 import ClientDetailsPage from "../pages/ClientDetailsPage.jsx";
+=======
+import AccountDetailsPage from "../pages/AccountDetailsPage.jsx";
+import ClientDashboardPage from "../pages/ClientDashboardPage.jsx";
+>>>>>>> main
 
 export default function AppRouter() {
   return (
@@ -17,6 +23,7 @@ export default function AppRouter() {
         <Route path="/" element={<Navigate to="/login" />} />
 
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/dashboard" element={<ProtectedRoute><ClientDashboardPage /></ProtectedRoute>} />
 
         <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
         <Route path="/employees/create" element={<ProtectedRoute><CreateEmployeePage /></ProtectedRoute>} />
@@ -24,8 +31,15 @@ export default function AppRouter() {
         <Route path="/employees/:id/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
         <Route path="/employees/:id" element={<ProtectedRoute><EmployeeDetailsPage /></ProtectedRoute>} />
         <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+<<<<<<< main
         <Route path="/clients" element={<ProtectedRoute><ClientsPage></ClientsPage></ProtectedRoute>}/>
         <Route path="/clients/:clientId" element={<ProtectedRoute><ClientDetailsPage></ClientDetailsPage></ProtectedRoute>}/>
+=======
+        <Route path="/cards" element={<ProtectedRoute><CardsPage /></ProtectedRoute>} />
+
+        <Route path="/accounts/:id" element={<ProtectedRoute><AccountDetailsPage /></ProtectedRoute>} />
+
+>>>>>>> main
       </Routes>
     </BrowserRouter>
   );

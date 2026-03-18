@@ -1,0 +1,194 @@
+.ad-page {
+    position: fixed;
+    inset: 0;
+    background-color: #0A0E17;
+    overflow-y: auto;
+    z-index: 20;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.ad-content {
+    max-width: 100%;
+    margin: 0;
+    padding: 20px 20px 60px;
+}
+
+.ad-state-msg {
+    text-align: center;
+    color: #475569;
+    padding: 80px 24px;
+    font-size: 0.95rem;
+}
+
+.ad-state-msg--error {
+    color: #ef4444;
+}
+
+.ad-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ad-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.ad-back-btn:hover {
+    background: #1a2234;
+}
+
+.ad-title {
+    color: #f1f5f9;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.ad-balance-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 24px;
+}
+
+.ad-account-number {
+    color: #475569;
+    font-size: 0.75rem;
+    font-family: monospace;
+}
+
+.ad-balance-main {
+    color: #f1f5f9;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    line-height: 1;
+}
+
+.ad-balance-row {
+    display: flex;
+    gap: 40px;
+}
+
+.ad-balance-label {
+    color: #475569;
+    font-size: 0.6875rem;
+    margin-bottom: 2px;
+}
+
+.ad-balance-available {
+    color: #06d6a0;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.ad-balance-reserved {
+    color: #f59e0b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.ad-section-title {
+    color: #f1f5f9;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 14px;
+}
+
+.ad-empty {
+    text-align: center;
+    color: #475569;
+    padding: 40px 0;
+    font-size: 0.9rem;
+}
+
+
+.ad-txn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ad-txn-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #111827;
+    border-radius: 14px;
+    border: 1px solid #1e293b;
+    transition: background 0.15s;
+}
+
+.ad-txn-row:hover {
+    background: #1a2234;
+}
+
+.ad-txn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ad-txn-icon--credit {
+    background: rgba(6, 214, 160, 0.15);
+    color: #06d6a0;
+}
+
+.ad-txn-icon--debit {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.ad-txn-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ad-txn-desc {
+    color: #f1f5f9;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ad-txn-date {
+    color: #475569;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.ad-txn-amount {
+    color: #f1f5f9;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.ad-txn-amount--credit {
+    color: #06d6a0;
+}
