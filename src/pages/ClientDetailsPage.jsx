@@ -125,9 +125,7 @@ export default function ClientDetailsPage() {
                             {accounts.map((acc) => (
                                 <tr key={acc.clientId}>
                                     <td>
-                                        <Link to={`/clients/${clientId}/accounts/${acc.id}`} className="details-link">
-                                            {acc.account_number}
-                                        </Link>
+                                        {acc.account_number}
                                     </td>
                                     <td>
                                         <span className="badge">{acc.type}</span>
