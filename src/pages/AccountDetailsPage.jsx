@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAccountById, getAccountTransactions } from "../services/accountService";
+import { getAccountById, getAccountTransactions } from "../services/AccountService";
 import "./AccountDetailsPage.css";
 
 function fmt(amount, currency = "RSD") {
