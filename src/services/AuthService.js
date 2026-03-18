@@ -15,6 +15,7 @@ export const login = async (email, password) => {
 };
 
 export const requestPasswordReset = (email) => {
+  // TODO: Backend nema ovaj endpoint jos — ostaje mock
   return new Promise((resolve) => {
     setTimeout(() => {
       console.log("Mock: password reset request for:", email);
