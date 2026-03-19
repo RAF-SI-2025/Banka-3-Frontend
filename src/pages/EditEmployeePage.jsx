@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./CreateEmployeePage.css";
 import "./EmployeesPage.css";
 import { getEmployeeById, updateEmployee } from "../services/EmployeeService";
+import MenuDropdown from "../components/MenuDropdown";
 
 function validate(form) {
   const errors = {};
@@ -42,7 +43,7 @@ export default function EditEmployeePage() {
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
- /* useEffect(() => {
+  useEffect(() => {
     getEmployeeById(Number(id))
       .then((employee) => {
         setForm({
@@ -56,49 +57,7 @@ export default function EditEmployeePage() {
         });
       })
       .catch(() => setNotFound(true));
-  }, [id]);*/
-  useEffect(() => {
-  const USE_MOCK = true;
-
-  if (USE_MOCK) {
-    const mockEmployee = {
-      id: Number(id),
-      lastName: "Petrović",
-      gender: "Female",
-      phone: "+381641234567",
-      address: "Knez Mihailova 25, Beograd",
-      position: "Menadžer",
-      department: "Prodaja",
-      active: true,
-    };
-
-    setForm({
-      prezime: mockEmployee.lastName ?? "",
-      pol: mockEmployee.gender ?? "",
-      telefon: mockEmployee.phone ?? "",
-      adresa: mockEmployee.address ?? "",
-      pozicija: mockEmployee.position ?? "",
-      departman: mockEmployee.department ?? "",
-      aktivan: mockEmployee.active ?? true,
-    });
-
-    return;
-  }
-
-  getEmployeeById(Number(id))
-    .then((employee) => {
-      setForm({
-        prezime: employee.lastName ?? "",
-        pol: employee.gender ?? "",
-        telefon: employee.phone ?? "",
-        adresa: employee.address ?? "",
-        pozicija: employee.position ?? "",
-        departman: employee.department ?? "",
-        aktivan: employee.active ?? true,
-      });
-    })
-    .catch(() => setNotFound(true));
-}, [id]);
+  }, [id]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -167,7 +126,7 @@ export default function EditEmployeePage() {
     return (
       <div className="page-bg">
         <img src="/bank-logo.png" className="bank-logo" />
-        <img src="/menu-icon.png" className="menu-icon" />
+        <MenuDropdown />
 
         <div className="create-page">
           <div className="create-form-card">
@@ -181,7 +140,7 @@ export default function EditEmployeePage() {
   return (
     <div className="page-bg">
       <img src="/bank-logo.png" className="bank-logo" />
-      <img src="/menu-icon.png" className="menu-icon" />
+      <MenuDropdown />
 
       <div className="create-page">
         <div className="create-form-card">

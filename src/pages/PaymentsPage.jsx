@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTransactions } from "../services/PaymentService";
+import MenuDropdown from "../components/MenuDropdown";
 import "./PaymentsPage.css";
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -184,7 +185,7 @@ export default function PaymentsPage() {
   return (
     <div className="pp-bg">
       <img src="/bank-logo.png" alt="logo" className="pp-logo" />
-      <img src="/menu-icon.png" alt="menu" className="pp-menu-icon" />
+      <MenuDropdown />
 
       <div className="pp-wrapper">
         {/* Page header */}

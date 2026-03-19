@@ -2,54 +2,39 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import EmployeeTable from "../components/employees/EmployeeTable";
 import { getEmployees } from "../services/EmployeeService";
+import MenuDropdown from "../components/MenuDropdown";
 import "./EmployeesPage.css";
 
 function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPosition, setFilterPosition] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  /*
-    STARO:
-    useEffect(() => {
-      async function loadEmployees() {
-        const data = await getEmployees();
-        setEmployees(data);
-      }
-      loadEmployees();
-    }, []);
-
-    NOVO:
-    Dok radiš UI bez backenda, ostavljamo mock podatke.
-    Posle samo vrati stari useEffect.
-  */
   useEffect(() => {
-    const mockData = [
-      {
-        id: 1,
-        first_name: "Ana",
-        last_name: "Petrović",
-        email: "ana@test.com",
-        position: "Menadžer",
-      },
-      {
-        id: 2,
-        first_name: "Marko",
-        last_name: "Marković",
-        email: "marko@test.com",
-        position: "Blagajnik",
-      },
-      {
-        id: 3,
-        first_name: "Jelena",
-        last_name: "Jovanović",
-        email: "jelena@test.com",
-        position: "Admin",
-      },
-    ];
+    const controller = new AbortController();
 
-    setEmployees(mockData);
+    async function loadEmployees() {
+      try {
+        const data = await getEmployees();
+        if (!controller.signal.aborted) {
+          setEmployees(data);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError("Greška pri učitavanju zaposlenih.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadEmployees();
+    return () => controller.abort();
   }, []);
 
   const uniquePositions = useMemo(() => {
@@ -81,18 +66,34 @@ function EmployeesPage() {
     setFilterPosition("");
   }
 
-  return (
-    /*
-      STARO:
-      page-bg je bio light / image based ekran
+  if (loading) {
+    return (
+      <div className="page-bg">
+        <img src="/bank-logo.png" alt="logo" className="bank-logo" />
+        <MenuDropdown />
+        <div className="content-wrapper">
+          <p>Učitavanje...</p>
+        </div>
+      </div>
+    );
+  }
 
-      NOVO:
-      page-bg ostaje isto ime klase, ali CSS ga pravi dark i modernim
-    */
+  if (error) {
+    return (
+      <div className="page-bg">
+        <img src="/bank-logo.png" alt="logo" className="bank-logo" />
+        <MenuDropdown />
+        <div className="content-wrapper">
+          <p style={{ color: "#e74c3c" }}>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <div className="page-bg">
-      {/* Za sada ostavljamo logo i menu kao što već koristiš */}
       <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+      <MenuDropdown />
 
       <div className="content-wrapper">
         <div className="employee-card">
@@ -111,15 +112,6 @@ function EmployeesPage() {
             </button>
           </div>
 
-          {/*
-            STARO:
-            search, select i reset su bili podeljeni levo/desno
-            pa je dolazilo do preklapanja
-
-            NOVO:
-            sve ide u jedan toolbar-row:
-            [ search ][ select ][ reset ]
-          */}
           <div className="employee-toolbar">
           <div className="toolbar-row">
             <div className="search-wrapper">

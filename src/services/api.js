@@ -29,6 +29,8 @@ api.interceptors.response.use(
       if (!storedRefresh) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userRole");
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -44,6 +46,8 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userRole");
         window.location.href = "/login";
         return Promise.reject(error);
       }

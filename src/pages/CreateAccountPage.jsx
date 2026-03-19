@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createAccount } from "../services/AccountService";
+import { getCurrentUserId } from "../services/AuthService";
 import "./CreateAccountPage.css";
 
 const ACCOUNT_TYPES = [
@@ -146,8 +147,12 @@ export default function CreateAccountPage() {
 
         try {
             setSubmitting(true);
+            const userId = getCurrentUserId();
+            if (!userId) {
+                throw new Error("Niste ulogovani. Prijavite se ponovo.");
+            }
             await createAccount({
-                client_id: 1,
+                client_id: Number(userId),
                 account_type: accountType,
                 subtype: ownerType === "BUSINESS" ? "DOO" : subtype,
                 currency,

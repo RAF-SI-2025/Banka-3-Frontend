@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getEmployeeById } from "../services/EmployeeService";
+import MenuDropdown from "../components/MenuDropdown";
 import "./EmployeeDetailsPage.css";
 
 export default function EmployeeDetailsPage() {
@@ -11,43 +12,13 @@ export default function EmployeeDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
-  /*
-    STARO:
-    Uvek si zvala backend preko getEmployeeById(Number(id))
-
-    NOVO:
-    Dok radiš UI bez backenda, ostavljamo mock podatke.
-    Posle samo vrati stari backend deo.
-  */
   useEffect(() => {
     if (!id) return;
 
     let cancelled = false;
 
-    const USE_MOCK = true;
-
-    const mockEmployee = {
-      id: Number(id),
-      firstName: "Ana",
-      lastName: "Petrović",
-      dateOfBirth: 946684800, // 01.01.2000
-      gender: "Female",
-      jmbg: "0101000123456",
-      address: "Knez Mihailova 25, Beograd",
-      email: "ana@test.com",
-      phone: "+381641234567",
-      department: "Prodaja",
-      role: "ADMIN",
-      active: true,
-    };
-
     const load = async () => {
       try {
-        if (USE_MOCK) {
-          if (!cancelled) setEmployee(mockEmployee);
-          return;
-        }
-
         const data = await getEmployeeById(Number(id));
         if (!cancelled) setEmployee(data);
       } catch (err) {
@@ -76,7 +47,7 @@ export default function EmployeeDetailsPage() {
     return (
       <div className="page-bg">
         <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-        <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+        <MenuDropdown />
 
         <div className="profile-page">
           <div className="profile-card profile-state-card">
@@ -91,7 +62,7 @@ export default function EmployeeDetailsPage() {
     return (
       <div className="page-bg">
         <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-        <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+        <MenuDropdown />
 
         <div className="profile-page">
           <div className="profile-card profile-state-card">
@@ -107,7 +78,7 @@ export default function EmployeeDetailsPage() {
   return (
     <div className="page-bg">
       <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+      <MenuDropdown />
 
       <div className="profile-page">
         <div className="profile-card">

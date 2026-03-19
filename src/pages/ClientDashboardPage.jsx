@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAccounts, getAccountTransactions } from "../services/AccountService";
+import { getCurrentClient } from "../services/ClientService";
+import { getCurrentUserEmail } from "../services/AuthService";
 import "./ClientDashboardPage.css";
 
 function fmt(amount, currency = "RSD") {
@@ -21,6 +23,30 @@ export default function ClientDashboardPage() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [displayName, setDisplayName] = useState("Korisnik");
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const loadName = async () => {
+            try {
+                const email = getCurrentUserEmail();
+                if (!email) return;
+                const client = await getCurrentClient(email);
+                if (!controller.signal.aborted && client) {
+                    setDisplayName(`${client.firstName} ${client.lastName}`);
+                }
+            } catch {
+                if (!controller.signal.aborted) {
+                    const email = getCurrentUserEmail();
+                    if (email) setDisplayName(email);
+                }
+            }
+        };
+
+        loadName();
+        return () => controller.abort();
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -132,7 +158,7 @@ export default function ClientDashboardPage() {
                 <div className="dash-header">
                     <div>
                         <p className="dash-greeting">Dobro došli</p>
-                        <p className="dash-name">Marko Petrović</p>
+                        <p className="dash-name">{displayName}</p>
                     </div>
                     <button className="dash-bell" aria-label="Obaveštenja">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"

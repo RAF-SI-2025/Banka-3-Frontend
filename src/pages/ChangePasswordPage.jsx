@@ -4,11 +4,13 @@ import { confirmPasswordReset } from "../services/AuthService";
 import { validatePasswordStrength } from "../utils/validators";
 import { confirmPasswordReset } from "../services/AuthService";
 import "./ChangePasswordPage.css";
+import MenuDropdown from "../components/MenuDropdown";
 import "./EmployeesPage.css";
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
 
   const { token } = location.state || {};
 
@@ -74,14 +76,12 @@ export default function ChangePasswordPage() {
   return (
     <div className="page-bg">
       <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+      <MenuDropdown />
 
       {/* STARO: cp-page-center + cp-card sa bež karticom */}
       {/* NOVO: isti dark card sistem kao create/edit/details */}
       <div className="cp-page">
         <div className="cp-card">
-          {/* STARO: samo naslov */}
-          {/* NOVO: header blok kao na ostalim ekranima */}
           <div className="cp-header">
             <div className="cp-header-text">
               <p className="cp-eyebrow">PROMENA LOZINKE</p>
@@ -95,7 +95,7 @@ export default function ChangePasswordPage() {
               <button
                 type="button"
                 className="cp-btn cp-btn-secondary"
-                onClick={() => navigate(`/employees/${id}`)}
+                onClick={() => navigate(id ? `/employees/${id}` : "/login")}
               >
                 Nazad
               </button>

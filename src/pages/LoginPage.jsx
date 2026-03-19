@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "../services/AuthService";
+import { getClientByEmail } from "../services/ClientService";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,14 +24,32 @@ export default function LoginPage() {
       return;
     }
 
+    setLoading(true);
+    setMessage("");
+
     try {
       const data = await login(email, password);
 
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("userId", data.userId);
+      if (data.userId) localStorage.setItem("userId", data.userId);
 
-      setMessage("Uspešno logovanje");
+      // TODO: Tehnički dug — backend treba da uvede GET /api/me endpoint
+      // koji vraća ulogovanog korisnika sa rolom, umesto da frontend pogađa
+      // rolu probanjem /api/clients endpointa.
+      try {
+        const client = await getClientByEmail(email);
+        if (client) {
+          localStorage.setItem("userRole", "client");
+          localStorage.setItem("userId", client.id);
+          navigate("/dashboard");
+          return;
+        }
+      } catch {
+        // Nije client — nastavljamo kao employee
+      }
+
+      localStorage.setItem("userRole", "employee");
       navigate("/employees");
     } catch (err) {
       if (err.response) {
@@ -43,6 +63,8 @@ export default function LoginPage() {
       } else {
         setMessage(err.message || "Nepoznata greška");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,8 +111,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" className="login-button">
-            Prijavi se
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Prijavljivanje..." : "Prijavi se"}
           </button>
 
           <p className="forgot-password" onClick={handleForgotPassword}>

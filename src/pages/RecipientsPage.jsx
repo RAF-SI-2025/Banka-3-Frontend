@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRecipients } from "../services/PaymentService";
+import MenuDropdown from "../components/MenuDropdown";
 import "./RecipientsPage.css";
 
 export default function RecipientsPage() {
@@ -30,7 +31,7 @@ export default function RecipientsPage() {
   return (
     <div className="rp-bg">
       <img src="/bank-logo.png" alt="logo" className="rp-logo" />
-      <img src="/menu-icon.png" alt="menu" className="rp-menu-icon" />
+      <MenuDropdown />
 
       <div className="rp-wrapper">
         {/* Page header */}

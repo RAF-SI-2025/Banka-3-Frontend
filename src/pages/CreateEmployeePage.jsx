@@ -3,6 +3,7 @@ import { createEmployee } from "../services/EmployeeService";
 import "./CreateEmployeePage.css";
 import "../pages/EmployeesPage.css";
 import { useNavigate } from "react-router-dom";
+import MenuDropdown from "../components/MenuDropdown";
 
 function validate(form) {
   const errors = {};
@@ -154,7 +155,7 @@ export default function CreateEmployeePage() {
     */
     <div className="page-bg">
       <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+      <MenuDropdown />
 
       <div className="create-page">
         <div className="create-form-card">
