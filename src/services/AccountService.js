@@ -46,3 +46,21 @@ export async function getAccountTransactions(accountId) {
     const response = await api.get(`/accounts/${accountId}/transactions`);
     return response.data;
 }
+
+export async function createAccount(data) {
+    if (USE_MOCK) {
+        await new Promise(r => setTimeout(r, 500));
+        const newAccount = {
+            id: MOCK_ACCOUNTS.length + 1,
+            name: data.account_type === "TEKUCI" ? "Tekući račun" : "Devizni račun",
+            number: `265-0000000011234-${56 + MOCK_ACCOUNTS.length}`,
+            balance: data.initial_balance,
+            available: data.initial_balance,
+            currency: data.currency,
+        };
+        MOCK_ACCOUNTS.push(newAccount);
+        return newAccount;
+    }
+    const response = await api.post("/accounts", data);
+    return response.data;
+}
