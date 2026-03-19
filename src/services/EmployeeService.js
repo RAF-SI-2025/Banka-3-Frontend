@@ -2,7 +2,7 @@ import api from "./api.js";
 
 export async function getEmployees() {
   const response = await api.get("/employees");
-  return response.data;
+  return response.data.employees ?? response.data;
 }
 
 export async function getEmployeeById(employeeId) {
