@@ -12,6 +12,7 @@ import CardsPage from "../pages/CardsPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import AccountDetailsPage from "../pages/AccountDetailsPage.jsx";
 import ClientDashboardPage from "../pages/ClientDashboardPage.jsx";
+import ExchangePage from "../pages/ExchangePage.jsx";
 import PaymentPage from "../pages/PaymentPage.jsx";
 
 export default function AppRouter() {
