@@ -1,0 +1,65 @@
+.loan-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #0f1f3d, #050b1a);
+}
+
+.loan-card {
+  width: 420px;
+  padding: 30px;
+  border-radius: 10px;
+  background: #0b1630;
+  box-shadow: 0 0 25px rgba(0, 195, 255, 0.15);
+}
+
+.loan-card h2 {
+  color: #7fd4ff;
+  margin-bottom: 20px;
+}
+
+.loan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.loan-form input {
+  height: 40px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #1e3a6d;
+  background: #091126;
+  color: white;
+}
+
+.loan-form input:focus {
+  outline: none;
+  border-color: #00c3ff;
+  box-shadow: 0 0 6px rgba(0,195,255,0.5);
+}
+
+.loan-form button {
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #00c3ff, #3a7bff);
+  color: white;
+  cursor: pointer;
+}
+
+.loan-rate {
+  color: #7fd4ff;
+  font-size: 14px;
+}
+
+.loan-error {
+  color: #ff6b6b;
+  margin-top: 10px;
+}
+
+.loan-success {
+  color: #3cff9f;
+  margin-top: 10px;
+}
