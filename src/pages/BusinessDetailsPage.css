@@ -1,0 +1,136 @@
+.business-container {
+  background: #0A0E17;
+  min-height: 100vh;
+  padding: 32px;
+  color: white;
+  font-family: sans-serif;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.welcome {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.header h1 {
+  font-size: 22px;
+}
+
+.bell {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* BALANCE */
+.balance-card {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  padding: 24px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+
+.balance-card p {
+  opacity: 0.8;
+}
+
+.balance-card h2 {
+  font-size: 32px;
+  margin: 10px 0;
+}
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.actions button:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* CARD */
+.card {
+  background: #111827;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.card h3 {
+  margin-bottom: 12px;
+}
+
+/* TRANSACTIONS */
+.transactions {
+  margin-top: 20px;
+}
+
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #1e293b;
+}
+
+.transaction:last-child {
+  border-bottom: none;
+}
+
+.desc {
+  font-weight: 500;
+}
+
+.transaction span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* COLORS */
+.positive {
+  color: #06d6a0;
+  font-weight: bold;
+}
+
+.negative {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+/* LOADING */
+.business-loading {
+  text-align: center;
+  padding: 40px;
+  color: white;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
