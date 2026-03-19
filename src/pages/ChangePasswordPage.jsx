@@ -12,11 +12,7 @@ export default function ChangePasswordPage() {
 
   const { token } = location.state || {};
 
-  // zaštita ako neko direktno uđe na stranicu
-   if (!token) {
-     navigate("/login");
-    return null;
-   }
+
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
