@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "../pages/LoginPage.jsx";
+import AccountsPage from "../pages/AccountsPage.jsx";
+import AdminAccountDetailsPage from "../pages/AdminAccountDetailsPage.jsx";
 import EmployeesPage from "../pages/EmployeesPage.jsx";
 import EmployeeDetailsPage from "../pages/EmployeeDetailsPage.jsx";
 import CreateEmployeePage from "../pages/CreateEmployeePage.jsx";

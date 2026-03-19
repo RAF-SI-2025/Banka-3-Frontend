@@ -1,0 +1,230 @@
+.accs-shell {
+    min-height: 100vh;
+    background-color: #0A0E17;
+    font-family: 'DM Sans', sans-serif;
+    color: #f1f5f9;
+}
+
+.accs-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+/* ── Header ── */
+.accs-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.accs-title-block p {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+.accs-title-block h1 {
+    color: #f1f5f9;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+
+/* ── Filters ── */
+.accs-filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.accs-search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.accs-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    pointer-events: none;
+    display: flex;
+}
+
+.accs-input {
+    width: 100%;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 10px 14px 10px 38px;
+    color: #f1f5f9;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.accs-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.accs-input::placeholder {
+    color: #475569;
+}
+
+.accs-select {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #f1f5f9;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 150px;
+}
+
+.accs-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.accs-reset-btn {
+    background: transparent;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 10px 18px;
+    color: #94a3b8;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.accs-reset-btn:hover {
+    background: #111827;
+    border-color: #3b82f6;
+    color: #f1f5f9;
+}
+
+/* ── Filter info ── */
+.accs-filter-info {
+    font-size: 0.8rem;
+    color: #475569;
+    margin-bottom: 14px;
+}
+
+.accs-filter-info strong {
+    color: #3b82f6;
+}
+
+/* ── State messages ── */
+.accs-state-msg {
+    text-align: center;
+    color: #475569;
+    padding: 60px 24px;
+    font-size: 0.95rem;
+}
+
+.accs-state-msg--error {
+    color: #ef4444;
+}
+
+/* ── Table ── */
+.accs-table-wrap {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.accs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.accs-table thead tr {
+    border-bottom: 1px solid #1e293b;
+}
+
+.accs-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+}
+
+.accs-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #1e293b;
+    color: #f1f5f9;
+}
+
+.accs-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.accs-row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.accs-row:hover {
+    background: #1a2234;
+}
+
+.accs-number {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+.accs-empty {
+    text-align: center;
+    color: #475569;
+    padding: 48px 0;
+    font-size: 0.9rem;
+}
+
+/* ── Status badge ── */
+.accs-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.accs-badge--active {
+    background: rgba(6, 214, 160, 0.12);
+    color: #06d6a0;
+}
+
+.accs-badge--inactive {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+@media (max-width: 768px) {
+    .accs-filters {
+        flex-direction: column;
+    }
+
+    .accs-select {
+        width: 100%;
+    }
+}

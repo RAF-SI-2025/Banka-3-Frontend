@@ -1,0 +1,246 @@
+.aad-shell {
+    min-height: 100vh;
+    background-color: #0A0E17;
+    font-family: 'DM Sans', sans-serif;
+    color: #f1f5f9;
+}
+
+.aad-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── State ── */
+.aad-state-msg {
+    text-align: center;
+    color: #475569;
+    padding: 80px 24px;
+    font-size: 0.95rem;
+}
+
+.aad-state-msg--error {
+    color: #ef4444;
+}
+
+/* ── Header ── */
+.aad-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.aad-back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.aad-back-btn:hover {
+    background: #1a2234;
+    border-color: #3b82f6;
+}
+
+.aad-title-block {
+    flex: 1;
+}
+
+.aad-title-block p {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+.aad-title-block h1 {
+    color: #f1f5f9;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+
+.aad-status-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.aad-status-badge--active {
+    background: rgba(6, 214, 160, 0.12);
+    color: #06d6a0;
+}
+
+.aad-status-badge--inactive {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+/* ── Balance card ── */
+.aad-balance-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.aad-account-number {
+    color: #475569;
+    font-size: 0.75rem;
+    font-family: monospace;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.aad-balance-main {
+    color: #f1f5f9;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 18px;
+    line-height: 1;
+}
+
+.aad-balance-row {
+    display: flex;
+    gap: 40px;
+}
+
+.aad-balance-label {
+    color: #475569;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.aad-balance-available {
+    color: #06d6a0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.aad-balance-reserved {
+    color: #f59e0b;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* ── Section ── */
+.aad-section {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 20px 22px;
+}
+
+.aad-section-title {
+    color: #f1f5f9;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+}
+
+/* ── Info grid ── */
+.aad-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.aad-info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.aad-info-row:nth-last-child(-n+2) {
+    border-bottom: none;
+}
+
+.aad-info-label {
+    font-size: 0.72rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.aad-info-value {
+    font-size: 0.9rem;
+    color: #f1f5f9;
+    font-weight: 500;
+}
+
+/* ── Limit bars ── */
+.aad-limit-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #1e293b;
+}
+
+.aad-limit-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aad-limit-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.aad-limit-bar-track {
+    height: 6px;
+    background: #1e293b;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.aad-limit-bar-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+@media (max-width: 600px) {
+    .aad-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aad-info-row:nth-last-child(-n+2) {
+        border-bottom: 1px solid #1e293b;
+    }
+
+    .aad-info-row:last-child {
+        border-bottom: none;
+    }
+
+    .aad-balance-main {
+        font-size: 1.6rem;
+    }
+}
