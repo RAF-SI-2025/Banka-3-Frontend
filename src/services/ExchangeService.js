@@ -16,7 +16,7 @@ export async function getExchangeRates() {
         await new Promise(r => setTimeout(r, 300));
         return MOCK_RATES;
     }
-    const response = await api.get("/exchange/rates");
+    const response = await api.get("/exchange-rates");
     return response.data;
 }
 
@@ -35,6 +35,10 @@ export async function performExchange(fromCurrency, toCurrency, amount) {
             rate: fromRate / toRate,
         };
     }
-    const response = await api.post("/exchange", { fromCurrency, toCurrency, amount });
+    const response = await api.post("/transactions/transfer", {
+        from_account: fromCurrency,
+        to_account: toCurrency,
+        amount,
+    });
     return response.data;
 }
