@@ -9,6 +9,10 @@ import ChangePasswordPage from "../pages/ChangePasswordPage.jsx";
 import CardsPage from "../pages/CardsPage.jsx";
 import ClientsPage from "../pages/ClientsPage.jsx";
 import ClientDetailsPage from "../pages/ClientDetailsPage.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import BusinessDetailsPage from "../pages/BusinessDetailsPage.jsx";
+import AccountDetailsPage from "../pages/AccountDetailsPage.jsx";
+import CreateAccountPage from "../pages/CreateAccountPage.jsx";
 import ClientDashboardPage from "../pages/ClientDashboardPage.jsx";
 import ExchangePage from "../pages/ExchangePage.jsx";
 
@@ -28,6 +32,7 @@ export default function AppRouter() {
         <Route path="/employees/:id/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
         <Route path="/employees/:id" element={<ProtectedRoute><EmployeeDetailsPage /></ProtectedRoute>} />
         <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+        <Route path="/accounts/business/:id" element={<ProtectedRoute><BusinessDetailsPage /></ProtectedRoute>}/>
         <Route path="/cards" element={<ProtectedRoute><CardsPage /></ProtectedRoute>} />
 
         <Route path="/accounts/:id" element={<ProtectedRoute><AccountDetailsPage /></ProtectedRoute>} />
