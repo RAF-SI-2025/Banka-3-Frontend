@@ -175,6 +175,95 @@
   margin-top: 2px;
 }
 
+/* PERMISSIONS */
+.permissions-section {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+}
+
+.permissions-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #60a5fa;
+  margin-bottom: 14px;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 20, 44, 0.7);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.permission-checkbox:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(10, 24, 52, 0.9);
+}
+
+.permission-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.permission-checkbox .checkmark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.9);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  position: relative;
+}
+
+.permission-checkbox .checkmark::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  width: 5px;
+  height: 10px;
+  border: solid transparent;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+  transition: border-color 0.2s ease;
+}
+
+.permission-checkbox input[type="checkbox"]:checked ~ .checkmark {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #3b82f6;
+}
+
+.permission-checkbox input[type="checkbox"]:checked ~ .checkmark::after {
+  border-color: #60a5fa;
+}
+
+.permission-checkbox input[type="checkbox"]:focus-visible ~ .checkmark {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.permission-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
 /* ACTIONS */
 .form-actions {
   position: relative;
@@ -262,7 +351,8 @@
   }
 
   .form-row-three,
-  .form-grid {
+  .form-grid,
+  .permissions-grid {
     grid-template-columns: 1fr;
   }
 

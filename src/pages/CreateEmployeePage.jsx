@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createEmployee } from "../services/EmployeeService";
+import { createEmployee, updateEmployee, getEmployees } from "../services/EmployeeService";
+import { PERMISSIONS } from "../constants/permissions";
 import "./CreateEmployeePage.css";
 import "../pages/EmployeesPage.css";
 import { useNavigate } from "react-router-dom";
@@ -61,6 +62,7 @@ const EMPTY = {
   datum: "",
   email: "",
   pozicija: "",
+  permissions: [],
 };
 
 export default function CreateEmployeePage() {
@@ -70,6 +72,15 @@ export default function CreateEmployeePage() {
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function handlePermissionToggle(value) {
+    setForm((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(value)
+        ? prev.permissions.filter((p) => p !== value)
+        : [...prev.permissions, value],
+    }));
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -100,7 +111,7 @@ export default function CreateEmployeePage() {
         dateOfBirth = Math.floor(new Date(`${yyyy}-${mm}-${dd}`).getTime() / 1000);
       }
 
-      await createEmployee({
+      const response = await createEmployee({
         firstName: form.ime,
         lastName: form.prezime,
         dateOfBirth,
@@ -113,6 +124,36 @@ export default function CreateEmployeePage() {
         department: "",
         password: form.lozinka,
       });
+
+      if (form.permissions.length > 0) {
+        try {
+          const employees = await getEmployees({ email: form.email });
+          const created = Array.isArray(employees)
+            ? employees.find((e) => e.email === form.email)
+            : null;
+
+          if (!created) throw new Error("Nije moguće pronaći kreiranog zaposlenog.");
+
+          await updateEmployee(created.id, {
+            firstName: form.ime,
+            lastName: form.prezime,
+            gender: form.pol,
+            phoneNumber: form.telefon,
+            address: form.adresa,
+            position: form.pozicija,
+            department: "",
+            active: true,
+            permissions: form.permissions,
+          });
+        } catch {
+          setSuccessMsg(
+            "Zaposleni je uspešno kreiran, ali dodela permisija nije uspela. Molimo izmenite ga ručno."
+          );
+          setForm(EMPTY);
+          setErrors({});
+          return;
+        }
+      }
 
       setSuccessMsg("Zaposleni uspešno kreiran.");
       setForm(EMPTY);
@@ -202,6 +243,23 @@ export default function CreateEmployeePage() {
               {field("Datum rođenja", "datum", "text", "DD.MM.GGGG")}
               {field("Email", "email", "email")}
               {field("Pozicija", "pozicija")}
+            </div>
+
+            <div className="permissions-section">
+              <label className="permissions-label">PERMISIJE</label>
+              <div className="permissions-grid">
+                {PERMISSIONS.map((perm) => (
+                  <label key={perm.value} className="permission-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={form.permissions.includes(perm.value)}
+                      onChange={() => handlePermissionToggle(perm.value)}
+                    />
+                    <span className="checkmark" />
+                    <span className="permission-text">{perm.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="form-actions">

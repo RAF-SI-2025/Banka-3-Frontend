@@ -153,6 +153,92 @@ describe("Employee API integracija", () => {
     });
   });
 
+  describe("Create Employee sa permisijama (POST + PUT)", () => {
+    it("kreira zaposlenog kroz formu sa permisijama i verifikuje preko API-a", () => {
+      const uniqueSuffix = Date.now();
+      const email = `perm-test-${uniqueSuffix}@primer.rs`;
+      const username = `permtest${uniqueSuffix}`;
+
+      cy.visit("/employees/create");
+
+      cy.get('input[name="ime"]').type("PermTest");
+      cy.get('input[name="prezime"]').type("Korisnik");
+      cy.get('input[name="pol"]').type("M");
+      cy.get('input[name="username"]').type(username);
+      cy.get('input[name="adresa"]').type("Beograd");
+      cy.get('input[name="lozinka"]').type("Test1234!");
+      cy.get('input[name="potvrda"]').type("Test1234!");
+      cy.get('input[name="telefon"]').type("0641234567");
+      cy.get('input[name="datum"]').type("01.01.1990");
+      cy.get('input[name="email"]').type(email);
+      cy.get('input[name="pozicija"]').type("Tester");
+
+      // Izaberi "Pregled akcija" i "Upravljanje ugovorima"
+      cy.get(".permission-checkbox").eq(2).click();
+      cy.get(".permission-checkbox").eq(3).click();
+
+      cy.get('button[type="submit"]').click();
+      cy.get(".success-msg", { timeout: 10000 }).should("contain", "uspešno kreiran");
+      cy.get(".success-msg").should("not.contain", "nije uspela");
+
+      // Verifikujemo preko API-a da zaposleni ima permisije
+      cy.request({
+        method: "GET",
+        url: `/api/employees?email=${email}`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }).then((resp) => {
+        expect(resp.status).to.eq(200);
+        const employees = resp.body.employees ?? resp.body;
+        const created = employees.find((e) => e.email === email);
+        expect(created).to.exist;
+
+        // Dohvati detalje sa permisijama
+        cy.request({
+          method: "GET",
+          url: `/api/employees/${created.id}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }).then((detailResp) => {
+          expect(detailResp.status).to.eq(200);
+          expect(detailResp.body.permissions).to.include("view_stocks");
+          expect(detailResp.body.permissions).to.include("manage_contracts");
+        });
+      });
+    });
+
+    it("kreira zaposlenog bez permisija - ne salje update", () => {
+      const uniqueSuffix = Date.now();
+      const email = `noperm-test-${uniqueSuffix}@primer.rs`;
+
+      cy.visit("/employees/create");
+
+      cy.get('input[name="ime"]').type("NoPerm");
+      cy.get('input[name="prezime"]').type("Korisnik");
+      cy.get('input[name="pol"]').type("M");
+      cy.get('input[name="username"]').type(`noperm${uniqueSuffix}`);
+      cy.get('input[name="adresa"]').type("Beograd");
+      cy.get('input[name="lozinka"]').type("Test1234!");
+      cy.get('input[name="potvrda"]').type("Test1234!");
+      cy.get('input[name="telefon"]').type("0641234567");
+      cy.get('input[name="datum"]').type("01.01.1990");
+      cy.get('input[name="email"]').type(email);
+      cy.get('input[name="pozicija"]').type("Tester");
+
+      cy.get('button[type="submit"]').click();
+      cy.get(".success-msg", { timeout: 10000 }).should("contain", "uspešno kreiran");
+
+      // Verifikujemo da zaposleni postoji
+      cy.request({
+        method: "GET",
+        url: `/api/employees?email=${email}`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }).then((resp) => {
+        const employees = resp.body.employees ?? resp.body;
+        const created = employees.find((e) => e.email === email);
+        expect(created).to.exist;
+      });
+    });
+  });
+
   describe("Get Employee by ID (GET /api/employees/:id)", () => {
     it("prikazuje detalje zaposlenog na stranici", () => {
       cy.visit("/employees/1");
