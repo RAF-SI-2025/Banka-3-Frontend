@@ -1,3 +1,6 @@
+import api from "./api";
+
+
 export const getAccountDetails = async (id) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -61,4 +64,14 @@ export const getAccountDetails = async (id) => {
 
     }, 800);
   });
+};
+
+
+//TODO dodati rutu kada back zavrsi rutu :D
+const createBusinessAccount = (data) => {
+  return api.post("/business", data);
+};
+
+export default {
+  createBusinessAccount,
 };
