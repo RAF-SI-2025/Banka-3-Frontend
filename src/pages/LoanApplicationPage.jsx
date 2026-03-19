@@ -1,104 +1,130 @@
-import { useState } from "react";
-import "./LoanApplicationPage.css";
+import { useState } from "react"
+import "./LoanApplicationPage.css"
 
-export default function CreateLoanRequestPage() {
-  const [amount, setAmount] = useState("");
-  const [period, setPeriod] = useState("");
-  const [monthlyRate, setMonthlyRate] = useState(null);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+export default function CreateLoanRequestPage(){
 
-  const calculateRate = (a, p) => {
-    if (a > 0 && p > 0) {
-      const rate = a / p;
-      setMonthlyRate(rate.toFixed(2));
-    } else {
-      setMonthlyRate(null);
+  const [amount,setAmount] = useState("")
+  const [period,setPeriod] = useState("")
+  const [monthlyRate,setMonthlyRate] = useState(null)
+  const [error,setError] = useState("")
+  const [success,setSuccess] = useState("")
+  const [loading,setLoading] = useState(false)
+
+  const calculateRate = (a,p)=>{
+    if(a>0 && p>0){
+      setMonthlyRate((a/p).toFixed(2))
+    }else{
+      setMonthlyRate(null)
     }
-  };
+  }
 
-  const handleAmountChange = (value) => {
-    setAmount(value);
-    calculateRate(value, period);
-  };
+  const mockLoanRequest = (data)=>{
+    return new Promise((resolve,reject)=>{
+      setTimeout(()=>{
+        if(data.amount && data.period){
+          resolve({status:"ok"})
+        }else{
+          reject(new Error("Greška prilikom slanja zahteva"))
+        }
+      },900)
+    })
+  }
 
-  const handlePeriodChange = (value) => {
-    setPeriod(value);
-    calculateRate(amount, value);
-  };
+  const handleSubmit = async (e)=>{
+    e.preventDefault()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
+    setError("")
+    setSuccess("")
 
-    if (!amount || !period) {
-      setError("Sva polja su obavezna.");
-      return;
+    if(!amount || !period){
+      setError("Sva polja su obavezna.")
+      return
     }
 
-    if (amount <= 0 || period <= 0) {
-      setError("Vrednosti moraju biti veće od nule.");
-      return;
+    if(amount <= 0 || period <= 0){
+      setError("Vrednosti moraju biti veće od nule.")
+      return
     }
 
-    try {
-      const response = await fetch("/api/loans/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          amount: Number(amount),
-          period: Number(period)
-        })
-      });
+    try{
+      setLoading(true)
 
-      if (response.ok) {
-        setMessage("Zahtev je uspešno podnet.");
-        setAmount("");
-        setPeriod("");
-        setMonthlyRate(null);
-      } else {
-        setError("Došlo je do greške pri slanju zahteva.");
-      }
-    } catch {
-      setError("Greška pri komunikaciji sa serverom.");
+      await mockLoanRequest({
+        amount:Number(amount),
+        period:Number(period)
+      })
+
+      setSuccess("Zahtev za kredit je uspešno podnet.")
+      setAmount("")
+      setPeriod("")
+      setMonthlyRate(null)
+
+    }catch(err){
+      setError(err.message)
+    }finally{
+      setLoading(false)
     }
-  };
+  }
 
-  return (
+  const handleAmountChange = (value)=>{
+    setAmount(value)
+    calculateRate(value,period)
+  }
+
+  const handlePeriodChange = (value)=>{
+    setPeriod(value)
+    calculateRate(amount,value)
+  }
+
+  return(
     <div className="loan-page">
-      <div className="loan-card">
-        <h2>Podnošenje zahteva za kredit</h2>
 
-        <form onSubmit={handleSubmit} className="loan-form">
-          <input
-            type="number"
-            placeholder="Iznos kredita"
-            value={amount}
-            onChange={(e) => handleAmountChange(e.target.value)}
-          />
+      <h1 className="loan-title">
+        Podnošenje zahteva za kredit
+      </h1>
 
-          <input
-            type="number"
-            placeholder="Period otplate (meseci)"
-            value={period}
-            onChange={(e) => handlePeriodChange(e.target.value)}
-          />
+      <div className="loan-grid">
 
-          {monthlyRate && (
-            <div className="loan-rate">
-              Procena mesečne rate: {monthlyRate}
-            </div>
-          )}
+        <div className="loan-card">
 
-          <button type="submit">Podnesi zahtev</button>
-        </form>
+          <form className="loan-form" onSubmit={handleSubmit}>
 
-        {error && <div className="loan-error">{error}</div>}
-        {message && <div className="loan-success">{message}</div>}
+            <input
+              type="number"
+              placeholder="Iznos kredita"
+              value={amount}
+              onChange={(e)=>handleAmountChange(e.target.value)}
+            />
+
+            <input
+              type="number"
+              placeholder="Period otplate (meseci)"
+              value={period}
+              onChange={(e)=>handlePeriodChange(e.target.value)}
+            />
+
+            {monthlyRate &&
+              <div className="loan-rate">
+                Procena mesečne rate: <strong>{monthlyRate} €</strong>
+              </div>
+            }
+
+            <button
+              className="loan-submit"
+              disabled={loading}
+            >
+              {loading ? "Slanje..." : "Podnesi zahtev"}
+            </button>
+
+          </form>
+
+          {error && <div className="loan-error">{error}</div>}
+          {success && <div className="loan-success">{success}</div>}
+
+        </div>
+
       </div>
+
     </div>
-  );
+  )
 }

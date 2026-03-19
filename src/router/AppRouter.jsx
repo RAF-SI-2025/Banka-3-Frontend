@@ -20,7 +20,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<ProtectedRoute><ClientDashboardPage /></ProtectedRoute>} />
 
-        <Route path="/loan-request" element={<LoanApplicationPage />} />
+        <Route path="/loan-request" element={<ProtectedRoute><LoanApplicationPage /></ProtectedRoute>} />
         <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
         <Route path="/employees/create" element={<ProtectedRoute><CreateEmployeePage /></ProtectedRoute>} />
         <Route path="/employees/edit/:id" element={<ProtectedRoute><EditEmployeePage /></ProtectedRoute>} />
