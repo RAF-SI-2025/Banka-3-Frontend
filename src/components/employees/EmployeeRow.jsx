@@ -14,23 +14,22 @@ function EmployeeRow({ employee }) {
 
   return (
     <tr className="employee-row">
-
-      <td onClick={openEmployeeDetails}>{employee.id}</td>
-      <td onClick={openEmployeeDetails}>{employee.first_name}</td>
-      <td onClick={openEmployeeDetails}>{employee.last_name}</td>
-      <td onClick={openEmployeeDetails}>{employee.email}</td>
-      <td onClick={openEmployeeDetails}>{employee.position}</td>
+      <td className="cell-link" onClick={openEmployeeDetails}>{employee.id}</td>
+      <td className="cell-link" onClick={openEmployeeDetails}>{employee.first_name}</td>
+      <td className="cell-link" onClick={openEmployeeDetails}>{employee.last_name}</td>
+      <td className="cell-link employee-email" onClick={openEmployeeDetails}>{employee.email}</td>
+      <td className="cell-link">
+        <span className="position-badge">{employee.position}</span>
+      </td>
 
       <td className="actions">
-        <button className="icon-btn" onClick={openEditEmployee}>
-          ✏️
+        <button className="icon-btn edit-btn" onClick={openEditEmployee}>
         </button>
 
-        <button className="icon-btn">
+        <button className="icon-btn delete-btn">
           🗑
         </button>
       </td>
-
     </tr>
   );
 }

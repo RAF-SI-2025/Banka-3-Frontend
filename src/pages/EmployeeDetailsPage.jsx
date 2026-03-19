@@ -11,139 +11,229 @@ export default function EmployeeDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
+  /*
+    STARO:
+    Uvek si zvala backend preko getEmployeeById(Number(id))
+
+    NOVO:
+    Dok radiš UI bez backenda, ostavljamo mock podatke.
+    Posle samo vrati stari backend deo.
+  */
   useEffect(() => {
     if (!id) return;
 
     let cancelled = false;
 
+    const USE_MOCK = true;
+
+    const mockEmployee = {
+      id: Number(id),
+      firstName: "Ana",
+      lastName: "Petrović",
+      dateOfBirth: 946684800, // 01.01.2000
+      gender: "Female",
+      jmbg: "0101000123456",
+      address: "Knez Mihailova 25, Beograd",
+      email: "ana@test.com",
+      phone: "+381641234567",
+      department: "Prodaja",
+      role: "ADMIN",
+      active: true,
+    };
+
     const load = async () => {
       try {
+        if (USE_MOCK) {
+          if (!cancelled) setEmployee(mockEmployee);
+          return;
+        }
+
         const data = await getEmployeeById(Number(id));
         if (!cancelled) setEmployee(data);
       } catch (err) {
-        if (!cancelled) setPageError(err.message || "Greška pri učitavanju zaposlenog.");
+        if (!cancelled) {
+          setPageError(err.message || "Greška pri učitavanju zaposlenog.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
+  /*
+    STARO:
+    loading i error su bili samo običan tekst u staroj bež kartici
+
+    NOVO:
+    isti dark card stil kao EmployeesPage
+  */
   if (loading) {
     return (
-        <div className="page-bg">
-          <div className="profile-page">
-            <div className="profile-card">
-              <p style={{ textAlign: "center", color: "#666" }}>Učitavanje...</p>
-            </div>
-          </div>
-        </div>
-    );
-  }
-
-  if (pageError || !employee) {
-    return (
-        <div className="page-bg">
-          <div className="profile-page">
-            <div className="profile-card">
-              <p style={{ textAlign: "center", color: "#c00" }}>
-                {pageError || "Zaposleni nije pronađen."}
-              </p>
-            </div>
-          </div>
-        </div>
-    );
-  }
-
-  return (
       <div className="page-bg">
         <img src="/bank-logo.png" alt="logo" className="bank-logo" />
         <img src="/menu-icon.png" alt="menu" className="menu-icon" />
 
         <div className="profile-page">
-          <div className="profile-card">
-            <h2 className="profile-title">Profil zaposlenog</h2>
+          <div className="profile-card profile-state-card">
+            <p className="profile-state-text">Učitavanje...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            <div className="profile-body">
-              {/* LEFT COLUMN */}
-              <div className="profile-left">
-                <div className="profile-avatar">
-                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="50" fill="#c8b99a" />
-                    <circle cx="50" cy="38" r="18" fill="#8a7560" />
-                    <ellipse cx="50" cy="90" rx="30" ry="22" fill="#8a7560" />
-                  </svg>
-                </div>
+  if (pageError || !employee) {
+    return (
+      <div className="page-bg">
+        <img src="/bank-logo.png" alt="logo" className="bank-logo" />
+        <img src="/menu-icon.png" alt="menu" className="menu-icon" />
 
-                <p className="profile-role">
-                  {employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
-                </p>
+        <div className="profile-page">
+          <div className="profile-card profile-state-card">
+            <p className="profile-state-text error">
+              {pageError || "Zaposleni nije pronađen."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-                <div className="profile-left-fields">
-                  <ProfileField label="Ime:" value={employee.firstName} />
-                  <ProfileField label="Prezime:" value={employee.lastName} />
-                  <ProfileField label="Datum rodjenja:" value={formatDate(employee.dateOfBirth)} />
-                  <ProfileField label="Pol:" value={employee.gender === "Male" ? "M" : "Ž"} />
-                  <ProfileField label="JMBG:" value={employee.jmbg} />
-                </div>
+  return (
+    <div className="page-bg">
+      <img src="/bank-logo.png" alt="logo" className="bank-logo" />
+      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
+
+      <div className="profile-page">
+        <div className="profile-card">
+          {/* STARO: samo naslov "Profil zaposlenog" */}
+          {/* NOVO: uvodni blok kao na EmployeesPage */}
+          <div className="profile-header">
+            <div className="profile-header-text">
+              <p className="profile-eyebrow">DETALJI ZAPOSLENOG</p>
+              <h1 className="profile-title">Profil zaposlenog</h1>
+              <p className="profile-subtitle">
+                Pregled osnovnih podataka, statusa i kontakt informacija zaposlenog.
+              </p>
+            </div>
+
+            <div className="profile-header-actions">
+              <button
+                className="profile-btn profile-btn-secondary"
+                onClick={() => navigate("/employees")}
+              >
+                Nazad
+              </button>
+
+              <button
+                className="profile-btn profile-btn-primary"
+                onClick={() => navigate(`/employees/edit/${id}`)}
+              >
+                Uredi profil
+              </button>
+            </div>
+          </div>
+
+          {/* STARO: bež avatar blok i dva odvojena stuba */}
+          {/* NOVO: dark overview kartica gore */}
+          <div className="profile-overview-card">
+            <div className="profile-overview-left">
+              <div className="profile-avatar">
+                <span>
+                  {employee.firstName?.[0] || "A"}
+                  {employee.lastName?.[0] || "P"}
+                </span>
               </div>
 
-              {/* VERTICAL DIVIDER */}
-              <div className="profile-divider" />
+              <div className="profile-main-info">
+                <h2>
+                  {employee.firstName} {employee.lastName}
+                </h2>
+                <p>{employee.email}</p>
 
-              {/* RIGHT COLUMN */}
-              <div className="profile-right">
-                <ProfileField label="Adresa:" value={employee.address} />
-                <ProfileField label="Email:" value={employee.email} />
-                <ProfileField label="Broj telefona:" value={employee.phone} />
-                <ProfileField label="Departman:" value={employee.department} />
+                <div className="profile-meta-row">
+                  <span className="role-badge">
+                    {employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
+                  </span>
 
-                <div className="profile-field profile-field-active">
-                  <span className="pf-label">Aktivan</span>
-                  <span className="pf-checkbox">
-                  {employee.active ? (
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="1" y="1" width="18" height="18" rx="3" stroke="#5a4a3a" strokeWidth="1.5" fill="rgba(255,255,255,0.3)" />
-                        <path d="M4 10l4 4 8-8" stroke="#5a4a3a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                  ) : (
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="1" y="1" width="18" height="18" rx="3" stroke="#5a4a3a" strokeWidth="1.5" fill="rgba(255,255,255,0.3)" />
-                      </svg>
-                  )}
-                </span>
-                </div>
-
-                <div className="profile-actions">
-                  <button
-                      className="btn-uredi"
-                      onClick={() => navigate(`/employees/${id}/change-password`)}
+                  <span
+                    className={`status-badge ${
+                      employee.active ? "is-active" : "is-inactive"
+                    }`}
                   >
-                    Promeni lozinku
-                  </button>
-                  <button
-                      className="btn-uredi"
-                      onClick={() => navigate(`/employees/edit/${id}`)}
-                  >
-                    Uredi profil
-                  </button>
+                    {employee.active ? "Aktivan" : "Neaktivan"}
+                  </span>
                 </div>
+              </div>
+            </div>
+
+            <div className="profile-overview-right">
+              <button
+                className="profile-btn profile-btn-secondary"
+                onClick={() => navigate(`/employees/${id}/change-password`)}
+              >
+                Promeni lozinku
+              </button>
+            </div>
+          </div>
+
+          {/* STARO: dva column layout sa dividerom */}
+          {/* NOVO: info grid u dve kartice */}
+          <div className="profile-grid">
+            <div className="profile-info-card">
+              <h3 className="section-title">Lični podaci</h3>
+
+              <div className="profile-fields-grid">
+                <ProfileField label="Ime" value={employee.firstName} />
+                <ProfileField label="Prezime" value={employee.lastName} />
+                <ProfileField
+                  label="Datum rođenja"
+                  value={formatDate(employee.dateOfBirth)}
+                />
+                <ProfileField
+                  label="Pol"
+                  value={employee.gender === "Male" ? "M" : "Ž"}
+                />
+                <ProfileField label="JMBG" value={employee.jmbg} />
+                <ProfileField
+                  label="Uloga"
+                  value={employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
+                />
+              </div>
+            </div>
+
+            <div className="profile-info-card">
+              <h3 className="section-title">Kontakt i posao</h3>
+
+              <div className="profile-fields-grid">
+                <ProfileField label="Adresa" value={employee.address} />
+                <ProfileField label="Email" value={employee.email} />
+                <ProfileField label="Broj telefona" value={employee.phone} />
+                <ProfileField label="Departman" value={employee.department} />
+                <ProfileField
+                  label="Status"
+                  value={employee.active ? "Aktivan" : "Neaktivan"}
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
   );
 }
 
 function ProfileField({ label, value }) {
   return (
-      <div className="profile-field">
-        <span className="pf-label">{label}</span>
-        <span className="pf-value">{value || "—"}</span>
-      </div>
+    <div className="profile-field">
+      <span className="pf-label">{label}</span>
+      <span className="pf-value">{value || "—"}</span>
+    </div>
   );
 }
 

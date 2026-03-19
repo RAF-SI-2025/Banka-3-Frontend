@@ -1,25 +1,61 @@
-.employee-row{
-  border-bottom:1px solid #bcbcbc;
+.employee-row {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-.actions{
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
+.cell-link {
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.icon-btn{
-  border:none;
-  background:#eee;
-  padding:6px 8px;
-  border-radius:4px;
-  cursor:pointer;
+.cell-link:hover {
+  color: #60a5fa;
 }
 
-.icon-btn:hover{
-  background:#ddd;
+.employee-email {
+  color: #cbd5e1;
 }
 
-.actions-header{
-  width:80px;
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(30, 41, 59, 0.95);
+}
+
+.edit-btn:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.delete-btn:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.actions-header {
+  width: 120px;
 }

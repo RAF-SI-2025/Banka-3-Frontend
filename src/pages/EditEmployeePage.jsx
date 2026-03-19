@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./CreateEmployeePage.css";
 import "./EmployeesPage.css";
 import { getEmployeeById, updateEmployee } from "../services/EmployeeService";
@@ -25,16 +25,24 @@ function validate(form) {
 
 export default function EditEmployeePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    prezime: "", pol: "", telefon: "", adresa: "", pozicija: "", departman: "", aktivan: true,
+    prezime: "",
+    pol: "",
+    telefon: "",
+    adresa: "",
+    pozicija: "",
+    departman: "",
+    aktivan: true,
   });
+
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
+ /* useEffect(() => {
     getEmployeeById(Number(id))
       .then((employee) => {
         setForm({
@@ -47,26 +55,75 @@ export default function EditEmployeePage() {
           aktivan: employee.active ?? true,
         });
       })
-      .catch(() => {
-        setNotFound(true);
+      .catch(() => setNotFound(true));
+  }, [id]);*/
+  useEffect(() => {
+  const USE_MOCK = true;
+
+  if (USE_MOCK) {
+    const mockEmployee = {
+      id: Number(id),
+      lastName: "Petrović",
+      gender: "Female",
+      phone: "+381641234567",
+      address: "Knez Mihailova 25, Beograd",
+      position: "Menadžer",
+      department: "Prodaja",
+      active: true,
+    };
+
+    setForm({
+      prezime: mockEmployee.lastName ?? "",
+      pol: mockEmployee.gender ?? "",
+      telefon: mockEmployee.phone ?? "",
+      adresa: mockEmployee.address ?? "",
+      pozicija: mockEmployee.position ?? "",
+      departman: mockEmployee.department ?? "",
+      aktivan: mockEmployee.active ?? true,
+    });
+
+    return;
+  }
+
+  getEmployeeById(Number(id))
+    .then((employee) => {
+      setForm({
+        prezime: employee.lastName ?? "",
+        pol: employee.gender ?? "",
+        telefon: employee.phone ?? "",
+        adresa: employee.address ?? "",
+        pozicija: employee.position ?? "",
+        departman: employee.department ?? "",
+        aktivan: employee.active ?? true,
       });
-  }, [id]);
+    })
+    .catch(() => setNotFound(true));
+}, [id]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSuccessMsg("");
+
     const errs = validate(form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+
     setLoading(true);
+
     try {
       await updateEmployee(Number(id), {
         lastName: form.prezime,
@@ -77,10 +134,13 @@ export default function EditEmployeePage() {
         department: form.departman,
         active: form.aktivan,
       });
+
       setSuccessMsg("Profil uspešno izmenjen.");
       setErrors({});
     } catch (err) {
-      setErrors({ submit: err.response?.data?.error || "Greška pri izmeni profila." });
+      setErrors({
+        submit: err.response?.data?.error || "Greška pri izmeni profila.",
+      });
     } finally {
       setLoading(false);
     }
@@ -106,11 +166,12 @@ export default function EditEmployeePage() {
   if (notFound) {
     return (
       <div className="page-bg">
-        <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-        <img src="/menu-icon.png" alt="menu" className="menu-icon" />
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: "80px" }}>
+        <img src="/bank-logo.png" className="bank-logo" />
+        <img src="/menu-icon.png" className="menu-icon" />
+
+        <div className="create-page">
           <div className="create-form-card">
-            <h2>Zaposleni nije pronađen.</h2>
+            <p className="submit-error">Zaposleni nije pronađen.</p>
           </div>
         </div>
       </div>
@@ -119,61 +180,86 @@ export default function EditEmployeePage() {
 
   return (
     <div className="page-bg">
-      <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
-      <div style={{ display: "flex", alignItems: "flex-start", paddingTop: "40px" }}>
-        <form className="create-form-card" onSubmit={handleSubmit} noValidate>
-          <h2>Uredi profil</h2>
+      <img src="/bank-logo.png" className="bank-logo" />
+      <img src="/menu-icon.png" className="menu-icon" />
+
+      <div className="create-page">
+        <div className="create-form-card">
+
+          {/* HEADER */}
+          <div className="create-header">
+            <div className="create-header-text">
+              <p className="create-eyebrow">IZMENA PROFILA</p>
+              <h1>Uredi zaposlenog</h1>
+              <p className="create-subtitle">
+                Izmenite osnovne podatke i status zaposlenog.
+              </p>
+            </div>
+
+            <div className="create-header-actions">
+              <button
+                type="button"
+                className="create-btn create-btn-secondary"
+                onClick={() => navigate("/employees")}
+              >
+                Nazad
+              </button>
+            </div>
+          </div>
 
           {successMsg && <div className="success-msg">{successMsg}</div>}
-          {errors.submit && <div className="error-msg">{errors.submit}</div>}
+          {errors.submit && <div className="submit-error">{errors.submit}</div>}
 
-          {/* Prezime — full width */}
-          <div style={{ marginBottom: "14px" }}>
-            {field("Prezime:", "prezime", "text", "unesite adresu...")}
-          </div>
+          <form onSubmit={handleSubmit} noValidate>
 
-          {/* Pol + Broj telefona — two columns */}
-          <div className="form-row-two" style={{ marginBottom: "14px" }}>
-            {field("Pol:", "pol", "text", "unesite lozinku...")}
-            {field("Broj telefona:", "telefon", "text", "unesite lozinku...")}
-          </div>
+            <div style={{ marginBottom: "16px" }}>
+              {field("Prezime", "prezime")}
+            </div>
 
-          {/* Adresa — full width */}
-          <div style={{ marginBottom: "14px" }}>
-            {field("Adresa:", "adresa", "text", "unesite adresu...")}
-          </div>
+            <div className="form-row-two" style={{ marginBottom: "16px" }}>
+              {field("Pol", "pol")}
+              {field("Broj telefona", "telefon")}
+            </div>
 
-          {/* Pozicija — full width */}
-          <div style={{ marginBottom: "14px" }}>
-            {field("Pozicija:", "pozicija", "text", "unesite adresu...")}
-          </div>
+            <div style={{ marginBottom: "16px" }}>
+              {field("Adresa", "adresa")}
+            </div>
 
-          {/* Departman — full width */}
-          <div style={{ marginBottom: "14px" }}>
-            {field("Departman:", "departman", "text", "unesite lozinku...")}
-          </div>
+            <div style={{ marginBottom: "16px" }}>
+              {field("Pozicija", "pozicija")}
+            </div>
 
-          {/* Aktivan checkbox */}
-          <div className="form-group" style={{ marginBottom: "20px" }}>
-            <label className="checkbox-label">
-              Aktivan
-              <input
-                type="checkbox"
-                name="aktivan"
-                checked={form.aktivan}
-                onChange={handleChange}
-              />
-              <span className="checkbox-box">{form.aktivan ? "✓" : ""}</span>
-            </label>
-          </div>
+            <div style={{ marginBottom: "16px" }}>
+              {field("Departman", "departman")}
+            </div>
 
-          <div className="form-actions">
-            <button className="submit-btn" type="submit" disabled={loading}>
-              {loading ? "Slanje..." : "Izmeni profil"}
-            </button>
-          </div>
-        </form>
+            <div className="form-group" style={{ marginBottom: "24px" }}>
+              <label className="checkbox-label">
+                Aktivan
+                <input
+                  type="checkbox"
+                  name="aktivan"
+                  checked={form.aktivan}
+                  onChange={handleChange}
+                />
+                <span className="checkbox-box">
+                  {form.aktivan ? "✓" : ""}
+                </span>
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                className="create-btn create-btn-primary"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Čuvanje..." : "Sačuvaj izmene"}
+              </button>
+            </div>
+
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -11,24 +11,27 @@ function EmployeeTable({ employees }) {
   }
 
   return (
-    <table className="employee-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Ime</th>
-          <th>Prezime</th>
-          <th>Email</th>
-          <th>Pozicija</th>
-          <th className="actions-header"></th>
-        </tr>
-      </thead>
+    /* NOVO: table-scroll pomaže ako tabela bude šira na manjim ekranima */
+    <div className="table-scroll">
+      <table className="employee-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Email</th>
+            <th>Pozicija</th>
+            <th className="actions-header">Akcije</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        {employees.map(employee => (
-          <EmployeeRow key={employee.id} employee={employee} />
-        ))}
-      </tbody>
-    </table>
+        <tbody>
+          {employees.map(employee => (
+            <EmployeeRow key={employee.id} employee={employee} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

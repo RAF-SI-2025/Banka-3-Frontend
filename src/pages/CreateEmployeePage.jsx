@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createEmployee } from "../services/EmployeeService";
 import "./CreateEmployeePage.css";
 import "../pages/EmployeesPage.css";
+import { useNavigate } from "react-router-dom";
 
 function validate(form) {
   const errors = {};
@@ -48,11 +49,22 @@ function validate(form) {
 }
 
 const EMPTY = {
-  ime: "", prezime: "", pol: "", username: "", adresa: "",
-  lozinka: "", potvrda: "", telefon: "", datum: "", email: "", pozicija: "",
+  ime: "",
+  prezime: "",
+  pol: "",
+  username: "",
+  adresa: "",
+  lozinka: "",
+  potvrda: "",
+  telefon: "",
+  datum: "",
+  email: "",
+  pozicija: "",
 };
 
 export default function CreateEmployeePage() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
@@ -61,22 +73,27 @@ export default function CreateEmployeePage() {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // clear error on edit
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSuccessMsg("");
+
     const errs = validate(form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+
     setLoading(true);
+
     try {
-      // Parse DD.MM.YYYY to Unix timestamp
       let dateOfBirth = 0;
+
       if (form.datum) {
         const [dd, mm, yyyy] = form.datum.split(".");
         dateOfBirth = Math.floor(new Date(`${yyyy}-${mm}-${dd}`).getTime() / 1000);
@@ -95,11 +112,14 @@ export default function CreateEmployeePage() {
         department: "",
         password: form.lozinka,
       });
+
       setSuccessMsg("Zaposleni uspešno kreiran.");
       setForm(EMPTY);
       setErrors({});
     } catch (err) {
-      setErrors({ submit: err.response?.data?.error || "Greška pri kreiranju zaposlenog." });
+      setErrors({
+        submit: err.response?.data?.error || "Greška pri kreiranju zaposlenog.",
+      });
     } finally {
       setLoading(false);
     }
@@ -108,8 +128,9 @@ export default function CreateEmployeePage() {
   function field(label, name, type = "text", placeholder = "unesite...") {
     return (
       <div className="form-group">
-        <label>{label}</label>
+        <label htmlFor={name}>{label}</label>
         <input
+          id={name}
           type={type}
           name={name}
           value={form[name]}
@@ -123,37 +144,71 @@ export default function CreateEmployeePage() {
   }
 
   return (
-    <div style={{ backgroundColor: "blue" }}>
-      <div className="page-bg">
-        <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-        <img src="/menu-icon.png" alt="menu" className="menu-icon" />
-        <div style={{ display: "flex", alignItems: "flex-start", paddingTop: "40px" }}>
-          <form className="create-form-card" onSubmit={handleSubmit} noValidate>
-            <h2>Napravi novog korisnika</h2>
+    /*
+      STARO:
+      <div style={{ backgroundColor: "blue" }}>
+      ... i unutra još jedan wrapper sa inline style
 
-            {successMsg && <div className="success-msg">{successMsg}</div>}
+      NOVO:
+      čist layout bez debug background-a i bez inline stilova
+    */
+    <div className="page-bg">
+      <img src="/bank-logo.png" alt="logo" className="bank-logo" />
+      <img src="/menu-icon.png" alt="menu" className="menu-icon" />
 
-            {/* Row 1: Ime, Prezime, Pol */}
-            <div className="form-row-three">
-              {field("Ime:", "ime")}
-              {field("Prezime:", "prezime")}
-              {field("Pol:", "pol")}
+      <div className="create-page">
+        <div className="create-form-card">
+          {/* STARO: samo h2 naslov */}
+          {/* NOVO: isti header stil kao na ostalim ekranima */}
+          <div className="create-header">
+            <div className="create-header-text">
+              <p className="create-eyebrow">KREIRANJE ZAPOSLENOG</p>
+              <h1>Napravi novog korisnika</h1>
+              <p className="create-subtitle">
+                Unesite osnovne podatke, pristupne informacije i radnu poziciju zaposlenog.
+              </p>
             </div>
 
-            {/* Rows 2-5: two-column grid */}
+            <div className="create-header-actions">
+              <button
+                type="button"
+                className="create-btn create-btn-secondary"
+                onClick={() => navigate("/employees")}
+              >
+                Nazad
+              </button>
+            </div>
+          </div>
+
+          {successMsg && <div className="success-msg">{successMsg}</div>}
+          {errors.submit && <div className="submit-error">{errors.submit}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            {/* STARO: običan row */}
+            {/* NOVO: ostaje ista logika, samo dark stil */}
+            <div className="form-row-three">
+              {field("Ime", "ime")}
+              {field("Prezime", "prezime")}
+              {field("Pol", "pol")}
+            </div>
+
             <div className="form-grid">
-              {field("Username:", "username")}
-              {field("Adresa:", "adresa")}
-              {field("Lozinka:", "lozinka", "password")}
-              {field("Broj telefona:", "telefon")}
-              {field("Potvrda lozinke:", "potvrda", "password")}
-              {field("Datum rodjenja:", "datum", "text", "DD.MM.GGGG")}
-              {field("Email:", "email", "email")}
-              {field("Pozicija:", "pozicija")}
+              {field("Username", "username")}
+              {field("Adresa", "adresa")}
+              {field("Lozinka", "lozinka", "password")}
+              {field("Broj telefona", "telefon")}
+              {field("Potvrda lozinke", "potvrda", "password")}
+              {field("Datum rođenja", "datum", "text", "DD.MM.GGGG")}
+              {field("Email", "email", "email")}
+              {field("Pozicija", "pozicija")}
             </div>
 
             <div className="form-actions">
-              <button className="submit-btn" type="submit" disabled={loading}>
+              <button
+                className="create-btn create-btn-primary"
+                type="submit"
+                disabled={loading}
+              >
                 {loading ? "Slanje..." : "Potvrdi"}
               </button>
             </div>
