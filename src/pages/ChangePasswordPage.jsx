@@ -2,12 +2,21 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { confirmPasswordReset } from "../services/AuthService";
 import { validatePasswordStrength } from "../utils/validators";
+import { confirmPasswordReset } from "../services/AuthService";
 import "./ChangePasswordPage.css";
 import "./EmployeesPage.css";
 
 export default function ChangePasswordPage() {
-  const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { token } = location.state || {};
+
+  // zaštita ako neko direktno uđe na stranicu
+   if (!token) {
+     navigate("/login");
+    return null;
+   }
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,10 +32,12 @@ export default function ChangePasswordPage() {
     setSubmitError("");
     setMatchError("");
 
+    // validacija jačine lozinke
     const errors = validatePasswordStrength(newPassword);
     setStrengthErrors(errors);
     if (errors.length > 0) return;
 
+    // validacija poklapanja
     if (newPassword !== confirmPassword) {
       setMatchError("Lozinke se ne poklapaju.");
       return;
@@ -43,6 +54,12 @@ export default function ChangePasswordPage() {
       setSuccessMessage("Lozinka uspešno promenjena.");
       setNewPassword("");
       setConfirmPassword("");
+
+      // opciono redirect posle par sekundi
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+
     } catch (error) {
       setSubmitError(
         error instanceof Error
