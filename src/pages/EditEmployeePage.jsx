@@ -38,6 +38,7 @@ export default function EditEmployeePage() {
     aktivan: true,
   });
 
+  const [originalFirstName, setOriginalFirstName] = useState("");
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,7 @@ export default function EditEmployeePage() {
   useEffect(() => {
     getEmployeeById(Number(id))
       .then((employee) => {
+        setOriginalFirstName(employee.firstName ?? "");
         setForm({
           prezime: employee.lastName ?? "",
           pol: employee.gender ?? "",
@@ -85,6 +87,7 @@ export default function EditEmployeePage() {
 
     try {
       await updateEmployee(Number(id), {
+        firstName: originalFirstName,
         lastName: form.prezime,
         gender: form.pol,
         phoneNumber: form.telefon,

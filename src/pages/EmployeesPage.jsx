@@ -46,9 +46,9 @@ function EmployeesPage() {
       const searchLower = searchTerm.toLowerCase();
 
       const matchesSearch =
-        employee.first_name.toLowerCase().includes(searchLower) ||
-        employee.last_name.toLowerCase().includes(searchLower) ||
-        employee.email.toLowerCase().includes(searchLower);
+        (employee.first_name || "").toLowerCase().includes(searchLower) ||
+        (employee.last_name || "").toLowerCase().includes(searchLower) ||
+        (employee.email || "").toLowerCase().includes(searchLower);
 
       const matchesPosition =
         !filterPosition || employee.position === filterPosition;

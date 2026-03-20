@@ -129,7 +129,7 @@ export default function EmployeeDetailsPage() {
 
                 <div className="profile-meta-row">
                   <span className="role-badge">
-                    {employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
+                    {employee.position || "Zaposleni"}
                   </span>
 
                   <span
@@ -168,11 +168,11 @@ export default function EmployeeDetailsPage() {
                 />
                 <ProfileField
                   label="Pol"
-                  value={employee.gender === "Male" ? "M" : "Ž"}
+                  value={employee.gender === "M" ? "Muški" : employee.gender === "F" ? "Ženski" : employee.gender}
                 />
                 <ProfileField
                   label="Uloga"
-                  value={employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
+                  value={employee.position}
                 />
               </div>
             </div>
@@ -207,8 +207,13 @@ function ProfileField({ label, value }) {
   );
 }
 
-function formatDate(timestamp) {
-  if (!timestamp) return "—";
-  const d = new Date(timestamp * 1000);
+function formatDate(value) {
+  if (!value) return "—";
+  if (typeof value === "string") {
+    const [y, m, d] = value.split("-");
+    if (y && m && d) return `${parseInt(d)}/${parseInt(m)}/${y}`;
+  }
+  const d = new Date(typeof value === "number" ? value * 1000 : value);
+  if (isNaN(d.getTime())) return "—";
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
