@@ -231,7 +231,22 @@ export default function CreateEmployeePage() {
             <div className="form-row-three">
               {field("Ime", "ime")}
               {field("Prezime", "prezime")}
-              {field("Pol", "pol")}
+             <div className="form-group">
+  <label htmlFor="pol">Pol</label>
+  <select
+    id="pol"
+    name="pol"
+    value={form.pol}
+    onChange={handleChange}
+    className={errors.pol ? "input-error" : ""}
+  >
+    <option value="">Izaberite pol</option>
+    <option value="M">Muški</option>
+    <option value="Z">Ženski</option>
+  </select>
+  {errors.pol && <span className="error-msg">{errors.pol}</span>}
+</div>
+
             </div>
 
             <div className="form-grid">
