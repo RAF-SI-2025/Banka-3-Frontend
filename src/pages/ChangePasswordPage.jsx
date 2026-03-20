@@ -11,14 +11,18 @@ export default function ChangePasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
 
-  const { token } = location.state || {};
+  // Token prioritet: URL query param > location.state
+  const token = searchParams.get("token") || (location.state && location.state.token);
 
    // zaštita ako neko direktno uđe na stranicu
    if (!token) {
      navigate("/login");
     return null;
    }
+
+  const isAdminFlow = !!id;
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -75,8 +79,8 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="page-bg">
-      <img src="/bank-logo.png" alt="logo" className="bank-logo" />
-      <MenuDropdown />
+      {isAdminFlow && <img src="/bank-logo.png" alt="logo" className="bank-logo" />}
+      {isAdminFlow && <MenuDropdown />}
 
       {/* STARO: cp-page-center + cp-card sa bež karticom */}
       {/* NOVO: isti dark card sistem kao create/edit/details */}

@@ -1,41 +1,76 @@
 import { useState } from "react";
 import { requestPasswordReset } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
+import "./ChangePasswordPage.css";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setSuccessMessage("");
 
     try {
       await requestPasswordReset(email);
-
-      navigate("/enter-token");
+      setSuccessMessage("Token je poslat na vašu email adresu. Proverite inbox.");
+      setTimeout(() => {
+        navigate("/enter-token");
+      }, 2000);
     } catch (err) {
-      setMessage("Greška pri slanju tokena");
+      setMessage("Greška pri slanju tokena.");
     }
   };
 
   return (
-    <div className="business-container">
-      <div className="card">
-        <h2>Reset lozinke</h2>
-        <p>Token vam je poslat na email adresu.</p>
+    <div className="page-bg">
+      <div className="cp-page">
+        <div className="cp-card">
+          <div className="cp-header">
+            <div className="cp-header-text">
+              <p className="cp-eyebrow">RESET LOZINKE</p>
+              <h1 className="cp-title">Zaboravljena lozinka</h1>
+              <p className="cp-subtitle">
+                Unesite vašu email adresu i poslaćemo vam token za resetovanje lozinke.
+              </p>
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="form">
-          <input
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="cp-fields">
+              <div className="cp-field">
+                <label className="cp-label">Email adresa</label>
+                <input
+                  className="cp-input"
+                  type="email"
+                  placeholder="unesite email adresu..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          <button type="submit">Pošalji token</button>
+              {message && <p className="cp-error">{message}</p>}
+              {successMessage && <p className="cp-success">{successMessage}</p>}
+            </div>
 
-          {message && <p className="error">{message}</p>}
-        </form>
+            <div className="cp-actions">
+              <button type="submit" className="cp-btn cp-btn-primary">
+                Pošalji token
+              </button>
+              <button
+                type="button"
+                className="cp-btn cp-btn-secondary"
+                onClick={() => navigate("/login")}
+              >
+                Nazad na login
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
