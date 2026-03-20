@@ -14,6 +14,8 @@ function validate(form) {
   if (!form.pol.trim()) errors.pol = "Pol je obavezan.";
   if (!form.username.trim()) errors.username = "Username je obavezan.";
   if (!form.adresa.trim()) errors.adresa = "Adresa je obavezna.";
+  if (!form.department.trim()) errors.department = "Departman je obavezan.";
+
 
   if (!form.telefon.trim()) {
     errors.telefon = "Broj telefona je obavezan.";
@@ -48,6 +50,7 @@ const EMPTY = {
   datum: "",
   email: "",
   pozicija: "",
+  department: "",
   permissions: [],
 };
 
@@ -107,7 +110,7 @@ export default function CreateEmployeePage() {
         address: form.adresa,
         username: form.username,
         position: form.pozicija,
-        department: "",
+        department: form.department,
       });
 
       if (form.permissions.length > 0) {
@@ -126,7 +129,7 @@ export default function CreateEmployeePage() {
             phoneNumber: form.telefon,
             address: form.adresa,
             position: form.pozicija,
-            department: "",
+            department: "form.department",
             active: true,
             permissions: form.permissions,
           });
@@ -241,6 +244,8 @@ export default function CreateEmployeePage() {
               {field("Datum rođenja", "datum", "text", "DD.MM.GGGG")}
               {field("Email", "email", "email")}
               {field("Pozicija", "pozicija")}
+              {field("Departman", "department")}
+
             </div>
 
             <div className="permissions-section">
