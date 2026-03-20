@@ -125,7 +125,7 @@ export default function EmployeeDetailsPage() {
                 <h2>
                   {employee.firstName} {employee.lastName}
                 </h2>
-                <p>{employee.email}</p>
+                <p>{employee.username}</p>
 
                 <div className="profile-meta-row">
                   <span className="role-badge">
@@ -170,7 +170,6 @@ export default function EmployeeDetailsPage() {
                   label="Pol"
                   value={employee.gender === "Male" ? "M" : "Ž"}
                 />
-                <ProfileField label="JMBG" value={employee.jmbg} />
                 <ProfileField
                   label="Uloga"
                   value={employee.role === "ADMIN" ? "Admin" : "Zaposleni"}
