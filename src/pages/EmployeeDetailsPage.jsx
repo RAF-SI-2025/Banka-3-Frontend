@@ -143,14 +143,6 @@ export default function EmployeeDetailsPage() {
               </div>
             </div>
 
-            <div className="profile-overview-right">
-              <button
-                className="profile-btn profile-btn-secondary"
-                onClick={() => navigate(`/employees/${id}/change-password`)}
-              >
-                Promeni lozinku
-              </button>
-            </div>
           </div>
 
           {/* STARO: dva column layout sa dividerom */}

@@ -15,18 +15,6 @@ function validate(form) {
   if (!form.username.trim()) errors.username = "Username je obavezan.";
   if (!form.adresa.trim()) errors.adresa = "Adresa je obavezna.";
 
-  if (!form.lozinka) {
-    errors.lozinka = "Lozinka je obavezna.";
-  } else if (form.lozinka.length < 6) {
-    errors.lozinka = "Lozinka mora imati najmanje 6 karaktera.";
-  }
-
-  if (!form.potvrda) {
-    errors.potvrda = "Potvrda lozinke je obavezna.";
-  } else if (form.potvrda !== form.lozinka) {
-    errors.potvrda = "Lozinke se ne podudaraju.";
-  }
-
   if (!form.telefon.trim()) {
     errors.telefon = "Broj telefona je obavezan.";
   } else if (!/^\+?[\d\s\-()]{7,15}$/.test(form.telefon)) {
@@ -56,8 +44,6 @@ const EMPTY = {
   pol: "",
   username: "",
   adresa: "",
-  lozinka: "",
-  potvrda: "",
   telefon: "",
   datum: "",
   email: "",
@@ -122,7 +108,6 @@ export default function CreateEmployeePage() {
         username: form.username,
         position: form.pozicija,
         department: "",
-        password: form.lozinka,
       });
 
       if (form.permissions.length > 0) {
@@ -155,7 +140,7 @@ export default function CreateEmployeePage() {
         }
       }
 
-      setSuccessMsg("Zaposleni uspešno kreiran.");
+      setSuccessMsg("Zaposleni uspešno kreiran. Email za aktivaciju naloga je poslat.");
       setForm(EMPTY);
       setErrors({});
     } catch (err) {
@@ -252,9 +237,7 @@ export default function CreateEmployeePage() {
             <div className="form-grid">
               {field("Username", "username")}
               {field("Adresa", "adresa")}
-              {field("Lozinka", "lozinka", "password")}
               {field("Broj telefona", "telefon")}
-              {field("Potvrda lozinke", "potvrda", "password")}
               {field("Datum rođenja", "datum", "text", "DD.MM.GGGG")}
               {field("Email", "email", "email")}
               {field("Pozicija", "pozicija")}
