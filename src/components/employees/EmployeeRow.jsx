@@ -24,6 +24,7 @@ function EmployeeRow({ employee }) {
 
       <td className="actions">
         <button className="icon-btn edit-btn" onClick={openEditEmployee}>
+          ✏️
         </button>
 
         <button className="icon-btn delete-btn">
