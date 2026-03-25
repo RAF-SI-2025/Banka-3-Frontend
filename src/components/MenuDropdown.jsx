@@ -40,49 +40,66 @@ export default function MenuDropdown() {
     }
     navigate("/login");
   };
+  const handleNavigate = (path) => {
+    setOpen(false);
+    navigate(path);
+  };
 
   return createPortal(
-    <>
-      {/* Burger button - fixed gore desno */}
-      <button
-        className="menu-icon-btn"
-        onClick={() => setOpen(true)}
-        aria-label="Meni"
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-
-      {/* Overlay + Side Panel */}
-      <div className={`sidepanel-overlay${open ? " open" : ""}`} onClick={() => setOpen(false)}>
-        <nav
-          ref={panelRef}
-          className={`sidepanel${open ? " open" : ""}`}
-          onClick={(e) => e.stopPropagation()}
+      <>
+        {/* Burger button - fixed gore desno */}
+        <button
+            className="menu-icon-btn"
+            onClick={() => setOpen(true)}
+            aria-label="Meni"
         >
-          <button className="sidepanel-close" onClick={() => setOpen(false)} aria-label="Zatvori">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
-          <div className="sidepanel-content">
-            <button className="sidepanel-item sidepanel-logout" onClick={handleLogout}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
+        {/* Overlay + Side Panel */}
+        <div className={`sidepanel-overlay${open ? " open" : ""}`} onClick={() => setOpen(false)}>
+          <nav
+              ref={panelRef}
+              className={`sidepanel${open ? " open" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+          >
+            <button className="sidepanel-close" onClick={() => setOpen(false)} aria-label="Zatvori">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-              Odjavi se
             </button>
-          </div>
-        </nav>
-      </div>
-    </>,
-    document.body
+
+            <div className="sidepanel-content">
+              <button
+                  className="sidepanel-item"
+                  onClick={() => handleNavigate("/orders/review")}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h18" />
+                  <path d="M3 12h18" />
+                  <path d="M3 17h18" />
+                  <path d="M8 7v10" />
+                  <path d="M16 7v10" />
+                </svg>
+                Pregled naloga
+              </button>
+              <button className="sidepanel-item sidepanel-logout" onClick={handleLogout}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Odjavi se
+              </button>
+            </div>
+          </nav>
+        </div>
+      </>,
+      document.body
   );
 }
