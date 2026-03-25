@@ -14,6 +14,8 @@ import AccountDetailsPage from "../pages/AccountDetailsPage.jsx";
 import ClientDashboardPage from "../pages/ClientDashboardPage.jsx";
 import ExchangePage from "../pages/ExchangePage.jsx";
 import PaymentPage from "../pages/PaymentPage.jsx";
+import SecuritiesPage from "../pages/SecuritiesPage.jsx";
+import SecurityDetailPage from "../pages/SecurityDetailPage.jsx";
 
 export default function AppRouter() {
   return (

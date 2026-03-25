@@ -1,0 +1,572 @@
+/* ─── Page ────────────────────────────────────────────────────────────────── */
+.page-bg {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top center, rgba(37, 99, 235, 0.12), transparent 24%),
+    linear-gradient(180deg, #030b1a 0%, #020817 100%);
+  padding: 110px 24px 48px;
+}
+
+.page-bg > * { position: relative; z-index: 1; }
+
+.bank-logo {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  height: 44px;
+  opacity: 0.95;
+}
+
+.content-wrapper {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+}
+
+.loading-msg { color: #94a3b8; font-size: 15px; }
+
+/* ─── Back button ─────────────────────────────────────────────────────────── */
+.det-header-row {
+  margin-bottom: 18px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.9);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.btn-back:hover {
+  color: #cbd5e1;
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+/* ─── Main card ───────────────────────────────────────────────────────────── */
+.det-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.det-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.07), transparent 55%);
+  pointer-events: none;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+.det-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.det-title-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.det-ticker-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.det-ticker--stock {
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.det-ticker--futures {
+  background: rgba(124, 58, 237, 0.18);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  color: #c4b5fd;
+}
+
+.det-ticker--forex {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  color: #6ee7b7;
+}
+
+.det-name {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.det-exchange {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.det-price-group {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.det-price {
+  display: block;
+  font-size: 36px;
+  font-weight: 800;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.det-change {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.det-change.pos { color: #4ade80; }
+.det-change.neg { color: #f87171; }
+
+/* ─── Period selector ─────────────────────────────────────────────────────── */
+.period-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.period-btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(8, 20, 44, 0.7);
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.period-btn:hover { color: #94a3b8; background: rgba(15, 30, 60, 0.8); }
+
+.period-btn.active {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+/* ─── Chart ───────────────────────────────────────────────────────────────── */
+.chart-section {
+  margin-bottom: 32px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(8, 20, 44, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 12px;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+  cursor: crosshair;
+}
+
+.chart-placeholder {
+  padding: 60px 20px;
+  text-align: center;
+  color: #475569;
+  font-size: 14px;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 10px;
+  padding: 6px 12px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.tt-date { font-size: 11px; color: #64748b; }
+.tt-price { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ─── Info grid ───────────────────────────────────────────────────────────── */
+.info-section { margin-bottom: 32px; }
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(8, 20, 44, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 12px;
+}
+
+.info-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.info-value { font-size: 14px; color: #e2e8f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ─── Options section ─────────────────────────────────────────────────────── */
+.options-section { margin-top: 8px; }
+
+.expiry-table-wrap {
+  display: inline-block;
+  margin-bottom: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  min-width: 320px;
+}
+
+.expiry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.expiry-table th {
+  padding: 12px 16px;
+  background: rgba(8, 20, 44, 0.8);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  text-align: left;
+}
+
+.expiry-table td {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
+  color: #cbd5e1;
+}
+
+.expiry-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.expiry-row:hover { background: rgba(30, 41, 59, 0.5); }
+
+.expiry-row.selected {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.expiry-row.selected td { color: #93c5fd; }
+
+.days-cell {
+  color: #94a3b8 !important;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Chain toolbar ───────────────────────────────────────────────────────── */
+.chain-section { margin-top: 8px; }
+
+.chain-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.chain-date-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding: 0 4px;
+}
+
+.filter-chip {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.9);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-chip.active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.view-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: none;
+  background: rgba(8, 20, 44, 0.8);
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-btn.active {
+  background: rgba(37, 99, 235, 0.18);
+  color: #60a5fa;
+}
+
+.opt-search-wrapper {
+  display: flex;
+  margin-left: auto;
+}
+
+.opt-search {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px 0 0 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-right: none;
+  background: rgba(8, 20, 44, 0.9);
+  color: #f8fafc;
+  font-size: 13px;
+  width: 180px;
+}
+
+.opt-search::placeholder { color: #64748b; }
+.opt-search:focus { outline: none; border-color: rgba(59, 130, 246, 0.45); }
+
+.opt-search-btn {
+  height: 34px;
+  width: 36px;
+  border-radius: 0 10px 10px 0;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ─── Chain labels (Calls / Date / Puts) ──────────────────────────────────── */
+.chain-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.chain-label-calls, .chain-label-puts {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f5f9;
+  flex: 1;
+}
+
+.chain-label-calls { text-align: left; }
+.chain-label-puts  { text-align: right; }
+
+.chain-label-center {
+  font-size: 13px;
+  color: #64748b;
+  flex: 0 0 auto;
+  padding: 0 16px;
+}
+
+/* ─── Chain grid (Calls | Strike | Puts) ─────────────────────────────────── */
+.chain-container {
+  background: rgba(8, 20, 44, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.chain-grid {
+  display: grid;
+  grid-template-columns: 1fr 100px 1fr;
+  overflow-x: auto;
+}
+
+.chain-side {}
+
+.strike-col {
+  border-left: 1px solid rgba(148, 163, 184, 0.1);
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.strike-header {
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 20, 44, 0.7);
+}
+
+.strike-cell {
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3b82f6;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  font-variant-numeric: tabular-nums;
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.strike-cell.atm {
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+  border-top: 1px solid rgba(59, 130, 246, 0.3);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* ─── Options table ───────────────────────────────────────────────────────── */
+.opt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.opt-table th {
+  padding: 14px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: rgba(8, 20, 44, 0.7);
+}
+
+.opt-table th.num { text-align: right; }
+
+.opt-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+
+.opt-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.opt-table tbody tr { transition: background 0.12s; }
+.opt-table tbody tr:hover { background: rgba(30, 41, 59, 0.4); }
+
+/* ITM highlighting */
+tr.itm-call { background: rgba(37, 99, 235, 0.08); }
+tr.itm-put  { background: rgba(124, 58, 237, 0.08); }
+tr.atm-row  { background: rgba(37, 99, 235, 0.14); }
+
+.strike-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos { color: #4ade80; }
+.neg { color: #f87171; }
+
+.no-results {
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.table-scroll { overflow-x: auto; }
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .det-topbar { flex-direction: column; align-items: flex-start; }
+  .det-price-group { text-align: left; }
+  .det-price { font-size: 28px; }
+  .chain-grid { grid-template-columns: 1fr 80px 1fr; }
+}
+
+@media (max-width: 768px) {
+  .page-bg { padding: 90px 16px 32px; }
+  .bank-logo { left: 16px; top: 20px; height: 34px; }
+  .det-card { padding: 22px 16px; border-radius: 22px; }
+  .det-name { font-size: 20px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .chain-toolbar { gap: 8px; }
+  .opt-search { width: 130px; }
+  .chain-labels { display: none; }
+  .chain-grid { grid-template-columns: 1fr; }
+  .strike-col { border: none; }
+  .chain-side + .chain-side { border-top: 1px solid rgba(148,163,184,0.1); }
+}

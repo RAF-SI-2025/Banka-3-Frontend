@@ -62,7 +62,7 @@ export default function ClientDashboardPage() {
                     if (!cancelled) setTransactions(txData);
                 }
             } catch (err) {
-                if (!cancelled) setError("Greška pri učitavanju podataka.");
+                if (!cancelled) setError("Greška pri učitavanju podataka. " + (err.message || ""));
             } finally {
                 if (!cancelled) setLoading(false);
             }
