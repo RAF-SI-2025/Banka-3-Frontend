@@ -58,8 +58,12 @@ export default function ClientDashboardPage() {
                 setAccounts(accountsData);
 
                 if (accountsData.length > 0) {
-                    const txData = await getAccountTransactions(accountsData[0].id);
-                    if (!cancelled) setTransactions(txData);
+                    try {
+                        const txData = await getAccountTransactions(accountsData[0].account_number);
+                        if (!cancelled) setTransactions(txData);
+                    } catch {
+                        if (!cancelled) setTransactions([]);
+                    }
                 }
             } catch (err) {
                 if (!cancelled) setError("Greška pri učitavanju podataka.");
@@ -178,8 +182,8 @@ export default function ClientDashboardPage() {
                         <div className="dash-bc-circle1"/>
                         <div className="dash-bc-circle2"/>
                         <p className="dash-bc-label">Ukupno stanje</p>
-                        <p className="dash-bc-amount">{fmt(mainAccount.balance, mainAccount.currency)}</p>
-                        <p className="dash-bc-avail">Raspoloživo: {fmt(mainAccount.available, mainAccount.currency)}</p>
+                        <p className="dash-bc-amount">{fmt(mainAccount.available_balance ?? mainAccount.available ?? mainAccount.balance ?? 0, mainAccount.currency)}</p>
+                        <p className="dash-bc-avail">Raspoloživo: {fmt(mainAccount.available_balance ?? mainAccount.available ?? mainAccount.balance ?? 0, mainAccount.currency)}</p>
                         <div className="dash-quick-row">
                             {quickActions.map(({label, icon, target}) => (
                                 <button key={label} className="dash-quick-btn" onClick={() => navigate(target)}>
@@ -198,11 +202,16 @@ export default function ClientDashboardPage() {
                 </div>
                 <div className="dash-accounts-scroll">
                     {accounts.map((acc) => (
-                        <button key={acc.id} className="dash-account-pill"
-                                onClick={() => navigate(`/accounts/${acc.id}`)}>
-                            <p className="dash-pill-name">{acc.name}</p>
-                            <p className="dash-pill-number">{acc.number}</p>
-                            <p className="dash-pill-bal">{fmt(acc.balance, acc.currency)}</p>
+                        <button
+                            key={acc.account_number}
+                            className="dash-account-pill"
+                            onClick={() => navigate(`/accounts/${acc.account_number}`)}
+                        >
+                            <p className="dash-pill-name">{acc.account_name}</p>
+                            <p className="dash-pill-number">{acc.account_number}</p>
+                            <p className="dash-pill-bal">
+                                {fmt(acc.available_balance ?? acc.available ?? acc.balance ?? 0, acc.currency)}
+                            </p>
                         </button>
                     ))}
                 </div>

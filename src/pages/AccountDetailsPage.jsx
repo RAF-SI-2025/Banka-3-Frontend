@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAccountById, getAccountTransactions } from "../services/AccountService";
+import { getAccountByNumber } from "../services/AccountsService";
+import { getAccountTransactions } from "../services/AccountService";
+import { updateAccountName } from "../services/AccountsService";
 import "./AccountDetailsPage.css";
+
 
 function fmt(amount, currency = "RSD") {
     if (amount == null) return "—";
@@ -16,27 +19,35 @@ function fmt(amount, currency = "RSD") {
 }
 
 export default function AccountDetailsPage() {
-    const { id } = useParams();
+    const { id: accountNumber } = useParams();
     const navigate = useNavigate();
 
     const [account, setAccount] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [showEdit, setShowEdit] = useState(false);
+    const [newName, setNewName] = useState("");
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (!id) return;
+        if (!accountNumber) return;
         let cancelled = false;
 
         const load = async () => {
             try {
-                const [acc, txs] = await Promise.all([
-                    getAccountById(Number(id)),
-                    getAccountTransactions(Number(id)),
-                ]);
+                const acc = await getAccountByNumber(accountNumber);
+
+                let txs = [];
+                try {
+                    txs = await getAccountTransactions(accountNumber);
+                } catch {
+                    txs = [];
+                }
+
                 if (!cancelled) {
                     setAccount(acc);
-                    setTransactions(txs);
+                    setTransactions(Array.isArray(txs) ? txs : []);
                 }
             } catch {
                 if (!cancelled) setError("Greška pri učitavanju podataka o računu.");
@@ -47,7 +58,7 @@ export default function AccountDetailsPage() {
 
         load();
         return () => { cancelled = true; };
-    }, [id]);
+    }, [accountNumber]);
 
     const quickActions = [
         {
@@ -96,7 +107,8 @@ export default function AccountDetailsPage() {
         );
     }
 
-    const reserved = account.balance - account.available;
+    const available = account.available_balance ?? account.available ?? account.balance ?? 0;
+    const reserved = 0;
 
     return (
         <div className="ad-page">
@@ -107,17 +119,26 @@ export default function AccountDetailsPage() {
                     <button className="ad-back-btn" onClick={() => navigate("/accounts")}>
                         <ChevronLeftIcon />
                     </button>
-                    <h1 className="ad-title">{account.name}</h1>
+                    <h1 className="ad-title">{account.account_name}</h1>
+                    <button
+                        className="ad-edit-btn"
+                        onClick={() => {
+                            setNewName(account.account_name);
+                            setShowEdit(true);
+                        }}
+                    >
+                        Promeni naziv računa
+                    </button>
                 </div>
 
                 {/* ── BALANCE CARD ── */}
                 <div className="ad-balance-card">
-                    <p className="ad-account-number">{account.number}</p>
+                    <p className="ad-account-number">{account.account_number}</p>
                     <p className="ad-balance-main">{fmt(account.balance, account.currency)}</p>
                     <div className="ad-balance-row">
                         <div>
                             <p className="ad-balance-label">Raspoloživo</p>
-                            <p className="ad-balance-available">{fmt(account.available, account.currency)}</p>
+                            <p className="ad-balance-available">{fmt(available, account.currency)}</p>
                         </div>
                         <div>
                             <p className="ad-balance-label">Rezervisano</p>
@@ -125,7 +146,7 @@ export default function AccountDetailsPage() {
                         </div>
                     </div>
                     <div className="dash-quick-row">
-                        {quickActions.map(({label, icon, target}) => (
+                        {quickActions.map(({ label, icon, target }) => (
                             <button key={label} className="dash-quick-btn" onClick={() => navigate(target)}>
                                 {icon}
                                 <span>{label}</span>
@@ -143,7 +164,7 @@ export default function AccountDetailsPage() {
                     <div className="ad-txn-list">
                         {transactions.map((tx) => (
                             <div key={tx.id} className="ad-txn-row">
-                            <div className={`ad-txn-icon ${tx.amount > 0 ? "ad-txn-icon--credit" : "ad-txn-icon--debit"}`}>
+                                <div className={`ad-txn-icon ${tx.amount > 0 ? "ad-txn-icon--credit" : "ad-txn-icon--debit"}`}>
                                     {tx.amount > 0 ? <ArrowDownIcon /> : <ArrowUpIcon />}
                                 </div>
                                 <div className="ad-txn-info">
@@ -151,17 +172,70 @@ export default function AccountDetailsPage() {
                                     <p className="ad-txn-date">{new Date(tx.date).toLocaleDateString("sr-RS")}</p>
                                 </div>
                                 <p className={`ad-txn-amount ${tx.amount > 0 ? "ad-txn-amount--credit" : ""}`}>
-                                    {tx.amount > 0 ? "+" : ""}{fmt(tx.amount, account.currency)}
+                                    {tx.amount > 0 ? "+" : ""}
+                                    {fmt(tx.amount, account.currency)}
                                 </p>
                             </div>
                         ))}
                     </div>
                 )}
-
             </div>
+
+            {showEdit && (
+                <div className="ad-modal">
+                    <div className="ad-modal-content">
+                        <h3>Promena naziva računa</h3>
+
+                        <p>Trenutni naziv: {account.account_name}</p>
+
+                        <input
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            placeholder="Novo ime računa"
+                        />
+
+                        <div className="ad-modal-actions">
+                            <button
+                                type="button"
+                                className="ad-modal-cancel-btn"
+                                onClick={() => setShowEdit(false)}
+                            >
+                                Otkaži
+                            </button>
+
+                            <button
+                                type="button"
+                                className="ad-modal-save-btn"
+                                disabled={saving}
+                                onClick={async () => {
+                                    if (!newName.trim()) return alert("Unesi ime računa.");
+                                    if (newName.trim() === account.account_name) return alert("Novo ime mora biti drugačije.");
+
+                                    try {
+                                        setSaving(true);
+                                        await updateAccountName(account.account_number, newName.trim());
+
+                                        setAccount({
+                                            ...account,
+                                            account_name: newName.trim(),
+                                        });
+
+                                        setShowEdit(false);
+                                    } catch (e) {
+                                        alert("Greška pri promeni naziva računa.");
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                }}
+                            >
+                                {saving ? "Čuvanje..." : "Sačuvaj"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    );
-}
+    )};
 
 function ChevronLeftIcon() {
     return (

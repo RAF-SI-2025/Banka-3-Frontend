@@ -192,3 +192,119 @@
 .ad-txn-amount--credit {
     color: #06d6a0;
 }
+.ad-edit-btn {
+    margin-left: 12px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    background: #111827;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.ad-edit-btn:hover {
+    background: #1a2234;
+    border-color: #334155;
+}
+
+.ad-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.ad-modal-content {
+    width: 100%;
+    max-width: 500px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.ad-modal-content h3 {
+    margin: 0 0 12px;
+    color: #f1f5f9;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.ad-modal-content p {
+    margin: 0 0 16px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.ad-modal-content input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #0A0E17;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.ad-modal-content input:focus {
+    border-color: #3b82f6;
+}
+
+.ad-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.ad-modal-cancel-btn,
+.ad-modal-save-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.ad-modal-cancel-btn {
+    border: 1px solid #334155;
+    background: transparent;
+    color: #cbd5e1;
+}
+
+.ad-modal-cancel-btn:hover {
+    background: #1a2234;
+    color: #f8fafc;
+}
+
+.ad-modal-save-btn {
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.ad-modal-save-btn:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.ad-modal-save-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}

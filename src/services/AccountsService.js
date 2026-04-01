@@ -9,3 +9,9 @@ export async function getAccountByNumber(accountNumber) {
   const response = await api.get(`/accounts/${accountNumber}`);
   return response.data;
 }
+export async function updateAccountName(accountNumber, name) {
+  const response = await api.patch(`/accounts/${accountNumber}/name`, {
+    name,
+  });
+  return response.data;
+}

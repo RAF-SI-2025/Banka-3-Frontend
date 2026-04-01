@@ -12,6 +12,13 @@ import api from "./api.js";
  * @param {string} data.purpose
  */
 export async function transferFunds(data) {
-    const response = await api.post("/transactions/payment", data);
+    const { totp, ...payload } = data;
+
+    const response = await api.post("/transactions/payment", payload, {
+        headers: {
+            TOTP: totp,
+        },
+    });
+
     return response.data;
 }

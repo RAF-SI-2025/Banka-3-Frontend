@@ -1,6 +1,6 @@
 import api from "./api.js";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const MOCK_ACCOUNTS = [
     { id: 1, name: "Tekući račun", number: "265-0000000011234-56", balance: 347250, available: 335750, currency: "RSD" },
@@ -38,13 +38,30 @@ export async function getAccountById(accountId) {
     return response.data;
 }
 
-export async function getAccountTransactions(accountId) {
+export async function getAccountTransactions(accountNumber) {
     if (USE_MOCK) {
         await new Promise(r => setTimeout(r, 300));
-        return MOCK_TRANSACTIONS.filter(t => t.accountId === accountId);
+        return MOCK_TRANSACTIONS.filter(t => t.accountId === accountNumber);
     }
-    const response = await api.get(`/accounts/${accountId}/transactions`);
-    return response.data;
+
+    const response = await api.get("/transactions", {
+        params: { account_number: accountNumber },
+    });
+
+    return response.data.map((tx, index) => ({
+        id: `${tx.reference_number || "tx"}-${index}`,
+        desc: tx.purpose || "Transakcija",
+        date: tx.timestamp,
+        amount: tx.final_amount ?? tx.initial_amount ?? 0,
+        status: tx.status,
+        fromAccount: tx.from_account,
+        toAccount: tx.to_account,
+        paymentCode: tx.payment_code,
+        referenceNumber: tx.reference_number,
+        fee: tx.fee,
+        currency: tx.currency,
+    }));
+
 }
 
 export async function createAccount(data) {

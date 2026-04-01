@@ -439,7 +439,7 @@ export default function PaymentsPage() {
               {selectedTx ? "Detalji plaćanja" : "Pregled plaćanja"}
             </h2>
           </div>
-          <button className="pp-new-btn" onClick={() => navigate("/payments/new")}>
+          <button className="pp-new-btn" onClick={() => navigate("/payment")}>
             + Novo plaćanje
           </button>
         </div>

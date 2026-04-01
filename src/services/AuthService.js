@@ -4,9 +4,9 @@ import { clearClientCache } from "./ClientService.js";
 export const login = async (email, password) => {
   const response = await api.post("/login", { email, password });
   return {
-    accessToken: response.data.access_token,
-    refreshToken: response.data.refresh_token,
-    userId: response.data.user_id,
+    accessToken: response.data.accessToken,
+    refreshToken: response.data.refreshToken,
+    userId: response.data.userId,
   };
 };
 
@@ -24,8 +24,8 @@ export const refreshToken = async (refreshToken) => {
     refresh_token: refreshToken,
   });
   return {
-    accessToken: response.data.access_token,
-    refreshToken: response.data.refresh_token,
+    accessToken: response.data.accessToken,
+    refreshToken: response.data.refreshToken,
   };
 };
 

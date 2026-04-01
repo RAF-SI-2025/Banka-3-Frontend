@@ -8,9 +8,10 @@ const EMPTY_FORM = {
     recipient_account: "",
     recipient_name: "",
     amount: "",
-    payment_code: "",
+    payment_code: "289",
     reference_number: "",
     purpose: "",
+    totp: "",
 };
 
 function validate(form) {
@@ -33,6 +34,9 @@ function validate(form) {
 
     if (!form.purpose.trim())
         errors.purpose = "Unesite svrhu plaćanja.";
+
+    if (!form.totp.trim())
+        errors.totp = "Unesite verifikacioni kod.";
 
     return errors;
 }
@@ -73,6 +77,7 @@ export default function PaymentPage() {
                 payment_code: form.payment_code.trim(),
                 reference_number: form.reference_number.trim(),
                 purpose: form.purpose.trim(),
+                totp: form.totp.trim(),
             });
             setSuccessMsg("Transakcija je uspešno izvršena.");
             setForm(EMPTY_FORM);
@@ -94,7 +99,7 @@ export default function PaymentPage() {
 
                 {/* Header */}
                 <div className="pay-header">
-                    <button className="pay-back-btn" onClick={() => navigate("/dashboard")}>
+                    <button className="pay-back-btn" onClick={() => navigate(-1)}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M15 18l-6-6 6-6" />
@@ -211,6 +216,18 @@ export default function PaymentPage() {
                         </div>
                     </div>
 
+                    <div className="pay-field">
+                        <label className="pay-field-label">Verifikacioni kod</label>
+                        <input
+                            className={`pay-input ${errors.totp ? "pay-input--error" : ""}`}
+                            name="totp"
+                            value={form.totp}
+                            onChange={handleChange}
+                            placeholder="Unesite TOTP kod"
+                        />
+                        {errors.totp && <p className="pay-error">{errors.totp}</p>}
+                    </div>
+
                     {/* ── Summary ── */}
                     {form.recipient_name && form.recipient_account && form.amount && (
                         <div className="pay-summary">
@@ -247,7 +264,7 @@ export default function PaymentPage() {
                     {submitError && <p className="pay-error pay-error--submit">{submitError}</p>}
 
                     <div className="pay-actions">
-                        <button type="button" className="pay-btn-back" onClick={() => navigate("/dashboard")}>
+                        <button type="button" className="pay-btn-back" onClick={() => navigate(-1)}>
                             Otkaži
                         </button>
                         <button type="submit" className="pay-btn-submit" disabled={submitting}>

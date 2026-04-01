@@ -22,7 +22,6 @@ export default function AccountsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -45,33 +44,49 @@ export default function AccountsPage() {
     [accounts]
   );
 
-  const uniqueStatuses = useMemo(() =>
-    [...new Set(accounts.map((a) => a.status).filter(Boolean))].sort(),
-    [accounts]
-  );
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    return accounts.filter((a) => {
-      const matchesSearch =
-        !term ||
-        a.account_number?.toLowerCase().includes(term) ||
-        a.account_name?.toLowerCase().includes(term) ||
-        String(a.owner_id).includes(term);
-      const matchesType = !filterType || a.account_type === filterType;
-      const matchesStatus = !filterStatus || a.status === filterStatus;
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [accounts, searchTerm, filterType, filterStatus]);
+
+    return [...accounts]
+        .filter((a) => {
+          const status = String(a.status || "").toLowerCase();
+          const isActive = status === "active" || status === "aktivan";
+
+          const matchesSearch =
+              !term ||
+              a.account_number?.toLowerCase().includes(term) ||
+              a.account_name?.toLowerCase().includes(term);
+
+          const matchesType = !filterType || a.account_type === filterType;
+
+          return isActive && matchesSearch && matchesType;
+        })
+        .sort((a, b) => {
+          const availableA = a.available_balance ?? a.available ?? a.balance ?? 0;
+          const availableB = b.available_balance ?? b.available ?? b.balance ?? 0;
+          return availableB - availableA;
+        });
+  }, [accounts, searchTerm, filterType]);
 
   return (
     <div className="accs-shell">
       <div className="accs-content">
 
         <div className="accs-header">
+          <button
+              type="button"
+              className="accs-back-btn"
+              onClick={() => navigate("/dashboard")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
           <div className="accs-title-block">
-            <p>Administracija</p>
-            <h1>Pregled računa</h1>
+            <p>Moji računi</p>
+            <h1>Pregled stanja i detalja</h1>
           </div>
         </div>
 
@@ -84,44 +99,32 @@ export default function AccountsPage() {
             </span>
             <input
               className="accs-input"
-              placeholder="Pretraga po broju, imenu ili klijentu..."
+              placeholder="Pretraga po broju računa ili nazivu..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
           <select
-            className="accs-select"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+              className="accs-select"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
           >
             <option value="">Svi tipovi</option>
             {uniqueTypes.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-
-          <select
-            className="accs-select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="">Svi statusi</option>
-            {uniqueStatuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
+                <option key={t} value={t}>{t}</option>
             ))}
           </select>
 
           <button
             className="accs-reset-btn"
-            onClick={() => { setSearchTerm(""); setFilterType(""); setFilterStatus(""); }}
+            onClick={() => { setSearchTerm(""); setFilterType("");}}
           >
             Reset
           </button>
         </div>
 
         <p className="accs-filter-info">
-          Pronađeno: <strong>{filtered.length}</strong> / {accounts.length} računa
+          Aktivni računi: <strong>{filtered.length}</strong>
         </p>
 
         {loading && <p className="accs-state-msg">Učitavanje...</p>}
@@ -131,41 +134,50 @@ export default function AccountsPage() {
           <div className="accs-table-wrap">
             <table className="accs-table">
               <thead>
-                <tr>
-                  <th>Broj računa</th>
-                  <th>Naziv</th>
-                  <th>Klijent ID</th>
-                  <th>Tip</th>
-                  <th>Valuta</th>
-                  <th>Stanje</th>
-                  <th>Status</th>
-                </tr>
+              <tr>
+                <th>Broj računa</th>
+                <th>Naziv</th>
+                <th>Tip</th>
+                <th>Valuta</th>
+                <th>Raspoloživo stanje</th>
+                <th>Detalji</th>
+              </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="accs-empty">Nema rezultata</td>
+                    <td colSpan={6} className="accs-empty">Nema aktivnih računa</td>
                   </tr>
                 ) : (
-                  filtered.map((a) => (
-                    <tr
-                      key={a.account_number}
-                      className="accs-row"
-                      onClick={() => navigate(`/admin/accounts/${a.account_number}`)}
-                    >
-                      <td className="accs-number">{a.account_number}</td>
-                      <td>{a.account_name}</td>
-                      <td>{a.owner_id}</td>
-                      <td>{a.account_type}</td>
-                      <td>{a.currency}</td>
-                      <td>{fmt(a.balance, a.currency)}</td>
-                      <td>
-                        <span className={`accs-badge ${a.status === "Aktivan" ? "accs-badge--active" : "accs-badge--inactive"}`}>
-                          {a.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                    filtered.map((a) => {
+                      const available = a.available_balance ?? a.available ?? a.balance ?? 0;
+
+                      return (
+                          <tr
+                              key={a.account_number}
+                              className="accs-row"
+                              onClick={() => navigate(`/accounts/${a.account_number}`)}
+                          >
+                            <td className="accs-number">{a.account_number}</td>
+                            <td>{a.account_name}</td>
+                            <td>{a.account_type}</td>
+                            <td>{a.currency}</td>
+                            <td>{fmt(available, a.currency)}</td>
+                            <td>
+                              <button
+                                  type="button"
+                                  className="accs-details-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/accounts/${a.account_number}`);
+                                  }}
+                              >
+                                Detalji
+                              </button>
+                            </td>
+                          </tr>
+                      );
+                    })
                 )}
               </tbody>
             </table>
