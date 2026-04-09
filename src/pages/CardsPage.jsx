@@ -5,7 +5,6 @@ import {
   getUserAccounts,
   requestCard
 } from "../services/CardService";
-import { getCurrentUserEmail } from "../services/AuthService";
 import CardsList from "../components/cards/CardsList";
 import CreateCardForm from "../components/cards/CreateCardForm";
 import Sidebar from "../components/Sidebar.jsx";
@@ -36,13 +35,6 @@ function CardsPage() {
   }, [location.search, role]);
 
   useEffect(() => {
-    const email = getCurrentUserEmail();
-
-    if (!email) {
-      navigate("/login");
-      return;
-    }
-
     loadData();
   }, [navigate]);
 
