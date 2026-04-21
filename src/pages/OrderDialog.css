@@ -1,0 +1,53 @@
+.dialog-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+}
+
+.dialog-box{
+  background:#1e293b;
+  padding:25px;
+  border-radius:12px;
+  color:white;
+  min-width:300px;
+}
+
+.dialog-box h3{
+  margin-bottom:15px;
+}
+
+.dialog-box p{
+  margin:5px 0;
+}
+
+.dialog-actions{
+  margin-top:15px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.confirm-btn{
+  flex:1;
+  background:#22c55e;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.cancel-btn{
+  flex:1;
+  background:#ef4444;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}

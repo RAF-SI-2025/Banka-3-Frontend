@@ -1,0 +1,47 @@
+.order-form{
+  margin-top:30px;
+  background:#1e293b;
+  padding:20px;
+  border-radius:12px;
+  color:white;
+  max-width:400px;
+}
+
+.order-form h2{
+  margin-bottom:15px;
+}
+
+.order-form input{
+  width:100%;
+  margin-bottom:10px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  background:#0f172a;
+  color:white;
+}
+
+.order-form input::placeholder{
+  color:#64748b;
+}
+
+.order-info{
+  margin:10px 0;
+  font-size:14px;
+  color:#cbd5f5;
+}
+
+.order-form button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#38bdf8;
+  color:black;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.order-form button:hover{
+  background:#0ea5e9;
+}

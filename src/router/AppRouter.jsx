@@ -35,6 +35,7 @@ import TaxDashboardPage from "../pages/TaxDashboardPage.jsx";
 import EditClientPage from "../pages/EditClientPage.jsx";
 import SecurityDetailPage from "../pages/SecurityDetailPage.jsx";
 import ActuaryManagementPage from "../pages/ActuaryManagementPage.jsx";
+import TradingPage from "../pages/TradingPage.jsx";
 
 export default function AppRouter() {
   return (
@@ -44,13 +45,14 @@ export default function AppRouter() {
 
           <Route path="/login" element={<LoginPage />} />
 
+
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/enter-token" element={<EnterTokenPage />} />
           <Route path="/reset-password" element={<ChangePasswordPage />} />
           <Route path="/set-password" element={<ChangePasswordPage />} />
 
           <Route path="/dashboard" element={<ProtectedRoute requiredRole="client"><ClientDashboardPage /></ProtectedRoute>} />
-
+          <Route path="/options" element={<ProtectedRoute requiredRole="client"><TradingPage /></ProtectedRoute>} />
           <Route path="/accounts" element={<ProtectedRoute requiredRole="client"><AccountsPage /></ProtectedRoute>} />
           <Route path="/accounts/create" element={<ProtectedRoute requiredRole="employee"><CreateAccountPage /></ProtectedRoute>} />
           <Route path="/admin/accounts" element={<ProtectedRoute requiredRole="employee"><AccountsPage /></ProtectedRoute>} />

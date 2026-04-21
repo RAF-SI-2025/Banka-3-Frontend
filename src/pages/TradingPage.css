@@ -1,0 +1,18 @@
+.trading-page{
+  background:#0f172a;
+  min-height:100vh;
+  padding:40px;
+  color:white;
+}
+
+.trading-layout{
+  display:grid;
+  grid-template-columns: 2fr 1fr;
+  gap:30px;
+}
+
+@media(max-width:1000px){
+  .trading-layout{
+    grid-template-columns:1fr;
+  }
+}
