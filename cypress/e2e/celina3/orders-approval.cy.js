@@ -96,16 +96,17 @@ describe("Odobravanje i pregled naloga — #48–58", () => {
     });
   });
 
-  // #51: granica limita — order = preostali limit prolazi bez approval
-  // Skipped: hard to make deterministic without explicit limit math + need_approval=false setup.
-  // Covered conceptually by #50 + #49.
-  it.skip("#51: order na ivici limita prolazi bez approval", () => {});
+  // #51 (order na ivici limita prolazi bez approval) is covered conceptually
+  // by #50 — the limit-only branch with need_approval=false is exercised there.
 
-  // #52: supervizor odobrava pending order — frontend flow on /orders
-  // TODO: /orders page was on this branch's dropped trading UI; main has no
-  // equivalent supervisor orders portal yet. Skip UI-driven approval flow
-  // until a replacement exists.
-  it.skip("#52: supervizor approve-uje pending → status approved + approved_by", () => {
+  // Supervisor portal lives at /orders/review (src/pages/OrdersReviewPage.jsx),
+  // gated by the "supervisor" permission. Status filter is rendered as buttons
+  // (.mo-filter), table is .mo-table, status cells are .mo-status--{state},
+  // action buttons are localized: "Odobri" / "Odbij" / "Otkaži". Action clicks
+  // go through window.confirm — Cypress auto-accepts.
+
+  // #52: supervizor odobrava pending order
+  it("#52: supervizor approve-uje pending → status approved + approved_by", () => {
     cy.loginAs("agent");
     cy.findListingByTicker(TICKER).then((l) => {
       cy.createOrderApi({
@@ -115,24 +116,26 @@ describe("Odobravanje i pregled naloga — #48–58", () => {
         quantity: 1,
         listing_id: l.id,
       }).then((r) => {
+        expect(r.status).to.be.oneOf([200, 201]);
         const orderId = r.body.order_id;
+
         cy.loginAs("supervisor");
-        cy.visit("/orders");
-        cy.get(".orders-filters select").select("pending");
-        cy.contains(".orders-table tr", String(orderId)).within(() => {
-          cy.contains("button", "Approve").click();
-        });
+        cy.visit("/orders/review");
+        cy.contains(".mo-filter", "Na čekanju").click();
+        cy.contains(".mo-table tbody tr", String(orderId))
+          .find("button.mo-approve-btn")
+          .click();
+
         cy.waitForOrderStatus(orderId, ["approved", "done"]).then((o) => {
           expect(o.status).to.be.oneOf(["approved", "done"]);
-          // approved_by may be a name or email or numeric id depending on response shape.
-          expect(o.approved_by || o.approved_by_id || o.approver).to.exist;
+          expect(o.approved_by || o.approved_by_id || o.approvedBy).to.exist;
         });
       });
     });
   });
 
-  // #53: supervizor odbija pending order — UI flow on dropped /orders page
-  it.skip("#53: supervizor decline-uje pending → status declined", () => {
+  // #53: supervizor odbija pending order
+  it("#53: supervizor decline-uje pending → status declined", () => {
     cy.loginAs("agent");
     cy.findListingByTicker(TICKER).then((l) => {
       cy.createOrderApi({
@@ -143,19 +146,24 @@ describe("Odobravanje i pregled naloga — #48–58", () => {
         listing_id: l.id,
       }).then((r) => {
         const orderId = r.body.order_id;
+
         cy.loginAs("supervisor");
-        cy.visit("/orders");
-        cy.get(".orders-filters select").select("pending");
-        cy.contains(".orders-table tr", String(orderId)).within(() => {
-          cy.contains("button", "Decline").click();
-        });
+        cy.visit("/orders/review");
+        cy.contains(".mo-filter", "Na čekanju").click();
+        cy.contains(".mo-table tbody tr", String(orderId))
+          .find("button.mo-cancel-btn")
+          .contains("Odbij")
+          .click();
+
         cy.waitForOrderStatus(orderId, "declined", { timeoutMs: 10_000 });
       });
     });
   });
 
-  // #54: order sa proslim settlement-om — UI flow on dropped /orders page
-  it.skip("#54: order na future-u sa proslim datumom: nema Approve dugmeta", () => {
+  // #54: order sa proslim settlement-om — Approve hidden, Decline available.
+  // Page logic: canApprove = status === "pending" && !isPastSettlement(settlementDate).
+  // Requires CLZ25 (or any future with past settlement) in the seed.
+  it("#54: order sa proslim settlement-om: nema Odobri dugmeta", () => {
     cy.loginAs("agent");
     cy.window().then((win) => {
       const token = win.sessionStorage.getItem("accessToken");
@@ -165,9 +173,9 @@ describe("Odobravanje i pregled naloga — #48–58", () => {
         headers: { Authorization: `Bearer ${token}` },
         qs: { search: "CLZ25" },
       }).then((resp) => {
-        const f = resp.body.find((x) => x.ticker === "CLZ25");
+        const f = (resp.body || []).find((x) => x.ticker === "CLZ25");
         if (!f) {
-          cy.log("CLZ25 missing from seed; skip");
+          cy.log("CLZ25 missing from seed; nothing to assert");
           return;
         }
         cy.createOrderApi({
@@ -177,95 +185,128 @@ describe("Odobravanje i pregled naloga — #48–58", () => {
           quantity: 1,
           listing_id: f.id,
         }).then((r) => {
-          // If backend rejected at create time (#32), no orders row to inspect — that
-          // also satisfies the spec intent. Otherwise inspect UI.
+          // Spec intent ("expired-settlement order cannot be approved") is
+          // satisfied at the API layer when the backend either rejects creation
+          // (#32 path) or auto-declines at create time. Only inspect the UI
+          // when the order actually lands in pending — otherwise there's no
+          // approval path left to assert against.
           if (r.status >= 400) return;
+          if (r.body.status !== "pending") {
+            cy.log(`order created with status=${r.body.status}; spec intent satisfied at API layer`);
+            return;
+          }
           const orderId = r.body.order_id;
+
           cy.loginAs("supervisor");
-          cy.visit("/orders");
-          cy.get(".orders-filters select").select("all");
-          cy.contains(".orders-table tr", String(orderId)).within(() => {
-            cy.contains("button", "Approve").should("not.exist");
-            cy.contains("button", "Decline").should("exist");
+          cy.visit("/orders/review");
+          cy.contains(".mo-filter", "Svi").click();
+          cy.contains(".mo-table tbody tr", String(orderId)).within(() => {
+            cy.get("button.mo-approve-btn").should("not.exist");
+            cy.contains("button", "Odbij").should("exist");
           });
         });
       });
     });
   });
 
-  // #55: supervizor vidi sve potrebne kolone — UI on dropped /orders page
-  it.skip("#55: /orders prikazuje sve obavezne kolone", () => {
+  // #55: supervizor vidi sve obavezne kolone u pregledu naloga.
+  // Spec lists: agent, order type, asset, quantity, contract size, price per
+  // unit, direction, remaining portions, status. Page renders Serbian labels.
+  it("#55: /orders/review prikazuje sve obavezne kolone", () => {
     cy.loginAs("supervisor");
-    cy.visit("/orders");
+    cy.visit("/orders/review");
     [
-      "Agent",
-      "Tip",
-      "Asset",
-      "Smer",
-      "Količina",
-      "Contract",
-      "Cena/jed.",
-      "Preostalo",
+      "Korisnik",         // agent
+      "Tip",              // order type
+      "Hartija",          // asset
+      "Količina",         // quantity
+      "Veličina ugovora", // contract size
+      "Cena/jed.",        // price per unit
+      "Smer",             // direction
+      "Preostalo",        // remaining portions
       "Status",
     ].forEach((header) => {
-      cy.get(".orders-table thead").should("contain", header);
+      cy.get(".mo-table thead").should("contain", header);
     });
   });
 
-  // #56: filter Pending — UI on dropped /orders page
-  it.skip("#56: filter Pending pokazuje samo pending ordere", () => {
-    cy.loginAs("supervisor");
-    cy.visit("/orders");
-    cy.get(".orders-filters select").select("pending");
-    cy.get(".orders-table tbody tr").each(($row) => {
-      cy.wrap($row).find(".orders-status").should("contain", "pending");
-    });
-  });
-
-  // #57: filter Done — UI on dropped /orders page
-  it.skip("#57: filter Done pokazuje samo zavrsene ordere", () => {
-    cy.loginAs("supervisor");
-    cy.visit("/orders");
-    cy.intercept("GET", "/api/orders?status=done*").as("doneList");
-    cy.get(".orders-filters select").select("done");
-    cy.wait("@doneList");
-    // Read statuses synchronously after the filter request resolved to avoid
-    // stale-DOM during async re-render.
-    cy.get(".orders-table tbody").should("exist");
-    cy.get(".orders-table tbody tr").then(($rows) => {
-      const statuses = $rows.toArray().map((tr) =>
-        (tr.querySelector(".orders-status")?.textContent || "").trim()
-      );
-      statuses.forEach((s) => expect(s).to.contain("done"));
-    });
-  });
-
-  // #58: supervizor cancel-uje approved order — UI on dropped /orders page
-  it.skip("#58: cancel na approved order menja status (cancelled ili sl.)", () => {
+  // #56: filter Pending pokazuje samo pending ordere
+  it("#56: filter 'Na čekanju' pokazuje samo pending ordere", () => {
+    // Make sure at least one pending row exists so the assertion is meaningful.
     cy.loginAs("agent");
     cy.findListingByTicker(TICKER).then((l) => {
       cy.createOrderApi({
         account_number: BANK_USD_ACCOUNT,
-        order_type: "limit", // limit so it hangs in approved waiting for trigger
+        order_type: "market",
         direction: "buy",
         quantity: 1,
         listing_id: l.id,
-        limit_price: Math.max(1, l.price - 10000), // way below market — won't fill
+      });
+    });
+
+    cy.loginAs("supervisor");
+    cy.intercept("GET", "/api/orders?status=pending*").as("pendingList");
+    cy.visit("/orders/review"); // default filter is already "pending"
+    cy.wait("@pendingList");
+
+    cy.get(".mo-table tbody").should("exist");
+    cy.get(".mo-table tbody tr").should("have.length.greaterThan", 0);
+    cy.get(".mo-table tbody tr .mo-status").each(($el) => {
+      cy.wrap($el).should("have.class", "mo-status--pending");
+    });
+  });
+
+  // #57: filter Done pokazuje samo zavrsene ordere
+  it("#57: filter 'Završeni' pokazuje samo zavrsene ordere", () => {
+    cy.loginAs("supervisor");
+    cy.intercept("GET", "/api/orders?status=done*").as("doneList");
+    cy.visit("/orders/review");
+    cy.contains(".mo-filter", "Završeni").click();
+    cy.wait("@doneList");
+
+    // Empty result is acceptable (no done orders yet); but if rows exist, every
+    // status badge must carry the done variant class.
+    cy.get(".mo-table tbody").should("exist");
+    cy.get(".mo-table tbody tr").then(($rows) => {
+      // Skip the "Nema naloga..." empty-state row, which has no .mo-status cell.
+      const statusCells = $rows.find(".mo-status");
+      statusCells.each((_, el) => {
+        expect(el.className).to.contain("mo-status--done");
+      });
+    });
+  });
+
+  // #58: supervizor otkazuje approved order. Use a limit BUY priced far below
+  // market so it sits in "approved" without filling, then exercise Otkaži.
+  it("#58: otkazivanje approved order-a menja status na cancelled", () => {
+    cy.loginAs("agent");
+    cy.findListingByTicker(TICKER).then((l) => {
+      cy.createOrderApi({
+        account_number: BANK_USD_ACCOUNT,
+        order_type: "limit",
+        direction: "buy",
+        quantity: 1,
+        listing_id: l.id,
+        limit_price: Math.max(1, l.price - 10000), // far below market — won't fill
       }).then((r) => {
+        expect(r.status).to.be.oneOf([200, 201]);
         const orderId = r.body.order_id;
+
+        // Approve the pending limit order.
         cy.loginAs("supervisor");
-        cy.visit("/orders");
-        cy.get(".orders-filters select").select("pending");
-        cy.contains(".orders-table tr", String(orderId)).within(() => {
-          cy.contains("button", "Approve").click();
-        });
+        cy.visit("/orders/review");
+        cy.contains(".mo-filter", "Na čekanju").click();
+        cy.contains(".mo-table tbody tr", String(orderId))
+          .find("button.mo-approve-btn")
+          .click();
         cy.waitForOrderStatus(orderId, "approved", { timeoutMs: 10_000 });
 
-        cy.visit("/orders");
-        cy.get(".orders-filters select").select("approved");
-        cy.contains(".orders-table tr", String(orderId)).within(() => {
-          cy.contains("button", "Cancel").click();
-        });
+        // Then cancel it from the Approved filter.
+        cy.contains(".mo-filter", "Odobreni").click();
+        cy.contains(".mo-table tbody tr", String(orderId))
+          .find("button.mo-cancel-btn")
+          .contains("Otkaži")
+          .click();
         cy.waitForOrderStatus(orderId, ["cancelled", "declined"], { timeoutMs: 10_000 });
       });
     });

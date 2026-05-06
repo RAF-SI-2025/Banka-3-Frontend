@@ -143,6 +143,7 @@ export default function OrdersReviewPage() {
                 <th>Hartija</th>
                 <th>Smer</th>
                 <th>Količina</th>
+                <th>Veličina ugovora</th>
                 <th>Cena/jed.</th>
                 <th>Preostalo</th>
                 <th>Status</th>
@@ -152,10 +153,10 @@ export default function OrdersReviewPage() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={11} className="mo-empty">Učitavanje…</td></tr>
+                <tr><td colSpan={12} className="mo-empty">Učitavanje…</td></tr>
               )}
               {!loading && orders.length === 0 && (
-                <tr><td colSpan={11} className="mo-empty">Nema naloga koji odgovaraju filteru.</td></tr>
+                <tr><td colSpan={12} className="mo-empty">Nema naloga koji odgovaraju filteru.</td></tr>
               )}
               {!loading && orders.map((o) => {
                 const expired = isPastSettlement(o.settlementDate);
@@ -174,6 +175,7 @@ export default function OrdersReviewPage() {
                       </span>
                     </td>
                     <td>{o.quantity}</td>
+                    <td>{o.contractSize}</td>
                     <td>{formatCurrency(o.pricePerUnit, o.currency)}</td>
                     <td>{o.remainingPortions}</td>
                     <td><span className={`mo-status mo-status--${o.status}`}>{ORDER_STATUS_LABEL[o.status] || o.status}</span></td>
