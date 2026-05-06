@@ -177,6 +177,32 @@ Cypress.Commands.add("setExchangeOpen", (micCode, open = true) => {
   });
 });
 
+// Inverse of setExchangeOpen — force-closes an exchange regardless of the
+// wall clock or open_override (#46). Required for closed-market tests that
+// need to run during NY business hours without time control.
+Cypress.Commands.add("setExchangeClosed", (micCode, closed = true) => {
+  return cy.window().then((win) => {
+    const token = win.sessionStorage.getItem("accessToken");
+    if (!token) throw new Error("setExchangeClosed requires prior login (loginAs)");
+    return cy
+      .request({
+        method: "GET",
+        url: "/api/exchanges",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((resp) => {
+        const ex = (resp.body || []).find((e) => e.mic_code === micCode);
+        if (!ex) throw new Error(`Exchange MIC=${micCode} not found in /exchanges`);
+        return cy.request({
+          method: "PATCH",
+          url: `/api/exchanges/${ex.id}/closed-override`,
+          headers: { Authorization: `Bearer ${token}` },
+          body: { closed_override: closed },
+        }).then(() => cy.wrap(ex));
+      });
+  });
+});
+
 // Resolve a listing by ticker (e.g. "MSFT") on a given MIC. Returns the listing object.
 Cypress.Commands.add("findListingByTicker", (ticker) => {
   return cy.window().then((win) => {

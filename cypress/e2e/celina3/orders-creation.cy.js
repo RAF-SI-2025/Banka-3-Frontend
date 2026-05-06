@@ -332,16 +332,32 @@ describe("Kreiranje naloga — #26–47", () => {
     // See cypress/e2e/ui/create-order-modal.cy.js
   });
 
-  // #46 Spec ↔ code divergence. Spec says: market order while exchange is
-  // closed is *created* and runs with a 30-min delay between fills. Backend
-  // (server.go:142) hard-rejects with FailedPrecondition. PR #201 added a
-  // frontend warning before submit but did not change the rejection behavior.
-  // Asserting the current code's rejection would give green CI for behavior
-  // that contradicts the spec — strictly worse than no test. Skipping until
-  // backend implements delayed execution.
-  it.skip("#46: market order pri zatvorenoj berzi se kreira sa odloženim izvršavanjem", () => {
-    // TODO: re-enable once server.go's closed-market path queues with delay
-    // instead of returning FailedPrecondition.
+  // #46 Spec p.57: market order pri zatvorenoj berzi se *kreira* i čeka da
+  // berza otvori, sa 30-min delay bonusom u izvršavaču. Force-closing the
+  // exchange via closed_override (added with this lift) keeps the assertion
+  // wall-clock-independent — without it, runs during NY business hours
+  // would naturally see IsOpen=true and the test would get no signal.
+  it("#46: market order pri zatvorenoj berzi se kreira sa odloženim izvršavanjem", () => {
+    cy.loginAs("supervisor");
+    cy.setExchangeClosed(NASDAQ_MIC, true);
+    cy.loginAs("agent");
+    cy.findListingByTicker(TICKER).then((l) => {
+      cy.createOrderApi({
+        account_number: BANK_USD_ACCOUNT,
+        order_type: "market",
+        direction: "buy",
+        quantity: 1,
+        listing_id: l.id,
+      }).then((r) => {
+        expect(r.status, "closed-market market order accepted, not rejected").to.be.oneOf([200, 201]);
+        cy.getOrderById(r.body.order_id).then((o) => {
+          expect(o.after_hours, "after_hours flag set when exchange is closed").to.eq(true);
+        });
+      });
+    });
+    // Restore: subsequent tests in the file rely on NASDAQ being open.
+    cy.loginAs("supervisor");
+    cy.setExchangeClosed(NASDAQ_MIC, false);
   });
 
   // #47 After-hours warning is a UI concern (modal text). Backend just sets
