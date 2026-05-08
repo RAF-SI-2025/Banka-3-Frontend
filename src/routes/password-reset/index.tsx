@@ -7,7 +7,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
 
-export const Route = createFileRoute('/reset-lozinke')({
+export const Route = createFileRoute('/password-reset/')({
+  // The route id is set automatically by the TanStack Router file-based
+  // plugin from this file's path; no body changes needed.
   component: ResetRequestPage,
 })
 

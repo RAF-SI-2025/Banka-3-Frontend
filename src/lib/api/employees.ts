@@ -64,12 +64,13 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Employ
   return data
 }
 
+// Per spec p.8, Username and Datum rođenja are "Ne menja se" — they are
+// not part of the patch surface even though the proto still carries
+// them for backwards compat (the server silently drops them).
 export interface UpdateEmployeeInput {
   email?: string
-  username?: string
   firstName?: string
   lastName?: string
-  dateOfBirth?: string
   gender?: Gender
   phone?: string
   address?: string
@@ -90,4 +91,8 @@ export async function setEmployeeActive(id: string, active: boolean): Promise<Em
 export async function setEmployeePermissions(id: string, permissions: string[]): Promise<Employee> {
   const { data } = await api.put<Employee>(`/v1/employees/${id}/permissions`, { permissions })
   return data
+}
+
+export async function resendActivation(employeeId: string): Promise<void> {
+  await api.post('/v1/auth/activate/resend', { employeeId })
 }

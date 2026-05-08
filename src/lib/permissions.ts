@@ -19,3 +19,15 @@ export function has(holder: string[], target: Permission): boolean {
 export function hasAny(holder: string[], targets: Permission[]): boolean {
   return targets.some((t) => has(holder, t))
 }
+
+// Serbian labels for the permission-management UI. Keys must match the
+// values in `Permissions` so the lookup can't drift silently — the type
+// of `permissionLabels` is `Record<Permission, string>`.
+export const permissionLabels: Record<Permission, string> = {
+  [Permissions.Admin]: 'Administrator (puna kontrola)',
+  [Permissions.EmployeeRead]: 'Pregled zaposlenih',
+  [Permissions.EmployeeWrite]: 'Upravljanje zaposlenima',
+  [Permissions.ClientRead]: 'Pregled klijenata',
+  [Permissions.ClientWrite]: 'Upravljanje klijentima',
+  [Permissions.PermissionGrant]: 'Dodela permisija',
+}

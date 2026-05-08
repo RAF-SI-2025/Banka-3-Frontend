@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
 import {
   getEmployee,
+  resendActivation,
   setEmployeeActive,
   setEmployeePermissions,
   updateEmployee,
@@ -11,7 +12,7 @@ import {
   type Gender,
   type UpdateEmployeeInput,
 } from '@/lib/api/employees'
-import { Permissions, has } from '@/lib/permissions'
+import { Permissions, has, permissionLabels, type Permission } from '@/lib/permissions'
 import { useAuthStore } from '@/lib/auth/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,7 +24,7 @@ export const Route = createFileRoute('/_authed/portal/employees/$id')({
   component: EditEmployeePage,
 })
 
-const ALL_PERMISSIONS = Object.values(Permissions)
+const ALL_PERMISSIONS: Permission[] = Object.values(Permissions)
 
 function EditEmployeePage() {
   const { id } = Route.useParams()
@@ -44,10 +45,8 @@ function EditEmployeePage() {
     if (q.data && form === null) {
       setForm({
         email: q.data.email,
-        username: q.data.username,
         firstName: q.data.firstName,
         lastName: q.data.lastName,
-        dateOfBirth: q.data.dateOfBirth,
         gender: q.data.gender,
         phone: q.data.phone,
         address: q.data.address,
@@ -71,6 +70,10 @@ function EditEmployeePage() {
   const setPerm = useMutation({
     mutationFn: (next: string[]) => setEmployeePermissions(id, next),
     onSuccess: (e) => onUpdated(e),
+    onError: (e) => surfaceError(e),
+  })
+  const resend = useMutation({
+    mutationFn: () => resendActivation(id),
     onError: (e) => surfaceError(e),
   })
 
@@ -126,7 +129,8 @@ function EditEmployeePage() {
             </div>
             <div>
               <Label htmlFor="username">Korisničko ime</Label>
-              <Input id="username" value={form.username ?? ''} onChange={(e) => field('username', e.target.value)} />
+              <Input id="username" value={emp.username} disabled readOnly />
+              <p className="mt-1 text-xs text-gray-500">Korisničko ime se ne menja nakon kreiranja.</p>
             </div>
             <div>
               <Label htmlFor="firstName">Ime</Label>
@@ -178,7 +182,7 @@ function EditEmployeePage() {
         <CardHeader>
           <CardTitle>Status naloga</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center gap-4">
+        <CardContent className="flex flex-wrap items-center gap-4">
           <span className={emp.active ? 'text-green-700' : 'text-red-700'}>
             {emp.active ? 'Aktivan' : 'Deaktiviran'}
           </span>
@@ -189,6 +193,24 @@ function EditEmployeePage() {
           >
             {emp.active ? 'Deaktiviraj' : 'Aktiviraj'}
           </Button>
+          {!emp.activated && (
+            <>
+              <span className="text-sm text-gray-500">
+                Nalog još nije aktiviran (link iz mejla nije iskorišćen).
+              </span>
+              <Button
+                variant="secondary"
+                disabled={resend.isPending || resend.isSuccess}
+                onClick={() => resend.mutate()}
+              >
+                {resend.isSuccess
+                  ? 'Mejl poslat'
+                  : resend.isPending
+                    ? 'Slanje…'
+                    : 'Pošalji aktivaciju ponovo'}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -200,9 +222,17 @@ function EditEmployeePage() {
           <CardContent className="space-y-3">
             <div className="grid gap-2 md:grid-cols-2">
               {ALL_PERMISSIONS.map((p) => (
-                <label key={p} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
-                  <code>{p}</code>
+                <label key={p} className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={perms.includes(p)}
+                    onChange={() => togglePerm(p)}
+                  />
+                  <span>
+                    <span className="block">{permissionLabels[p]}</span>
+                    <code className="text-xs text-gray-500">{p}</code>
+                  </span>
                 </label>
               ))}
             </div>

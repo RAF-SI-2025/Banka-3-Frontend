@@ -12,7 +12,7 @@ interface Search {
   token?: string
 }
 
-export const Route = createFileRoute('/reset-lozinke/potvrda')({
+export const Route = createFileRoute('/password-reset/confirm')({
   validateSearch: (search: Record<string, unknown>): Search => ({
     token: typeof search.token === 'string' ? search.token : undefined,
   }),

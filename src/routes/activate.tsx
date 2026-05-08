@@ -12,7 +12,7 @@ interface Search {
   token?: string
 }
 
-export const Route = createFileRoute('/aktivacija')({
+export const Route = createFileRoute('/activate')({
   validateSearch: (search: Record<string, unknown>): Search => ({
     token: typeof search.token === 'string' ? search.token : undefined,
   }),

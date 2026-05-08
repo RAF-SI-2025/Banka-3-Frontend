@@ -81,7 +81,7 @@ function LoginPage() {
               {submitting ? 'Prijavljivanje…' : 'Prijavi se'}
             </Button>
             <div className="text-center text-sm">
-              <Link to="/reset-lozinke" className="text-blue-600 hover:underline">
+              <Link to="/password-reset" className="text-blue-600 hover:underline">
                 Zaboravljena lozinka?
               </Link>
             </div>
