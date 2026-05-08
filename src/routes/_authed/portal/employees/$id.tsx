@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
@@ -27,7 +27,6 @@ const ALL_PERMISSIONS = Object.values(Permissions)
 
 function EditEmployeePage() {
   const { id } = Route.useParams()
-  const navigate = useNavigate()
   const qc = useQueryClient()
   const userPerms = useAuthStore((s) => s.permissions)
   const canGrant = has(userPerms, Permissions.PermissionGrant)
