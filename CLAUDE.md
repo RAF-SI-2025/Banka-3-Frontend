@@ -123,17 +123,33 @@ npm run api:gen          # regenerate src/lib/api from gen/openapi/banka.swagger
 `../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto` in
 the backend first.
 
-## What's not done yet
+## C1 status
 
-This branch is a scaffold. Next steps:
+Verified locally on the rewrite branch (2026-05-08):
+- `npm install` clean (537 packages)
+- `tsc -b` clean
+- `vite build` produces a working bundle (~413 kB JS, ~12 kB CSS)
+- `vite` dev server boots in ~350ms
 
-1. Stand up the login page and wire the auth flow against a real `user`
-   gRPC service (depends on backend celina 1 progress).
-2. Set up TanStack Router file structure with auth gate.
-3. Get one Cypress spec green end-to-end (login + redirect).
+Implemented and ready for browser smoke-test against a running backend
+(`task up CELINA=c1` over in `Banka-3-Backend`):
+- `/login` with spec-exact error messages ("Korisnik ne postoji",
+  "Neispravni unos") rendered from gateway responses
+- `/aktivacija?token=...`
+- `/reset-lozinke` and `/reset-lozinke/potvrda?token=...`
+- `/_authed` route gate redirecting to `/login` when no token
+- `/portal` admin home: paginated employee list with filter inputs,
+  permission-gated "Novi zaposleni" button
+- `/portal/employees/new` create form
+- `/portal/employees/:id` edit + active toggle + permission management
 
-Then build out per celina, one feature at a time, writing Cypress
-acceptance tests as we go.
+Cypress spec for c1 (`cypress/e2e/celina1/login.cy.ts`) covers
+TestoviCelina1 scenarios 1–3 against canned responses; exercising
+against a live backend requires a seeded admin (open issue in
+top-level CLAUDE.md).
+
+Next steps: c2 frontend pages (accounts, payments, cards, loans —
+client-side banking app).
 
 ## Spec edge cases that bite
 
