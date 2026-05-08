@@ -6,7 +6,7 @@ export const Route = createFileRoute('/')({
     const { accessToken, userKind } = useAuthStore.getState()
     if (!accessToken) throw redirect({ to: '/login' })
     if (userKind === 'employee') throw redirect({ to: '/portal' })
-    throw redirect({ to: '/portal' }) // c1: client home arrives in c2
+    throw redirect({ to: '/banking' })
   },
   component: () => null,
 })

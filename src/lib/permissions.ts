@@ -8,6 +8,16 @@ export const Permissions = {
   ClientRead: 'client.read',
   ClientWrite: 'client.write',
   PermissionGrant: 'permission.grant',
+  CompanyRead: 'company.read',
+  CompanyWrite: 'company.write',
+  AccountRead: 'account.read',
+  AccountWrite: 'account.write',
+  ExchangeWrite: 'exchange.write',
+  PaymentWrite: 'payment.write',
+  CardRead: 'card.read',
+  CardWrite: 'card.write',
+  LoanRead: 'loan.read',
+  LoanWrite: 'loan.write',
 } as const
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions]
@@ -20,9 +30,6 @@ export function hasAny(holder: string[], targets: Permission[]): boolean {
   return targets.some((t) => has(holder, t))
 }
 
-// Serbian labels for the permission-management UI. Keys must match the
-// values in `Permissions` so the lookup can't drift silently — the type
-// of `permissionLabels` is `Record<Permission, string>`.
 export const permissionLabels: Record<Permission, string> = {
   [Permissions.Admin]: 'Administrator (puna kontrola)',
   [Permissions.EmployeeRead]: 'Pregled zaposlenih',
@@ -30,4 +37,14 @@ export const permissionLabels: Record<Permission, string> = {
   [Permissions.ClientRead]: 'Pregled klijenata',
   [Permissions.ClientWrite]: 'Upravljanje klijentima',
   [Permissions.PermissionGrant]: 'Dodela permisija',
+  [Permissions.CompanyRead]: 'Pregled firmi',
+  [Permissions.CompanyWrite]: 'Upravljanje firmama',
+  [Permissions.AccountRead]: 'Pregled računa',
+  [Permissions.AccountWrite]: 'Upravljanje računima',
+  [Permissions.ExchangeWrite]: 'Upravljanje kursnom listom',
+  [Permissions.PaymentWrite]: 'Plaćanja i transferi',
+  [Permissions.CardRead]: 'Pregled kartica',
+  [Permissions.CardWrite]: 'Upravljanje karticama',
+  [Permissions.LoanRead]: 'Pregled kredita',
+  [Permissions.LoanWrite]: 'Odobravanje kredita',
 }
