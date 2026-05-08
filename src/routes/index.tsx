@@ -1,16 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useAuthStore } from '@/lib/auth/store'
 
 export const Route = createFileRoute('/')({
-  component: Landing,
+  beforeLoad: () => {
+    const { accessToken, userKind } = useAuthStore.getState()
+    if (!accessToken) throw redirect({ to: '/login' })
+    if (userKind === 'employee') throw redirect({ to: '/portal' })
+    throw redirect({ to: '/portal' }) // c1: client home arrives in c2
+  },
+  component: () => null,
 })
-
-function Landing() {
-  return (
-    <main className="container py-12">
-      <h1 className="text-3xl font-semibold">Banka 3</h1>
-      <p className="mt-2 text-muted-foreground">
-        Rewrite scaffolding. Login lands here once celina 1 is wired.
-      </p>
-    </main>
-  )
-}
