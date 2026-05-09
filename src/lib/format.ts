@@ -15,6 +15,17 @@ export function formatMoney(amount: string | number | undefined, currency?: stri
   return currency ? `${grouped},${fracPart} ${currencyLabel(currency)}` : `${grouped},${fracPart}`
 }
 
+// formatRate renders an FX rate trimmed to 2 decimal places. The
+// backend may emit "117.4523" or "1.0000" depending on which leg of
+// the conversion produced it; the menjačnica UI just needs a
+// human-readable kurs.
+export function formatRate(rate: string | number | undefined): string {
+  if (rate === undefined || rate === null || rate === '') return '—'
+  const n = typeof rate === 'string' ? Number(rate) : rate
+  if (!Number.isFinite(n)) return String(rate)
+  return n.toFixed(2)
+}
+
 export function currencyLabel(c: string | bankaBankV1Currency): string {
   // Strip CURRENCY_ prefix; UNSPECIFIED → empty.
   if (!c) return ''

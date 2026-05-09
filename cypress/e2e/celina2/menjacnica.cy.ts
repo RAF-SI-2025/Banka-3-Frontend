@@ -122,9 +122,7 @@ describe('Celina 2 — menjačnica', () => {
     cy.contains('9,95 EUR').should('be.visible')
     cy.contains('Provizija').parent().should('contain', '0,05 EUR')
 
-    // First click = Pregled, switches the button label to Realizuj. The
-    // Realizuj click opens the verifikacioni-kod dialog.
-    cy.findByRole('button', { name: /Pregled/ }).click()
+    // Realizuj opens the verifikacioni-kod dialog directly.
     cy.findByRole('button', { name: /Realizuj/ }).click()
     cy.wait('@verifReq')
     cy.get('#verif-code').type('424242')

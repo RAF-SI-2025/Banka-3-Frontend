@@ -11,7 +11,7 @@ import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
-import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
+import { formatMoney, formatAccountNumber, currencyLabel, formatRate } from '@/lib/format'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -44,7 +44,6 @@ function Menjacnica() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
-  const [confirmed, setConfirmed] = useState(false)
   const [pending, setPending] = useState<v1CreateTransferRequest | null>(null)
 
   const accounts = useQuery({
@@ -98,10 +97,6 @@ function Menjacnica() {
   const errMsg = exec.error ? apiError(exec.error, 'Greška pri zameni valuta.') : null
 
   function onSubmit(v: FormValues) {
-    if (!confirmed) {
-      setConfirmed(true)
-      return
-    }
     setPending({ fromAccountId: v.fromAccountId, toAccountId: v.toAccountId, amount: v.amount })
   }
 
@@ -116,11 +111,7 @@ function Menjacnica() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Sa računa</Label>
-            <Select
-              {...form.register('fromAccountId', {
-                onChange: () => setConfirmed(false),
-              })}
-            >
+            <Select {...form.register('fromAccountId')}>
               <option value="">— izaberite —</option>
               {accounts.data?.accounts?.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -136,7 +127,7 @@ function Menjacnica() {
           </div>
           <div>
             <Label>Na račun</Label>
-            <Select {...form.register('toAccountId', { onChange: () => setConfirmed(false) })}>
+            <Select {...form.register('toAccountId')}>
               <option value="">— izaberite —</option>
               {accounts.data?.accounts?.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -149,10 +140,7 @@ function Menjacnica() {
 
         <div>
           <Label>Iznos ({fromAcc ? currencyLabel(fromAcc.currency!) : '—'})</Label>
-          <Input
-            inputMode="decimal"
-            {...form.register('amount', { onChange: () => setConfirmed(false) })}
-          />
+          <Input inputMode="decimal" {...form.register('amount')} />
         </div>
 
         {fromAcc?.currency === toAcc?.currency && fromAcc && toAcc && (
@@ -165,7 +153,7 @@ function Menjacnica() {
           <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-900">
             <div className="grid grid-cols-2 gap-2">
               <div>Kurs:</div>
-              <div className="text-right font-mono">{quote.data.rate}</div>
+              <div className="text-right font-mono">{formatRate(quote.data.rate)}</div>
               <div>Provizija:</div>
               <div className="text-right">
                 {formatMoney(quote.data.commission, currencyLabel(toAcc!.currency!))}
@@ -180,12 +168,9 @@ function Menjacnica() {
 
         {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            {confirmed ? 'Potvrdite kliktajem na Realizuj.' : 'Pregledajte iznos pre realizacije.'}
-          </span>
+        <div className="flex justify-end">
           <Button type="submit" disabled={exec.isPending || quote.isFetching}>
-            {confirmed ? (exec.isPending ? 'Šaljem…' : 'Realizuj') : 'Pregled'}
+            {exec.isPending ? 'Šaljem…' : 'Realizuj'}
           </Button>
         </div>
       </form>
@@ -213,8 +198,8 @@ function Menjacnica() {
                   <TR key={i}>
                     <TD>{currencyLabel(r.from!)}</TD>
                     <TD>{currencyLabel(r.to!)}</TD>
-                    <TD className="text-right font-mono">{r.bid}</TD>
-                    <TD className="text-right font-mono">{r.ask}</TD>
+                    <TD className="text-right font-mono">{formatRate(r.bid)}</TD>
+                    <TD className="text-right font-mono">{formatRate(r.ask)}</TD>
                   </TR>
                 ))}
             </TBody>

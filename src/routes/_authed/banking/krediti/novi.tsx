@@ -24,18 +24,29 @@ export const Route = createFileRoute('/_authed/banking/krediti/novi')({
   component: NewLoanRequest,
 })
 
-const schema = z.object({
-  accountId: z.string().min(1, 'Izaberite račun'),
-  loanType: z.nativeEnum(v1LoanType),
-  interestType: z.nativeEnum(v1InterestType),
-  amount: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
-  installmentsTotal: z.coerce.number().int().positive('Broj rata mora biti pozitivan'),
-  monthlySalary: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Plata mora biti broj'),
-  employmentStatus: z.nativeEnum(v1EmploymentStatus),
-  employmentDurationMonths: z.coerce.number().int().nonnegative(),
-  contactPhone: z.string().min(6, 'Telefon je obavezan'),
-  purpose: z.string().min(1, 'Svrha je obavezna'),
-})
+const schema = z
+  .object({
+    accountId: z.string().min(1, 'Izaberite račun'),
+    loanType: z.nativeEnum(v1LoanType),
+    interestType: z.nativeEnum(v1InterestType),
+    amount: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
+    installmentsTotal: z.coerce.number().int().positive('Broj rata mora biti pozitivan'),
+    monthlySalary: z.string(),
+    employmentStatus: z.nativeEnum(v1EmploymentStatus),
+    employmentDurationMonths: z.coerce.number().int().nonnegative(),
+    contactPhone: z.string().min(6, 'Telefon je obavezan'),
+    purpose: z.string().min(1, 'Svrha je obavezna'),
+  })
+  .superRefine((v, ctx) => {
+    if (v.employmentStatus === v1EmploymentStatus.EMPLOYMENT_STATUS_UNEMPLOYED) return
+    if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(v.monthlySalary)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['monthlySalary'],
+        message: 'Plata mora biti broj',
+      })
+    }
+  })
 
 type FormValues = z.infer<typeof schema>
 
@@ -85,11 +96,14 @@ function NewLoanRequest() {
 
   const loanType = form.watch('loanType')
   const accountId = form.watch('accountId')
+  const employmentStatus = form.watch('employmentStatus')
   const account = accounts.data?.accounts?.find((a) => a.id === accountId)
+  const isUnemployed = employmentStatus === v1EmploymentStatus.EMPLOYMENT_STATUS_UNEMPLOYED
 
   const errMsg = submit.error ? apiError(submit.error, 'Greška pri slanju zahteva.') : null
 
   function onSubmit(v: FormValues) {
+    const unemployed = v.employmentStatus === v1EmploymentStatus.EMPLOYMENT_STATUS_UNEMPLOYED
     submit.mutate({
       accountId: v.accountId,
       loanType: v.loanType,
@@ -97,7 +111,9 @@ function NewLoanRequest() {
       amount: v.amount,
       currency: account?.currency ?? bankaBankV1Currency.CURRENCY_RSD,
       purpose: v.purpose,
-      monthlySalary: v.monthlySalary,
+      // Backend requires a numeric string; "0" stands in when the
+      // applicant is unemployed and the salary field was hidden.
+      monthlySalary: unemployed ? '0' : v.monthlySalary,
       employmentStatus: v.employmentStatus,
       employmentDurationMonths: v.employmentDurationMonths,
       installmentsTotal: v.installmentsTotal,
@@ -165,10 +181,6 @@ function NewLoanRequest() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Mesečna plata</Label>
-            <Input inputMode="decimal" {...form.register('monthlySalary')} />
-          </div>
-          <div>
             <Label>Status zaposlenja</Label>
             <Select {...form.register('employmentStatus')}>
               {Object.values(v1EmploymentStatus)
@@ -180,6 +192,17 @@ function NewLoanRequest() {
                 ))}
             </Select>
           </div>
+          {!isUnemployed && (
+            <div>
+              <Label>Mesečna plata</Label>
+              <Input inputMode="decimal" {...form.register('monthlySalary')} />
+              {form.formState.errors.monthlySalary && (
+                <p className="mt-1 text-xs text-red-600">
+                  {form.formState.errors.monthlySalary.message}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

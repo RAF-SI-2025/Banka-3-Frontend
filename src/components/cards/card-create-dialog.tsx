@@ -1,8 +1,8 @@
 // Shared "Nova kartica" form, used by /banking/kartice (client requesting
 // a card on their own account) and /portal/cards (employee on any
 // account — and AuthorizedPerson selection for business accounts).
-// Issuance is gated by the verifikacioni-kod primitive; for clients
-// the code is delivered by email.
+// Issuance is gated by the verifikacioni-kod primitive; the code is
+// shown inline next to the fake-QR placeholder until the c5 mobile app.
 
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -249,7 +249,7 @@ export function CardCreateDialog({
         open={!!pending}
         kind="card_issue"
         title="Potvrda izdavanja kartice"
-        description="Poslali smo verifikacioni kod na vašu email adresu."
+        description="Unesite verifikacioni kod kako biste potvrdili izdavanje kartice."
         onCancel={() => setPending(null)}
         onConfirm={async (proof) => {
           if (!pending) return
