@@ -29,7 +29,7 @@ function dockerExec(container: string, args: string[]): string {
   })
 }
 
-function resetBackend(): { ok: true } {
+function resetBackend(opts: { c2?: boolean } | null): { ok: true } {
   // Truncate every c1 user-schema table.
   dockerExec(POSTGRES_CONTAINER, [
     'psql',
@@ -42,6 +42,30 @@ function resetBackend(): { ok: true } {
               "user".activation_tokens, "user".password_reset_tokens
      restart identity cascade`,
   ])
+  // For c2 specs, also truncate bank schema (everything except system
+  // accounts which the bank service re-seeds at boot, but here we let
+  // EnsureSystemAccounts re-create them on next boot — easier to just
+  // wipe everything and rely on the live container to re-seed).
+  if (opts?.c2) {
+    dockerExec(POSTGRES_CONTAINER, [
+      'psql',
+      '-U',
+      PG_USER,
+      '-d',
+      PG_DB,
+      '-c',
+      `truncate
+         "bank".loan_installments, "bank".loans, "bank".loan_requests,
+         "bank".cards, "bank".authorized_persons, "bank".payment_recipients,
+         "bank".transactions, "bank".accounts, "bank".companies
+       restart identity cascade`,
+    ])
+    // Bank's house accounts are seeded at boot — bounce the container so
+    // EnsureSystemAccounts runs again.
+    execFileSync('docker', ['restart', 'banka-bank-1'], { encoding: 'utf8' })
+    // Wait for bank to be healthy again (~3-4s typically).
+    waitForHealthy('banka-bank-1', 15)
+  }
   // Drop login:* counters so prior locks don't bleed across specs.
   dockerExec(REDIS_CONTAINER, [
     'sh',
@@ -63,9 +87,26 @@ function resetBackend(): { ok: true } {
       ...process.env,
       PATH: augmentedPath,
       DATABASE_URL: `postgres://${PG_USER}:banka@localhost:5432/${PG_DB}?sslmode=disable`,
+      // Always seed the c2 fixture client too — idempotent; c1 specs
+      // ignore it. Saves us from a separate "seed c2" task.
+      SEED_CLIENT: 'true',
     },
   })
   return { ok: true }
+}
+
+function waitForHealthy(container: string, maxSeconds: number): void {
+  for (let i = 0; i < maxSeconds; i++) {
+    try {
+      const out = execFileSync('docker', ['inspect', '-f', '{{.State.Status}}', container], {
+        encoding: 'utf8',
+      }).trim()
+      if (out === 'running') return
+    } catch {
+      // ignore — container may not exist yet
+    }
+    execFileSync('sleep', ['1'])
+  }
 }
 
 // latestLink scrapes user-service stdout for the most recent email body

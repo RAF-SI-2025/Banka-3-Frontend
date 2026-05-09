@@ -81,6 +81,7 @@ function PortalAccounts() {
               <TH>Valuta</TH>
               <TH className="text-right">Stanje</TH>
               <TH>Status</TH>
+              <TH></TH>
             </TR>
           </THead>
           <TBody>
@@ -95,10 +96,15 @@ function PortalAccounts() {
                     {accountStatusLabel[a.status!]}
                   </Badge>
                 </TD>
+                <TD>
+                  <Link to="/portal/accounts/$id" params={{ id: a.id! }} className="text-blue-600 hover:underline">
+                    Detalji
+                  </Link>
+                </TD>
               </TR>
             ))}
             {(!accounts.data.accounts || accounts.data.accounts.length === 0) && (
-              <EmptyRow colSpan={5}>Nema rezultata.</EmptyRow>
+              <EmptyRow colSpan={6}>Nema rezultata.</EmptyRow>
             )}
           </TBody>
         </Table>

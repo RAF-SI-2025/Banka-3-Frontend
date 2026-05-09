@@ -14,8 +14,37 @@ export const api: AxiosInstance = axios.create({
 api.interceptors.request.use((cfg: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken
   if (token) cfg.headers.Authorization = `Bearer ${token}`
+
+  // Idempotency-Key on every mutating request (per the project's API
+  // conventions in CLAUDE.md). The gateway already accepts the header
+  // (CORS allow-list); services hash it into a per-key result cache to
+  // make retries safe. Callers can pre-set their own key (e.g. when
+  // retrying explicitly) and we won't overwrite it.
+  const method = (cfg.method ?? 'get').toLowerCase()
+  if (method !== 'get' && method !== 'head' && method !== 'options') {
+    if (!cfg.headers['Idempotency-Key']) {
+      cfg.headers['Idempotency-Key'] = uuidv4()
+    }
+  }
   return cfg
 })
+
+// uuidv4 returns a RFC 4122 v4 UUID. We avoid pulling in the `uuid`
+// package for one call site; crypto.randomUUID is available in every
+// browser since 2022 and in Node 14.17+, well within our targets.
+function uuidv4(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  // Fallback for environments without crypto.randomUUID — uses
+  // Math.random which is non-cryptographic, but the key only needs to
+  // be unique per request, not unguessable.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
 
 api.interceptors.response.use(
   (r) => r,

@@ -1,12 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { listCards, setCardStatus } from '@/lib/api/cards'
+import { listAccounts } from '@/lib/api/accounts'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { CardCreateDialog } from '@/components/cards/card-create-dialog'
 import { cardBrandLabel, cardStatusLabel } from '@/lib/labels'
 import { v1CardStatus } from '@/lib/api/generated/models/v1CardStatus'
 import { formatMoney } from '@/lib/format'
@@ -19,10 +22,17 @@ function PortalCards() {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const canWrite = has(perms, Permissions.CardWrite)
+  const [openCreate, setOpenCreate] = useState(false)
 
   const cards = useQuery({
     queryKey: keys.card.list({}),
     queryFn: () => listCards(),
+  })
+
+  const accounts = useQuery({
+    queryKey: keys.account.list({ pageSize: 200 }),
+    queryFn: () => listAccounts({ pageSize: 200 }),
+    enabled: canWrite,
   })
 
   const setStatus = useMutation({
@@ -32,7 +42,15 @@ function PortalCards() {
 
   return (
     <main className="container space-y-4 py-8">
-      <h1 className="text-2xl font-semibold">Kartice</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Kartice</h1>
+        {canWrite && <Button onClick={() => setOpenCreate(true)}>Nova kartica</Button>}
+      </div>
+      <CardCreateDialog
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        accounts={accounts.data?.accounts ?? []}
+      />
       {cards.data && (
         <Table>
           <THead>

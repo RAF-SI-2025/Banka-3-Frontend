@@ -6,23 +6,27 @@
 
 const ADMIN_EMAIL = 'admin@banka.local'
 const ADMIN_PASSWORD = 'Admin123!'
+const CLIENT_EMAIL = 'klijent@banka.local'
+const CLIENT_PASSWORD = 'Klijent123!'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      /** Truncate the user schema, flush login:* keys in Redis, and re-seed the bootstrap admin. */
-      resetBackend(): Chainable<void>
+      /** Truncate the user schema, flush login:* keys in Redis, and re-seed the bootstrap admin. Pass {c2:true} to also wipe bank schema. */
+      resetBackend(opts?: { c2?: boolean }): Chainable<void>
       /** Programmatic login via /api/v1/auth/login; populates the auth store and returns the token. */
       loginAsAdmin(): Chainable<string> // resolves to admin email; navigates browser to /portal
+      /** Login as the seeded c2 test client (planted by `task seed SEED_CLIENT=true`). */
+      loginAsClient(): Chainable<string>
       /** Reads the user service container's stdout, returns the most recent email body for `to` matching `marker`. */
       captureLink(to: string, marker: string): Chainable<string>
     }
   }
 }
 
-Cypress.Commands.add('resetBackend', () => {
-  cy.task('resetBackend').then((res) => {
+Cypress.Commands.add('resetBackend', (opts?: { c2?: boolean }) => {
+  cy.task('resetBackend', opts ?? null).then((res) => {
     if ((res as { ok: boolean }).ok !== true) {
       throw new Error('resetBackend failed: ' + JSON.stringify(res))
     }
@@ -39,6 +43,15 @@ Cypress.Commands.add('loginAsAdmin', () => {
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 5000 }).should('not.include', '/login')
   return cy.wrap(ADMIN_EMAIL)
+})
+
+Cypress.Commands.add('loginAsClient', () => {
+  cy.visit('/login')
+  cy.findByLabelText('Email').clear().type(CLIENT_EMAIL)
+  cy.findByLabelText('Lozinka').clear().type(CLIENT_PASSWORD)
+  cy.findByRole('button', { name: /Prijavi se/ }).click()
+  cy.url({ timeout: 5000 }).should('not.include', '/login')
+  return cy.wrap(CLIENT_EMAIL)
 })
 
 Cypress.Commands.add('captureLink', (to: string, marker: string) => {

@@ -16,9 +16,9 @@
     "api:gen": "openapi-typescript-codegen --input ../Banka-3-Backend/gen/openapi/banka.swagger.json --output src/lib/api/generated --client axios --useOptions"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-router": "^1.86.0",
-    "@hookform/resolvers": "^3.9.0",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@tanstack/router-vite-plugin": "^1.86.0",
+    "@testing-library/cypress": "^10.0.3",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.0",
@@ -40,7 +41,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
-    "@testing-library/cypress": "^10.0.3",
+    "axios-mock-adapter": "^2.1.0",
     "cypress": "^15.0.0",
     "eslint": "^9.16.0",
     "eslint-plugin-react-hooks": "^5.1.0",

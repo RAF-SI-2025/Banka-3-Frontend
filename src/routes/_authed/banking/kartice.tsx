@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { listCards, setCardStatus } from '@/lib/api/cards'
 import { listAccounts } from '@/lib/api/accounts'
 import { useAuthStore } from '@/lib/auth/store'
@@ -9,6 +10,7 @@ import { cardBrandLabel, cardStatusLabel } from '@/lib/labels'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { CardCreateDialog } from '@/components/cards/card-create-dialog'
 import { v1CardStatus } from '@/lib/api/generated/models/v1CardStatus'
 
 export const Route = createFileRoute('/_authed/banking/kartice')({
@@ -18,6 +20,7 @@ export const Route = createFileRoute('/_authed/banking/kartice')({
 function ClientCards() {
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
+  const [openCreate, setOpenCreate] = useState(false)
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -38,7 +41,15 @@ function ClientCards() {
 
   return (
     <main className="container space-y-4 py-8">
-      <h1 className="text-2xl font-semibold">Kartice</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Kartice</h1>
+        <Button onClick={() => setOpenCreate(true)}>Nova kartica</Button>
+      </div>
+      <CardCreateDialog
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        accounts={accounts.data?.accounts ?? []}
+      />
       {cards.isLoading && <p className="text-gray-500">Učitavanje…</p>}
       {cards.data && (
         <Table>
