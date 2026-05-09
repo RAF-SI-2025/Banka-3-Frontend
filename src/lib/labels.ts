@@ -14,6 +14,12 @@ import { v1InstallmentStatus } from './api/generated/models/v1InstallmentStatus'
 import { v1EmploymentStatus } from './api/generated/models/v1EmploymentStatus'
 import { v1TransactionKind } from './api/generated/models/v1TransactionKind'
 import { v1TransactionStatus } from './api/generated/models/v1TransactionStatus'
+import { v1OrderType } from './api/generated/models/v1OrderType'
+import { v1OrderStatus } from './api/generated/models/v1OrderStatus'
+import { v1Direction } from './api/generated/models/v1Direction'
+import { v1SecurityType } from './api/generated/models/v1SecurityType'
+import { v1OptionType } from './api/generated/models/v1OptionType'
+import { v1ActuaryType } from './api/generated/models/v1ActuaryType'
 
 export const accountKindLabel: Record<v1AccountKind, string> = {
   [v1AccountKind.ACCOUNT_KIND_UNSPECIFIED]: '—',
@@ -139,6 +145,7 @@ export const txKindLabel: Record<v1TransactionKind, string> = {
   [v1TransactionKind.TRANSACTION_KIND_TRANSFER]: 'Transfer',
   [v1TransactionKind.TRANSACTION_KIND_EXCHANGE]: 'Menjačnica',
   [v1TransactionKind.TRANSACTION_KIND_FEE]: 'Provizija',
+  [v1TransactionKind.TRANSACTION_KIND_TRADE]: 'Trgovina',
 }
 
 export const txStatusLabel: Record<v1TransactionStatus, string> = {
@@ -146,5 +153,51 @@ export const txStatusLabel: Record<v1TransactionStatus, string> = {
   [v1TransactionStatus.TRANSACTION_STATUS_REALIZED]: 'Realizovana',
   [v1TransactionStatus.TRANSACTION_STATUS_REJECTED]: 'Odbijena',
   [v1TransactionStatus.TRANSACTION_STATUS_PROCESSING]: 'U obradi',
+}
+
+export const orderTypeLabel: Record<v1OrderType, string> = {
+  [v1OrderType.ORDER_TYPE_UNSPECIFIED]: '—',
+  [v1OrderType.ORDER_TYPE_MARKET]: 'Tržišni',
+  [v1OrderType.ORDER_TYPE_LIMIT]: 'Limit',
+  [v1OrderType.ORDER_TYPE_STOP]: 'Stop',
+  [v1OrderType.ORDER_TYPE_STOP_LIMIT]: 'Stop-Limit',
+}
+
+// OrderStatus is the routing-state enum (pending/approved/declined).
+// "Done" and "Cancelled" are separate booleans on the Order row
+// (`isDone`, `cancelled`) — render their badges from those flags,
+// not from this map. Spec p.50 treats execution/cancellation as
+// orthogonal to the approval lifecycle.
+export const orderStatusLabel: Record<v1OrderStatus, string> = {
+  [v1OrderStatus.ORDER_STATUS_UNSPECIFIED]: '—',
+  [v1OrderStatus.ORDER_STATUS_PENDING]: 'Na čekanju',
+  [v1OrderStatus.ORDER_STATUS_APPROVED]: 'Odobren',
+  [v1OrderStatus.ORDER_STATUS_DECLINED]: 'Odbijen',
+}
+
+export const directionLabel: Record<v1Direction, string> = {
+  [v1Direction.DIRECTION_UNSPECIFIED]: '—',
+  [v1Direction.DIRECTION_BUY]: 'Kupovina',
+  [v1Direction.DIRECTION_SELL]: 'Prodaja',
+}
+
+export const securityTypeLabel: Record<v1SecurityType, string> = {
+  [v1SecurityType.SECURITY_TYPE_UNSPECIFIED]: '—',
+  [v1SecurityType.SECURITY_TYPE_STOCK]: 'Akcija',
+  [v1SecurityType.SECURITY_TYPE_FUTURE]: 'Future',
+  [v1SecurityType.SECURITY_TYPE_FOREX]: 'Forex par',
+  [v1SecurityType.SECURITY_TYPE_OPTION]: 'Opcija',
+}
+
+export const optionTypeLabel: Record<v1OptionType, string> = {
+  [v1OptionType.OPTION_TYPE_UNSPECIFIED]: '—',
+  [v1OptionType.OPTION_TYPE_CALL]: 'CALL',
+  [v1OptionType.OPTION_TYPE_PUT]: 'PUT',
+}
+
+export const actuaryTypeLabel: Record<v1ActuaryType, string> = {
+  [v1ActuaryType.ACTUARY_TYPE_UNSPECIFIED]: '—',
+  [v1ActuaryType.ACTUARY_TYPE_SUPERVISOR]: 'Supervizor',
+  [v1ActuaryType.ACTUARY_TYPE_AGENT]: 'Agent',
 }
 

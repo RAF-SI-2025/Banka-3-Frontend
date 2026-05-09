@@ -14,6 +14,12 @@ import {
   txKindLabel,
   txStatusLabel,
   subtypesForKind,
+  orderTypeLabel,
+  orderStatusLabel,
+  directionLabel,
+  securityTypeLabel,
+  optionTypeLabel,
+  actuaryTypeLabel,
 } from './labels'
 import { v1AccountKind } from './api/generated/models/v1AccountKind'
 import { v1AccountSubtype } from './api/generated/models/v1AccountSubtype'
@@ -28,6 +34,12 @@ import { v1InterestType } from './api/generated/models/v1InterestType'
 import { v1EmploymentStatus } from './api/generated/models/v1EmploymentStatus'
 import { v1TransactionKind } from './api/generated/models/v1TransactionKind'
 import { v1TransactionStatus } from './api/generated/models/v1TransactionStatus'
+import { v1OrderType } from './api/generated/models/v1OrderType'
+import { v1OrderStatus } from './api/generated/models/v1OrderStatus'
+import { v1Direction } from './api/generated/models/v1Direction'
+import { v1SecurityType } from './api/generated/models/v1SecurityType'
+import { v1OptionType } from './api/generated/models/v1OptionType'
+import { v1ActuaryType } from './api/generated/models/v1ActuaryType'
 
 // A label table is "complete" when every enum value has a non-empty
 // Serbian string. This catches the case where someone adds an enum
@@ -58,6 +70,12 @@ describe('label tables are complete for every enum value', () => {
   it('employmentStatusLabel', () => expectComplete('employmentStatusLabel', v1EmploymentStatus, employmentStatusLabel))
   it('txKindLabel', () => expectComplete('txKindLabel', v1TransactionKind, txKindLabel))
   it('txStatusLabel', () => expectComplete('txStatusLabel', v1TransactionStatus, txStatusLabel))
+  it('orderTypeLabel', () => expectComplete('orderTypeLabel', v1OrderType, orderTypeLabel))
+  it('orderStatusLabel', () => expectComplete('orderStatusLabel', v1OrderStatus, orderStatusLabel))
+  it('directionLabel', () => expectComplete('directionLabel', v1Direction, directionLabel))
+  it('securityTypeLabel', () => expectComplete('securityTypeLabel', v1SecurityType, securityTypeLabel))
+  it('optionTypeLabel', () => expectComplete('optionTypeLabel', v1OptionType, optionTypeLabel))
+  it('actuaryTypeLabel', () => expectComplete('actuaryTypeLabel', v1ActuaryType, actuaryTypeLabel))
 })
 
 describe('label spot-checks', () => {
