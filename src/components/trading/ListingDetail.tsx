@@ -14,7 +14,10 @@ import { currencyLabel, formatDate, formatMoney } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import { useAuthStore } from '@/lib/auth/store'
+import { Permissions, has } from '@/lib/permissions'
 import { PriceHistoryChart } from './PriceHistoryChart'
+import { PriceOverrideDialog } from './PriceOverrideDialog'
 
 export interface ListingDetailProps {
   listingId: string
@@ -136,15 +139,26 @@ function InstrumentCard({
   const ccy = security.currency
   const change = listing?.changeAmt
   const price = listing?.price
+  const perms = useAuthStore((s) => s.permissions)
+  const isAdmin = has(perms, Permissions.Admin)
+  const [overrideOpen, setOverrideOpen] = useState(false)
+  const canOverride = isAdmin && Boolean(security.id) && Boolean(listing?.exchangeMic ?? security.exchangeMic) && Boolean(listing?.id)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-3">
           <span className="font-mono">{security.ticker ?? '—'}</span>
-          <span className="text-xs font-normal text-muted-foreground">
-            {security.exchangeMic ?? ''}{ccy ? ` · ${currencyLabel(ccy)}` : ''}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-normal text-muted-foreground">
+              {security.exchangeMic ?? ''}{ccy ? ` · ${currencyLabel(ccy)}` : ''}
+            </span>
+            {canOverride && (
+              <Button type="button" variant="outline" size="sm" data-cy="open-price-override" onClick={() => setOverrideOpen(true)}>
+                Izmeni cenu
+              </Button>
+            )}
+          </div>
         </CardTitle>
         {security.name && <p className="text-sm text-muted-foreground">{security.name}</p>}
       </CardHeader>
@@ -199,6 +213,17 @@ function InstrumentCard({
           </>
         )}
       </CardContent>
+
+      {canOverride && (
+        <PriceOverrideDialog
+          open={overrideOpen}
+          onClose={() => setOverrideOpen(false)}
+          securityId={security.id!}
+          exchangeMic={(listing?.exchangeMic ?? security.exchangeMic)!}
+          listingId={listing!.id!}
+          initial={{ price: listing?.price, ask: listing?.ask, bid: listing?.bid }}
+        />
+      )}
     </Card>
   )
 }
