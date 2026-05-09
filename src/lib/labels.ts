@@ -147,3 +147,24 @@ export const txStatusLabel: Record<v1TransactionStatus, string> = {
   [v1TransactionStatus.TRANSACTION_STATUS_REJECTED]: 'Odbijena',
   [v1TransactionStatus.TRANSACTION_STATUS_PROCESSING]: 'U obradi',
 }
+
+// Closed list of employee positions surfaced as a dropdown in the
+// new-/edit-employee forms. Free-text positions invited typos like
+// "Position" appearing as a literal value in the table; the spec
+// (p.8) treats Pozicija as a tagged role bucket distinct from
+// Department, so an enum fits better than free text.
+export const employeePositions = [
+  'Šalterski službenik',
+  'Bankarski službenik',
+  'Agent prodaje',
+  'Kreditni analitičar',
+  'Risk menadžer',
+  'Supervizor',
+  'Menadžer poslovnice',
+  'IT specijalista',
+  'Računovođa',
+  'Administrator',
+  'Direktor',
+] as const
+
+export type EmployeePosition = (typeof employeePositions)[number]

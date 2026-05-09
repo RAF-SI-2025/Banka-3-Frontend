@@ -20,8 +20,10 @@ import { useAuthStore } from '@/lib/auth/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
+import { employeePositions } from '@/lib/labels'
 
 export const Route = createFileRoute('/_authed/portal/employees/$id')({
   component: EditEmployeePage,
@@ -37,7 +39,7 @@ const schema = z.object({
   address: z.string().min(1, 'Adresa je obavezna'),
   position: z.string().min(1, 'Pozicija je obavezna'),
   department: z.string().min(1, 'Departman je obavezan'),
-  gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE', 'GENDER_OTHER']),
+  gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE']),
 })
 
 type Values = z.infer<typeof schema>
@@ -46,7 +48,13 @@ function EditEmployeePage() {
   const { id } = Route.useParams()
   const qc = useQueryClient()
   const userPerms = useAuthStore((s) => s.permissions)
+  const currentUserId = useAuthStore((s) => s.userId)
   const canGrant = has(userPerms, Permissions.PermissionGrant)
+  // Editing your own permissions invites footguns (revoking your own
+  // admin and locking yourself out, especially with `admin` being
+  // sole-maintainer). Spec p.9 doesn't require self-edit; gate the
+  // entire panel off when the target is the logged-in user.
+  const isSelf = currentUserId !== null && currentUserId === id
 
   const q = useQuery({
     queryKey: keys.employee.detail(id),
@@ -79,7 +87,9 @@ function EditEmployeePage() {
         address: q.data.address,
         position: q.data.position,
         department: q.data.department,
-        gender: (q.data.gender ?? 'GENDER_MALE') as Values['gender'],
+        // Legacy data may carry GENDER_OTHER (now removed from the
+        // dropdown); fall back to MALE so the form stays valid.
+        gender: (q.data.gender === 'GENDER_FEMALE' ? 'GENDER_FEMALE' : 'GENDER_MALE') as Values['gender'],
       })
       setPerms(q.data.permissions ?? [])
     }
@@ -150,19 +160,32 @@ function EditEmployeePage() {
             <FormField label="Prezime" name="lastName" form={form} />
             <FormField label="Telefon" name="phone" form={form} />
             <FormField label="Adresa" name="address" form={form} />
-            <FormField label="Pozicija" name="position" form={form} />
+            <div>
+              <Label htmlFor="position">Pozicija</Label>
+              <Select id="position" {...form.register('position')}>
+                {/* Surface the saved value even if it's not in the
+                    canonical list so legacy data isn't silently
+                    rewritten on the next save. */}
+                {!employeePositions.includes(form.watch('position') as never) && form.watch('position') && (
+                  <option value={form.watch('position')}>{form.watch('position')}</option>
+                )}
+                {employeePositions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </Select>
+              {form.formState.errors.position?.message && (
+                <p className="mt-1 text-xs text-red-600">{form.formState.errors.position.message}</p>
+              )}
+            </div>
             <FormField label="Departman" name="department" form={form} />
             <div>
               <Label htmlFor="gender">Pol</Label>
-              <select
-                id="gender"
-                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                {...form.register('gender')}
-              >
+              <Select id="gender" {...form.register('gender')}>
                 <option value="GENDER_MALE">Muški</option>
                 <option value="GENDER_FEMALE">Ženski</option>
-                <option value="GENDER_OTHER">Drugo</option>
-              </select>
+              </Select>
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit" disabled={update.isPending}>
@@ -183,7 +206,8 @@ function EditEmployeePage() {
           </span>
           <Button
             variant={emp.active ? 'danger' : 'primary'}
-            disabled={setActive.isPending}
+            disabled={setActive.isPending || (isSelf && emp.active)}
+            title={isSelf && emp.active ? 'Ne možete deaktivirati sopstveni nalog' : undefined}
             onClick={() => setActive.mutate(!emp.active)}
           >
             {emp.active ? 'Deaktiviraj' : 'Aktiviraj'}
@@ -211,27 +235,35 @@ function EditEmployeePage() {
             <CardTitle>Permisije</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-2 md:grid-cols-2">
-              {ALL_PERMISSIONS.map((p) => (
-                <label key={p} className="flex items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="mt-1"
-                    checked={perms.includes(p)}
-                    onChange={() => togglePerm(p)}
-                  />
-                  <span>
-                    <span className="block">{permissionLabels[p]}</span>
-                    <code className="text-xs text-gray-500">{p}</code>
-                  </span>
-                </label>
-              ))}
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setPerm.mutate(perms)} disabled={setPerm.isPending}>
-                {setPerm.isPending ? 'Snimanje…' : 'Sačuvaj permisije'}
-              </Button>
-            </div>
+            {isSelf ? (
+              <p className="text-sm text-gray-600">
+                Ne možete menjati sopstvene permisije. Zamolite drugog administratora ako je promena potrebna.
+              </p>
+            ) : (
+              <>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {ALL_PERMISSIONS.map((p) => (
+                    <label key={p} className="flex items-start gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={perms.includes(p)}
+                        onChange={() => togglePerm(p)}
+                      />
+                      <span>
+                        <span className="block">{permissionLabels[p]}</span>
+                        <code className="text-xs text-gray-500">{p}</code>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => setPerm.mutate(perms)} disabled={setPerm.isPending}>
+                    {setPerm.isPending ? 'Snimanje…' : 'Sačuvaj permisije'}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -239,7 +271,7 @@ function EditEmployeePage() {
   )
 }
 
-type FieldName = 'email' | 'firstName' | 'lastName' | 'phone' | 'address' | 'position' | 'department'
+type FieldName = 'email' | 'firstName' | 'lastName' | 'phone' | 'address' | 'department'
 
 function FormField({
   label,

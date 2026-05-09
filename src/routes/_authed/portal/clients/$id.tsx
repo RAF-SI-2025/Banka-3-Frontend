@@ -120,7 +120,12 @@ function ClientDetail() {
             <Select {...form.register('gender')} disabled={!canWrite}>
               <option value={bankaUserV1Gender.GENDER_MALE}>Muški</option>
               <option value={bankaUserV1Gender.GENDER_FEMALE}>Ženski</option>
-              <option value={bankaUserV1Gender.GENDER_OTHER}>Drugo</option>
+              {/* Legacy data may carry GENDER_OTHER (the option was
+                  removed from the dropdown); surface it so the form
+                  doesn't silently reset on save. */}
+              {client.data?.gender === bankaUserV1Gender.GENDER_OTHER && (
+                <option value={bankaUserV1Gender.GENDER_OTHER}>Drugo</option>
+              )}
             </Select>
           </div>
           <div>

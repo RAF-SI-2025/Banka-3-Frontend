@@ -9,8 +9,10 @@ import { keys } from '@/lib/query-keys'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
+import { employeePositions } from '@/lib/labels'
 
 export const Route = createFileRoute('/_authed/portal/employees/new')({
   component: NewEmployeePage,
@@ -22,10 +24,10 @@ const schema = z.object({
   firstName: z.string().min(1, 'Ime je obavezno'),
   lastName: z.string().min(1, 'Prezime je obavezno'),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD'),
-  gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE', 'GENDER_OTHER']),
+  gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE']),
   phone: z.string().regex(/^\+?[0-9]{6,20}$/, 'Telefon: 6–20 cifara, opciono +'),
   address: z.string().min(1, 'Adresa je obavezna'),
-  position: z.string().min(1, 'Pozicija je obavezna'),
+  position: z.enum(employeePositions, { errorMap: () => ({ message: 'Izaberite poziciju' }) }),
   department: z.string().min(1, 'Departman je obavezan'),
   active: z.boolean(),
   role: z.enum(['admin', 'supervisor', 'agent', 'basic']),
@@ -47,7 +49,7 @@ function NewEmployeePage() {
       gender: 'GENDER_MALE',
       phone: '',
       address: '',
-      position: '',
+      position: employeePositions[0],
       department: '',
       active: true,
       role: 'basic',
@@ -82,19 +84,26 @@ function NewEmployeePage() {
               <TextField label="Datum rođenja" type="date" name="dateOfBirth" form={form} />
               <div>
                 <Label htmlFor="gender">Pol</Label>
-                <select
-                  id="gender"
-                  className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm"
-                  {...form.register('gender')}
-                >
+                <Select id="gender" {...form.register('gender')}>
                   <option value="GENDER_MALE">Muški</option>
                   <option value="GENDER_FEMALE">Ženski</option>
-                  <option value="GENDER_OTHER">Drugo</option>
-                </select>
+                </Select>
               </div>
               <TextField label="Telefon" name="phone" form={form} />
               <TextField label="Adresa" name="address" form={form} />
-              <TextField label="Pozicija" name="position" form={form} />
+              <div>
+                <Label htmlFor="position">Pozicija</Label>
+                <Select id="position" {...form.register('position')}>
+                  {employeePositions.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </Select>
+                {form.formState.errors.position?.message && (
+                  <p className="mt-1 text-xs text-red-600">{form.formState.errors.position.message}</p>
+                )}
+              </div>
               <TextField label="Departman" name="department" form={form} />
               <div>
                 <Label htmlFor="role">Uloga</Label>
@@ -145,7 +154,6 @@ type TextFieldName =
   | 'dateOfBirth'
   | 'phone'
   | 'address'
-  | 'position'
   | 'department'
 
 function TextField({

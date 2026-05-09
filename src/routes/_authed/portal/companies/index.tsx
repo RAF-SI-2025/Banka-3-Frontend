@@ -83,7 +83,11 @@ function CompaniesList() {
           Prethodna
         </Button>
         <span className="text-sm text-gray-600">Strana {page}</span>
-        <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+        <Button
+          variant="secondary"
+          disabled={!companies.data || page * 25 >= Number(companies.data.total ?? 0)}
+          onClick={() => setPage((p) => p + 1)}
+        >
           Sledeća
         </Button>
       </div>

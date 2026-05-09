@@ -200,7 +200,6 @@ function CompanyDetail() {
             <Select {...apForm.register('gender')}>
               <option value={bankaBankV1Gender.GENDER_MALE}>Muški</option>
               <option value={bankaBankV1Gender.GENDER_FEMALE}>Ženski</option>
-              <option value={bankaBankV1Gender.GENDER_OTHER}>Drugo</option>
             </Select>
           </div>
           <div>

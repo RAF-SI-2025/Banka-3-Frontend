@@ -86,7 +86,11 @@ function ClientsList() {
           Prethodna
         </Button>
         <span className="text-sm text-gray-600">Strana {page}</span>
-        <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+        <Button
+          variant="secondary"
+          disabled={!clients.data || page * 25 >= Number(clients.data.total ?? 0)}
+          onClick={() => setPage((p) => p + 1)}
+        >
           Sledeća
         </Button>
       </div>
