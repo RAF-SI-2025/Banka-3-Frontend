@@ -43,6 +43,11 @@ function PortalLayout() {
       label: 'Portfolio',
       hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),
     },
+    {
+      to: '/portal/aktuari',
+      label: 'Aktuari',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
+    },
     { to: '/portal/berze', label: 'Berze', hidden: !has(perms, Permissions.Admin) },
   ]
 
