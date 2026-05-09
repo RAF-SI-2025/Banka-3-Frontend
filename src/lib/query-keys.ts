@@ -91,8 +91,9 @@ export const keys = {
     detail: (id: string) => ['actuary', 'detail', id] as const,
   },
   tax: {
-    board: ['tax', 'board'] as const,
-    standings: (userId: string) => ['tax', 'standings', userId] as const,
+    all: ['tax'] as const,
+    board: (args: object) => ['tax', 'board', args] as const,
+    realized: (args: object) => ['tax', 'realized', args] as const,
     runs: ['tax', 'runs'] as const,
   },
 } as const
