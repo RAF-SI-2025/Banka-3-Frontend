@@ -25,7 +25,9 @@ function BankingLayout() {
     { to: '/banking/menjacnica', label: 'Menjačnica' },
     { to: '/banking/primaoci', label: 'Primaoci' },
     { to: '/banking/krediti', label: 'Krediti' },
+    { to: '/banking/portfolio', label: 'Portfolio', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/trgovina', label: 'Trgovina', hidden: !has(perms, Permissions.TradingClient) },
+    { to: '/banking/trgovina/nalozi', label: '↳ Moji nalozi', hidden: !has(perms, Permissions.TradingClient) },
   ]
 
   return (

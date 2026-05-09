@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeftRight, ArrowRightLeft, Send } from 'lucide-react'
+import { ArrowLeftRight, ArrowRightLeft, LineChart, Send } from 'lucide-react'
 import { listAccounts } from '@/lib/api/accounts'
+import { listHoldings } from '@/lib/api/portfolio'
 import { useAuthStore } from '@/lib/auth/store'
+import { Permissions, has } from '@/lib/permissions'
 import { keys } from '@/lib/query-keys'
 import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
 import { accountKindLabel } from '@/lib/labels'
@@ -20,10 +22,19 @@ const tileIconClass =
 function ClientHome() {
   const userId = useAuthStore((s) => s.userId)
   const firstName = useAuthStore((s) => s.firstName)
+  const perms = useAuthStore((s) => s.permissions)
+  const canTrade = has(perms, Permissions.TradingClient)
+
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
     queryFn: () => listAccounts({ ownerClientId: userId ?? undefined }),
     enabled: !!userId,
+  })
+
+  const portfolio = useQuery({
+    queryKey: keys.portfolio.list(userId ?? ''),
+    queryFn: () => listHoldings(),
+    enabled: !!userId && canTrade,
   })
 
   return (
@@ -102,6 +113,33 @@ function ClientHome() {
           <span>Menjačnica</span>
         </Link>
       </section>
+
+      {canTrade && (
+        <section className="space-y-3" data-cy="trading-tile">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Trgovina</h2>
+          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Ukupan profit</div>
+              <div className="text-2xl font-semibold tabular-nums">
+                {portfolio.isLoading ? '—' : formatMoney(portfolio.data?.totalProfit)}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {portfolio.data?.holdings?.length ?? 0} pozicija
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/banking/portfolio" className={tileClass}>
+                <span className={tileIconClass}><LineChart className="size-4" /></span>
+                <span>Portfolio</span>
+              </Link>
+              <Link to="/banking/trgovina" className={tileClass}>
+                <span className={tileIconClass}><LineChart className="size-4" /></span>
+                <span>Pretraži tržište</span>
+              </Link>
+            </div>
+          </Card>
+        </section>
+      )}
     </div>
   )
 }
