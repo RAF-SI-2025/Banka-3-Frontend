@@ -8,11 +8,9 @@ import path from 'node:path'
 // stdout. Both run as Cypress tasks so the spec stays declarative.
 
 const POSTGRES_CONTAINER = process.env.CYPRESS_POSTGRES_CONTAINER ?? 'banka-postgres-1'
-const REDIS_CONTAINER = process.env.CYPRESS_REDIS_CONTAINER ?? 'banka-redis-1'
 const USER_CONTAINER = process.env.CYPRESS_USER_CONTAINER ?? 'banka-user-1'
 const PG_USER = process.env.CYPRESS_PG_USER ?? 'banka'
 const PG_DB = process.env.CYPRESS_PG_DB ?? 'banka'
-const REDIS_PASSWORD = process.env.CYPRESS_REDIS_PASSWORD ?? 'banka'
 const BACKEND_REPO = process.env.CYPRESS_BACKEND_REPO ?? path.resolve(__dirname, '../Banka-3-Backend')
 
 function findNixGoBin(): string | null {
@@ -66,13 +64,6 @@ function resetBackend(opts: { c2?: boolean } | null): { ok: true } {
     // Wait for bank to be healthy again (~3-4s typically).
     waitForHealthy('banka-bank-1', 15)
   }
-  // Drop login:* counters so prior locks don't bleed across specs.
-  dockerExec(REDIS_CONTAINER, [
-    'sh',
-    '-c',
-    `redis-cli -a ${REDIS_PASSWORD} --no-auth-warning eval ` +
-      `"for _,k in ipairs(redis.call('KEYS','login:*')) do redis.call('DEL',k) end" 0`,
-  ])
   // Re-seed the bootstrap admin via the existing seed program. The go
   // toolchain may live in a nix path that cypress didn't inherit;
   // augment PATH from CYPRESS_GO_BIN if provided, otherwise scan

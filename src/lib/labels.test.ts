@@ -13,6 +13,7 @@ import {
   employmentStatusLabel,
   txKindLabel,
   txStatusLabel,
+  subtypesForKind,
 } from './labels'
 import { v1AccountKind } from './api/generated/models/v1AccountKind'
 import { v1AccountSubtype } from './api/generated/models/v1AccountSubtype'
@@ -73,5 +74,39 @@ describe('label spot-checks', () => {
   it('transaction status labels are user-facing Serbian', () => {
     expect(txStatusLabel[v1TransactionStatus.TRANSACTION_STATUS_REALIZED]).toBe('Realizovana')
     expect(txStatusLabel[v1TransactionStatus.TRANSACTION_STATUS_PROCESSING]).toBe('U obradi')
+  })
+})
+
+describe('subtypesForKind pins the spec p.12 subtype-to-kind contract', () => {
+  it('personal RSD allows STANDARD + the social variants', () => {
+    const got = subtypesForKind(v1AccountKind.ACCOUNT_KIND_PERSONAL_CHECKING_RSD)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_STANDARD)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_SAVINGS)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_PENSIONER)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_YOUTH)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_STUDENT)
+    expect(got).toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_UNEMPLOYED)
+    // Business-only subtypes must not leak in.
+    expect(got).not.toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_DOO)
+    expect(got).not.toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_AD)
+    expect(got).not.toContain(v1AccountSubtype.ACCOUNT_SUBTYPE_FOUNDATION)
+    // The default for personal-RSD must be STANDARD (first option).
+    expect(got[0]).toBe(v1AccountSubtype.ACCOUNT_SUBTYPE_STANDARD)
+  })
+
+  it('business RSD allows only the legal-entity forms', () => {
+    const got = subtypesForKind(v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD)
+    expect(got).toEqual([
+      v1AccountSubtype.ACCOUNT_SUBTYPE_DOO,
+      v1AccountSubtype.ACCOUNT_SUBTYPE_AD,
+      v1AccountSubtype.ACCOUNT_SUBTYPE_FOUNDATION,
+    ])
+  })
+
+  it('FX + system kinds collapse to UNSPECIFIED (empty list → hide field)', () => {
+    expect(subtypesForKind(v1AccountKind.ACCOUNT_KIND_PERSONAL_FX)).toEqual([])
+    expect(subtypesForKind(v1AccountKind.ACCOUNT_KIND_BUSINESS_FX)).toEqual([])
+    expect(subtypesForKind(v1AccountKind.ACCOUNT_KIND_SYSTEM)).toEqual([])
+    expect(subtypesForKind(v1AccountKind.ACCOUNT_KIND_UNSPECIFIED)).toEqual([])
   })
 })

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -5,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { listAccounts } from '@/lib/api/accounts'
 import { createTransfer } from '@/lib/api/payments'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
 import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
@@ -13,6 +16,9 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
+import { AccountLimitSummary } from '@/components/accounts/account-limit-summary'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
+import type { v1CreateTransferRequest } from '@/lib/api/generated/models/v1CreateTransferRequest'
 
 export const Route = createFileRoute('/_authed/banking/transferi')({
   component: NewTransfer,
@@ -36,6 +42,7 @@ function NewTransfer() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
+  const [pending, setPending] = useState<v1CreateTransferRequest | null>(null)
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -49,7 +56,8 @@ function NewTransfer() {
   })
 
   const create = useMutation({
-    mutationFn: createTransfer,
+    mutationFn: ({ payload, proof }: { payload: v1CreateTransferRequest; proof: VerificationProof }) =>
+      createTransfer(payload, proof),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.account.all })
       qc.invalidateQueries({ queryKey: keys.transaction.all })
@@ -57,17 +65,13 @@ function NewTransfer() {
     },
   })
 
-  const errMsg = create.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((create.error as any)?.response?.data?.message as string | undefined) ??
-      'Greška pri prenosu sredstava.'
-    : null
+  const errMsg = create.error ? apiError(create.error, 'Greška pri prenosu sredstava.') : null
 
   return (
     <main className="container max-w-2xl space-y-4 py-8">
       <h1 className="text-2xl font-semibold">Transfer između mojih računa</h1>
       <form
-        onSubmit={form.handleSubmit((v) => create.mutate(v))}
+        onSubmit={form.handleSubmit((v) => setPending(v))}
         className="space-y-4 rounded-lg border border-gray-200 bg-white p-6"
       >
         <div>
@@ -83,6 +87,15 @@ function NewTransfer() {
           {form.formState.errors.fromAccountId && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.fromAccountId.message}</p>
           )}
+          {(() => {
+            const id = form.watch('fromAccountId')
+            const a = accounts.data?.accounts?.find((x) => x.id === id)
+            return a ? (
+              <div className="mt-2">
+                <AccountLimitSummary account={a} />
+              </div>
+            ) : null
+          })()}
         </div>
 
         <div>
@@ -121,6 +134,18 @@ function NewTransfer() {
           </Button>
         </div>
       </form>
+      <VerificationDialog
+        open={!!pending}
+        kind="transfer"
+        title="Potvrda prenosa"
+        description="Unesite verifikacioni kod kako biste potvrdili transfer."
+        onCancel={() => setPending(null)}
+        onConfirm={async (proof) => {
+          if (!pending) return
+          await create.mutateAsync({ payload: pending, proof })
+          setPending(null)
+        }}
+      />
     </main>
   )
 }

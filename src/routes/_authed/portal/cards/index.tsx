@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { CardCreateDialog } from '@/components/cards/card-create-dialog'
 import { cardBrandLabel, cardStatusLabel } from '@/lib/labels'
 import { v1CardStatus } from '@/lib/api/generated/models/v1CardStatus'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, formatCardNumber } from '@/lib/format'
 
 export const Route = createFileRoute('/_authed/portal/cards/')({
   component: PortalCards,
@@ -68,7 +68,7 @@ function PortalCards() {
               <TR key={c.id}>
                 <TD>{c.name || '—'}</TD>
                 <TD>{cardBrandLabel[c.brand!]}</TD>
-                <TD className="font-mono text-xs">{c.number}</TD>
+                <TD className="font-mono text-xs">{formatCardNumber(c.number)}</TD>
                 <TD className="text-right">{formatMoney(c.cardLimit)}</TD>
                 <TD>
                   <Badge tone={c.status === v1CardStatus.CARD_STATUS_ACTIVE ? 'green' : 'red'}>

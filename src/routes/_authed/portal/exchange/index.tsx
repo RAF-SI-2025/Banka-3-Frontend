@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { listRates, upsertRate } from '@/lib/api/rates'
+import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
@@ -56,10 +57,7 @@ function PortalExchange() {
     },
   })
 
-  const errMsg = upsert.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((upsert.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri upisu kursa.'
-    : null
+  const errMsg = upsert.error ? apiError(upsert.error, 'Greška pri upisu kursa.') : null
 
   return (
     <main className="container space-y-6 py-8">

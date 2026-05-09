@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatMoney, currencyLabel, formatDate, formatDateTime, formatAccountNumber } from './format'
+import {
+  formatMoney,
+  currencyLabel,
+  formatDate,
+  formatDateTime,
+  formatAccountNumber,
+  formatCardNumber,
+} from './format'
 
 describe('formatMoney', () => {
   it('renders Serbian thousands and decimal separators', () => {
@@ -85,5 +92,29 @@ describe('formatAccountNumber', () => {
 
   it('em-dashes when missing', () => {
     expect(formatAccountNumber(undefined)).toBe('—')
+  })
+})
+
+describe('formatCardNumber', () => {
+  it('groups a 16-digit PAN into four blocks of four', () => {
+    expect(formatCardNumber('4111111111111111')).toBe('4111 1111 1111 1111')
+  })
+
+  it('preserves the spec p.29 mask layout when grouping', () => {
+    // pkg/card.Mask emits "first4 + 8 stars + last4" — render it grouped
+    // so the dashboard shows "4111 **** **** 1111".
+    expect(formatCardNumber('4111********1111')).toBe('4111 **** **** 1111')
+  })
+
+  it('leaves shorter or non-canonical strings untouched', () => {
+    // notification short form "****1234" is intentional — don't mangle.
+    expect(formatCardNumber('****1234')).toBe('****1234')
+    // 15-char PAN (Amex when displayed un-padded) is rendered verbatim
+    // rather than mis-grouped.
+    expect(formatCardNumber('378282246310005')).toBe('378282246310005')
+  })
+
+  it('em-dashes when missing', () => {
+    expect(formatCardNumber(undefined)).toBe('—')
   })
 })

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listEmployees } from '@/lib/api/employees'
+import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ function PortalHome() {
   const [page, setPage] = useState(1)
 
   const employees = useQuery({
-    queryKey: ['employees', { emailQuery, nameQuery, positionQuery, page }],
+    queryKey: keys.employee.list({ emailQuery, nameQuery, positionQuery, page }),
     queryFn: () => listEmployees({ emailQuery, nameQuery, positionQuery, page, pageSize: 25 }),
     enabled: canRead,
   })

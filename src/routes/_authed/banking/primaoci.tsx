@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { listRecipients, createRecipient, deleteRecipient, updateRecipient } from '@/lib/api/recipients'
 import { keys } from '@/lib/query-keys'
 import { formatAccountNumber } from '@/lib/format'
+import { validateAccountNumber } from '@/lib/account-number'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,9 +18,20 @@ export const Route = createFileRoute('/_authed/banking/primaoci')({
   component: Recipients,
 })
 
+const accountNumberMessage = {
+  'wrong-length': 'Račun mora imati 18 cifara',
+  'non-digit': 'Račun sme da sadrži samo cifre',
+  'checksum-mismatch': 'Neispravan kontrolni broj računa',
+} as const
+
 const schema = z.object({
   name: z.string().min(1, 'Ime je obavezno'),
-  accountNumber: z.string().regex(/^[0-9]{18}$/, 'Račun mora imati 18 cifara'),
+  accountNumber: z.string().superRefine((val, ctx) => {
+    const err = validateAccountNumber(val)
+    if (err) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: accountNumberMessage[err] })
+    }
+  }),
 })
 type FormValues = z.infer<typeof schema>
 

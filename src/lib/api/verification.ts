@@ -1,0 +1,41 @@
+import { api } from './client'
+
+// VerificationKind mirrors pkg/verification.ActionKind on the backend.
+// Adding a new action means: add a constant here, register a rule in
+// the gateway's verification middleware, and gate the form with the
+// dialog below.
+export type VerificationKind = 'payment' | 'transfer' | 'limit_change' | 'card_issue'
+
+// VerificationProof is what the dialog hands back to the caller. The
+// caller passes it on to the gated mutation (payments, transfers,
+// limit edits, card creation), where the API helper translates it
+// into X-Verification-Id + X-Verification-Code headers.
+export interface VerificationProof {
+  id: string
+  code: string
+}
+
+export interface IssuedVerification {
+  verificationId: string
+  // The mobile app is deferred until c5; until then the backend
+  // returns the code in the response so the FE can render it inline
+  // (CLAUDE.md edge case: fake QR + 6-digit code in dev).
+  code: string
+  expiresAt: string
+}
+
+export async function requestVerification(actionKind: VerificationKind): Promise<IssuedVerification> {
+  const { data } = await api.post<IssuedVerification>('/v1/verification/request', { actionKind })
+  return data
+}
+
+// proofHeaders maps a verification proof to the headers the gateway
+// middleware expects. Returns an empty object when proof is undefined
+// so call sites can spread unconditionally.
+export function proofHeaders(proof?: VerificationProof): Record<string, string> {
+  if (!proof) return {}
+  return {
+    'X-Verification-Id': proof.id,
+    'X-Verification-Code': proof.code,
+  }
+}

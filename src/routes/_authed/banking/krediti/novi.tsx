@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { listAccounts } from '@/lib/api/accounts'
 import { submitLoanRequest } from '@/lib/api/loans'
+import { apiError } from '@/lib/api/error'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
 import { formatAccountNumber, currencyLabel } from '@/lib/format'
@@ -86,11 +87,7 @@ function NewLoanRequest() {
   const accountId = form.watch('accountId')
   const account = accounts.data?.accounts?.find((a) => a.id === accountId)
 
-  const errMsg = submit.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((submit.error as any)?.response?.data?.message as string | undefined) ??
-      'Greška pri slanju zahteva.'
-    : null
+  const errMsg = submit.error ? apiError(submit.error, 'Greška pri slanju zahteva.') : null
 
   function onSubmit(v: FormValues) {
     submit.mutate({

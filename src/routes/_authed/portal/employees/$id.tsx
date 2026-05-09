@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AxiosError } from 'axios'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import {
   getEmployee,
   resendActivation,
@@ -9,9 +11,10 @@ import {
   setEmployeePermissions,
   updateEmployee,
   type Employee,
-  type Gender,
   type UpdateEmployeeInput,
 } from '@/lib/api/employees'
+import { apiError } from '@/lib/api/error'
+import { keys } from '@/lib/query-keys'
 import { Permissions, has, permissionLabels, type Permission } from '@/lib/permissions'
 import { useAuthStore } from '@/lib/auth/store'
 import { Button } from '@/components/ui/button'
@@ -26,6 +29,19 @@ export const Route = createFileRoute('/_authed/portal/employees/$id')({
 
 const ALL_PERMISSIONS: Permission[] = Object.values(Permissions)
 
+const schema = z.object({
+  email: z.string().email('Unesite ispravan email'),
+  firstName: z.string().min(1, 'Ime je obavezno'),
+  lastName: z.string().min(1, 'Prezime je obavezno'),
+  phone: z.string().regex(/^\+?[0-9]{6,20}$/, 'Telefon: 6–20 cifara, opciono +'),
+  address: z.string().min(1, 'Adresa je obavezna'),
+  position: z.string().min(1, 'Pozicija je obavezna'),
+  department: z.string().min(1, 'Departman je obavezan'),
+  gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE', 'GENDER_OTHER']),
+})
+
+type Values = z.infer<typeof schema>
+
 function EditEmployeePage() {
   const { id } = Route.useParams()
   const qc = useQueryClient()
@@ -33,74 +49,73 @@ function EditEmployeePage() {
   const canGrant = has(userPerms, Permissions.PermissionGrant)
 
   const q = useQuery({
-    queryKey: ['employee', id],
+    queryKey: keys.employee.detail(id),
     queryFn: () => getEmployee(id),
   })
 
-  const [form, setForm] = useState<UpdateEmployeeInput | null>(null)
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      address: '',
+      position: '',
+      department: '',
+      gender: 'GENDER_MALE',
+    },
+  })
+
   const [perms, setPerms] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (q.data && form === null) {
-      setForm({
+    if (q.data) {
+      form.reset({
         email: q.data.email,
         firstName: q.data.firstName,
         lastName: q.data.lastName,
-        gender: q.data.gender,
         phone: q.data.phone,
         address: q.data.address,
         position: q.data.position,
         department: q.data.department,
+        gender: (q.data.gender ?? 'GENDER_MALE') as Values['gender'],
       })
       setPerms(q.data.permissions ?? [])
     }
   }, [q.data, form])
 
+  function onUpdated(e: Employee) {
+    qc.invalidateQueries({ queryKey: keys.employee.all })
+    qc.invalidateQueries({ queryKey: keys.employee.detail(e.id) })
+  }
+
   const update = useMutation({
     mutationFn: (input: UpdateEmployeeInput) => updateEmployee(id, input),
-    onSuccess: (e) => onUpdated(e),
-    onError: (e) => surfaceError(e),
+    onSuccess: onUpdated,
   })
   const setActive = useMutation({
     mutationFn: (active: boolean) => setEmployeeActive(id, active),
-    onSuccess: (e) => onUpdated(e),
-    onError: (e) => surfaceError(e),
+    onSuccess: onUpdated,
   })
   const setPerm = useMutation({
     mutationFn: (next: string[]) => setEmployeePermissions(id, next),
-    onSuccess: (e) => onUpdated(e),
-    onError: (e) => surfaceError(e),
+    onSuccess: onUpdated,
   })
-  const resend = useMutation({
-    mutationFn: () => resendActivation(id),
-    onError: (e) => surfaceError(e),
-  })
+  const resend = useMutation({ mutationFn: () => resendActivation(id) })
 
-  function onUpdated(e: Employee) {
-    qc.invalidateQueries({ queryKey: ['employees'] })
-    qc.invalidateQueries({ queryKey: ['employee', e.id] })
-    setError(null)
-  }
-
-  function surfaceError(e: unknown) {
-    if (e instanceof AxiosError) setError(e.response?.data?.message ?? 'Greška')
-    else setError('Greška')
-  }
+  const error =
+    apiError(update.error, '') ||
+    apiError(setActive.error, '') ||
+    apiError(setPerm.error, '') ||
+    apiError(resend.error, '') ||
+    null
 
   if (q.isLoading) return <main className="container py-8">Učitavanje…</main>
-  if (q.isError || !q.data || !form) return <main className="container py-8">Greška pri učitavanju.</main>
+  if (q.isError || !q.data) return <main className="container py-8">Greška pri učitavanju.</main>
   const emp = q.data
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!form) return
-    update.mutate(form)
-  }
-
-  function field<K extends keyof UpdateEmployeeInput>(k: K, v: UpdateEmployeeInput[K]) {
-    setForm((f) => (f ? { ...f, [k]: v } : f))
-  }
+  const onSubmit = form.handleSubmit((v) => update.mutate(v))
 
   function togglePerm(p: string) {
     setPerms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]))
@@ -109,7 +124,9 @@ function EditEmployeePage() {
   return (
     <main className="container space-y-4 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{emp.firstName} {emp.lastName}</h1>
+        <h1 className="text-2xl font-semibold">
+          {emp.firstName} {emp.lastName}
+        </h1>
         <Link to="/portal" className="text-blue-600 hover:underline">
           ← Nazad na listu
         </Link>
@@ -123,46 +140,24 @@ function EditEmployeePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={form.email ?? ''} onChange={(e) => field('email', e.target.value)} />
-            </div>
+            <FormField label="Email" name="email" form={form} />
             <div>
               <Label htmlFor="username">Korisničko ime</Label>
               <Input id="username" value={emp.username} disabled readOnly />
               <p className="mt-1 text-xs text-gray-500">Korisničko ime se ne menja nakon kreiranja.</p>
             </div>
-            <div>
-              <Label htmlFor="firstName">Ime</Label>
-              <Input id="firstName" value={form.firstName ?? ''} onChange={(e) => field('firstName', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="lastName">Prezime</Label>
-              <Input id="lastName" value={form.lastName ?? ''} onChange={(e) => field('lastName', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="phone">Telefon</Label>
-              <Input id="phone" value={form.phone ?? ''} onChange={(e) => field('phone', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="address">Adresa</Label>
-              <Input id="address" value={form.address ?? ''} onChange={(e) => field('address', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="position">Pozicija</Label>
-              <Input id="position" value={form.position ?? ''} onChange={(e) => field('position', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="department">Departman</Label>
-              <Input id="department" value={form.department ?? ''} onChange={(e) => field('department', e.target.value)} />
-            </div>
+            <FormField label="Ime" name="firstName" form={form} />
+            <FormField label="Prezime" name="lastName" form={form} />
+            <FormField label="Telefon" name="phone" form={form} />
+            <FormField label="Adresa" name="address" form={form} />
+            <FormField label="Pozicija" name="position" form={form} />
+            <FormField label="Departman" name="department" form={form} />
             <div>
               <Label htmlFor="gender">Pol</Label>
               <select
                 id="gender"
                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                value={form.gender ?? ''}
-                onChange={(e) => field('gender', e.target.value as Gender)}
+                {...form.register('gender')}
               >
                 <option value="GENDER_MALE">Muški</option>
                 <option value="GENDER_FEMALE">Ženski</option>
@@ -203,11 +198,7 @@ function EditEmployeePage() {
                 disabled={resend.isPending || resend.isSuccess}
                 onClick={() => resend.mutate()}
               >
-                {resend.isSuccess
-                  ? 'Mejl poslat'
-                  : resend.isPending
-                    ? 'Slanje…'
-                    : 'Pošalji aktivaciju ponovo'}
+                {resend.isSuccess ? 'Mejl poslat' : resend.isPending ? 'Slanje…' : 'Pošalji aktivaciju ponovo'}
               </Button>
             </>
           )}
@@ -245,5 +236,26 @@ function EditEmployeePage() {
         </Card>
       )}
     </main>
+  )
+}
+
+type FieldName = 'email' | 'firstName' | 'lastName' | 'phone' | 'address' | 'position' | 'department'
+
+function FormField({
+  label,
+  name,
+  form,
+}: {
+  label: string
+  name: FieldName
+  form: ReturnType<typeof useForm<Values>>
+}) {
+  const err = form.formState.errors[name]?.message
+  return (
+    <div>
+      <Label htmlFor={name}>{label}</Label>
+      <Input id={name} {...form.register(name)} />
+      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
+    </div>
   )
 }

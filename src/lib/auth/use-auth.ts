@@ -9,8 +9,8 @@ interface RefreshBody {
 }
 
 interface MeBody {
-  employee?: { id: string; permissions: string[] }
-  client?: { id: string; permissions: string[] }
+  employee?: { id: string; permissions: string[]; firstName?: string; lastName?: string }
+  client?: { id: string; permissions: string[]; firstName?: string; lastName?: string }
 }
 
 /**
@@ -34,13 +34,16 @@ export function useBootstrapAuth(): boolean {
         })
         if (cancelled) return
         const perms = jwtDecodePermissions(data.accessToken) ?? []
-        const userId = me.data.employee?.id ?? me.data.client?.id ?? ''
+        const principal = me.data.employee ?? me.data.client
+        const userId = principal?.id ?? ''
         const userKind: 'employee' | 'client' = me.data.employee ? 'employee' : 'client'
         setLogin({
           accessToken: data.accessToken,
           userId,
           userKind,
           permissions: perms,
+          firstName: principal?.firstName,
+          lastName: principal?.lastName,
         })
       } catch {
         if (!cancelled) clear()

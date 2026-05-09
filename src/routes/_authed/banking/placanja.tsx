@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -6,6 +7,8 @@ import { z } from 'zod'
 import { listAccounts } from '@/lib/api/accounts'
 import { listRecipients } from '@/lib/api/recipients'
 import { createPayment } from '@/lib/api/payments'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
 import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
@@ -14,16 +17,34 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
+import { AccountLimitSummary } from '@/components/accounts/account-limit-summary'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
+import { validateAccountNumber } from '@/lib/account-number'
+import type { v1Account } from '@/lib/api/generated/models/v1Account'
+import type { v1CreatePaymentRequest } from '@/lib/api/generated/models/v1CreatePaymentRequest'
 
 export const Route = createFileRoute('/_authed/banking/placanja')({
   component: NewPayment,
 })
 
+// Map the validator's stable error code to a Serbian message at the
+// form boundary. The "non-digit" branch is unreachable from the
+// happy path because we reject anything that's not 18 chars first,
+// but we surface a sane copy in case someone pastes letters in.
+const accountNumberMessage = {
+  'wrong-length': 'Račun mora imati 18 cifara',
+  'non-digit': 'Račun sme da sadrži samo cifre',
+  'checksum-mismatch': 'Neispravan kontrolni broj računa',
+} as const
+
 const schema = z.object({
   fromAccountId: z.string().min(1, 'Izaberite račun'),
-  toAccountNumber: z
-    .string()
-    .regex(/^[0-9]{18}$/, 'Račun mora imati 18 cifara'),
+  toAccountNumber: z.string().superRefine((val, ctx) => {
+    const err = validateAccountNumber(val)
+    if (err) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: accountNumberMessage[err] })
+    }
+  }),
   amount: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
   recipientName: z.string().min(1, 'Naziv primaoca je obavezan'),
   paymentCode: z.string().min(1, 'Šifra plaćanja je obavezna'),
@@ -39,6 +60,7 @@ function NewPayment() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
+  const [pending, setPending] = useState<v1CreatePaymentRequest | null>(null)
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -66,7 +88,8 @@ function NewPayment() {
   })
 
   const create = useMutation({
-    mutationFn: createPayment,
+    mutationFn: ({ payload, proof }: { payload: v1CreatePaymentRequest; proof: VerificationProof }) =>
+      createPayment(payload, proof),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.account.all })
       qc.invalidateQueries({ queryKey: keys.transaction.all })
@@ -78,7 +101,7 @@ function NewPayment() {
   const onSubmit = form.handleSubmit((values) => {
     const { recipientTemplateId, ...rest } = values
     void recipientTemplateId
-    create.mutate(rest)
+    setPending(rest)
   })
 
   function applyTemplate(id: string) {
@@ -91,12 +114,7 @@ function NewPayment() {
     }
   }
 
-  const errMsg = create.error
-    ? // Axios error from gateway
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((create.error as any)?.response?.data?.message as string | undefined) ??
-      'Greška pri kreiranju plaćanja.'
-    : null
+  const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju plaćanja.') : null
 
   return (
     <main className="container max-w-2xl space-y-4 py-8">
@@ -113,6 +131,7 @@ function NewPayment() {
             ))}
           </Select>
           <FieldErr msg={form.formState.errors.fromAccountId?.message} />
+          <SelectedAccountLimits accounts={accounts.data?.accounts} selectedId={form.watch('fromAccountId')} />
         </div>
 
         {recipients.data?.recipients && recipients.data.recipients.length > 0 && (
@@ -178,6 +197,18 @@ function NewPayment() {
           </Button>
         </div>
       </form>
+      <VerificationDialog
+        open={!!pending}
+        kind="payment"
+        title="Potvrda plaćanja"
+        description="Unesite verifikacioni kod kako biste potvrdili plaćanje."
+        onCancel={() => setPending(null)}
+        onConfirm={async (proof) => {
+          if (!pending) return
+          await create.mutateAsync({ payload: pending, proof })
+          setPending(null)
+        }}
+      />
     </main>
   )
 }
@@ -185,4 +216,24 @@ function NewPayment() {
 function FieldErr({ msg }: { msg?: string }) {
   if (!msg) return null
   return <p className="mt-1 text-xs text-red-600">{msg}</p>
+}
+
+// SelectedAccountLimits renders the limit summary panel only once a
+// real account has been chosen. Kept inside this file because it's
+// trivially form-coupled — the panel itself is the reusable bit.
+function SelectedAccountLimits({
+  accounts,
+  selectedId,
+}: {
+  accounts: v1Account[] | undefined
+  selectedId: string
+}) {
+  if (!selectedId) return null
+  const a = accounts?.find((x) => x.id === selectedId)
+  if (!a) return null
+  return (
+    <div className="mt-2">
+      <AccountLimitSummary account={a} />
+    </div>
+  )
 }

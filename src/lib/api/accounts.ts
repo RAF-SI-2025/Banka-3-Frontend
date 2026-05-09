@@ -7,6 +7,7 @@ import type { v1CreateAccountRequest } from './generated/models/v1CreateAccountR
 import type { v1ListAccountsResponse } from './generated/models/v1ListAccountsResponse'
 import type { BankServiceUpdateAccountLimitsBody } from './generated/models/BankServiceUpdateAccountLimitsBody'
 import type { BankServiceSetAccountStatusBody } from './generated/models/BankServiceSetAccountStatusBody'
+import { proofHeaders, type VerificationProof } from './verification'
 
 export type Account = v1Account
 
@@ -37,8 +38,16 @@ export async function createAccount(input: v1CreateAccountRequest): Promise<Acco
 export async function updateAccountLimits(
   id: string,
   input: BankServiceUpdateAccountLimitsBody,
+  proof: VerificationProof,
 ): Promise<Account> {
-  const { data } = await api.patch<Account>(`/v1/accounts/${id}/limits`, input)
+  const { data } = await api.patch<Account>(`/v1/accounts/${id}/limits`, input, {
+    headers: proofHeaders(proof),
+  })
+  return data
+}
+
+export async function updateAccountName(id: string, name: string): Promise<Account> {
+  const { data } = await api.patch<Account>(`/v1/accounts/${id}/name`, { name })
   return data
 }
 

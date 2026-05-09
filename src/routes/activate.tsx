@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, type FormEvent } from 'react'
-import { AxiosError } from 'axios'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { activateAccount } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/error'
+import { passwordSchema } from '@/lib/auth/password'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,41 +23,42 @@ export const Route = createFileRoute('/activate')({
   component: ActivatePage,
 })
 
+const schema = z
+  .object({
+    password: passwordSchema,
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, {
+    path: ['confirm'],
+    message: 'Lozinke se ne poklapaju',
+  })
+
+type Values = z.infer<typeof schema>
+
 function ActivatePage() {
   const navigate = useNavigate()
   const { token } = Route.useSearch()
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { password: '', confirm: '' },
+  })
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
+  const onSubmit = form.handleSubmit(async (values) => {
     if (!token) {
-      setError('Nedostaje aktivacioni token')
+      form.setError('root', { message: 'Nedostaje aktivacioni token' })
       return
     }
-    if (password !== confirm) {
-      setError('Lozinke se ne poklapaju')
-      return
-    }
-    setSubmitting(true)
     try {
-      await activateAccount(token, password)
+      await activateAccount(token, values.password)
       setDone(true)
       setTimeout(() => navigate({ to: '/login' }), 2000)
     } catch (err) {
-      if (err instanceof AxiosError) {
-        setError(err.response?.data?.message ?? 'Aktivacija nije uspela')
-      } else {
-        setError('Aktivacija nije uspela')
-      }
-    } finally {
-      setSubmitting(false)
+      form.setError('root', { message: apiError(err, 'Aktivacija nije uspela') })
     }
-  }
+  })
+
+  const rootError = form.formState.errors.root?.message
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
@@ -63,37 +68,29 @@ function ActivatePage() {
         </CardHeader>
         <CardContent>
           {done ? (
-            <p className="text-green-700">
-              Nalog je aktiviran. Preusmeravamo Vas na prijavu…
-            </p>
+            <p className="text-green-700">Nalog je aktiviran. Preusmeravamo Vas na prijavu…</p>
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
-              {error && <ErrorBanner>{error}</ErrorBanner>}
+              {rootError && <ErrorBanner>{rootError}</ErrorBanner>}
               <p className="text-sm text-gray-600">
                 Postavite lozinku (8–32 znaka, ≥2 cifre, 1 veliko i 1 malo slovo).
               </p>
               <div>
                 <Label htmlFor="password">Nova lozinka</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <Input id="password" type="password" {...form.register('password')} />
+                {form.formState.errors.password && (
+                  <p className="mt-1 text-xs text-red-600">{form.formState.errors.password.message}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="confirm">Potvrdi lozinku</Label>
-                <Input
-                  id="confirm"
-                  type="password"
-                  required
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                />
+                <Input id="confirm" type="password" {...form.register('confirm')} />
+                {form.formState.errors.confirm && (
+                  <p className="mt-1 text-xs text-red-600">{form.formState.errors.confirm.message}</p>
+                )}
               </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Slanje…' : 'Aktiviraj nalog'}
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Slanje…' : 'Aktiviraj nalog'}
               </Button>
               <div className="text-center text-sm">
                 <Link to="/login" className="text-blue-600 hover:underline">

@@ -2,8 +2,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { z } from 'zod'
 import { createAccount } from '@/lib/api/accounts'
+import { apiError } from '@/lib/api/error'
 import { listClients } from '@/lib/api/clients'
 import { listCompanies } from '@/lib/api/companies'
 import { keys } from '@/lib/query-keys'
@@ -15,6 +17,7 @@ import { ErrorBanner } from '@/components/ui/error'
 import {
   accountKindLabel,
   accountSubtypeLabel,
+  subtypesForKind,
 } from '@/lib/labels'
 import { currencyLabel } from '@/lib/format'
 import { v1AccountKind } from '@/lib/api/generated/models/v1AccountKind'
@@ -76,14 +79,31 @@ function NewAccount() {
     },
   })
 
-  const errMsg = create.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((create.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri kreiranju računa.'
-    : null
+  const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju računa.') : null
 
   const kind = form.watch('kind')
   const isBusiness = kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD || kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_FX
   const isFx = kind === v1AccountKind.ACCOUNT_KIND_PERSONAL_FX || kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_FX
+  const allowedSubtypes = subtypesForKind(kind)
+  const showSubtype = allowedSubtypes.length > 0
+
+  // Keep subtype in sync with kind: when the user flips kind, the
+  // current subtype is almost certainly invalid for the new bucket
+  // (e.g. STANDARD doesn't apply to a business account). Snap to the
+  // first allowed value, or UNSPECIFIED for FX/system kinds where the
+  // backend ignores it anyway.
+  const subtype = form.watch('subtype')
+  useEffect(() => {
+    if (allowedSubtypes.length === 0) {
+      if (subtype !== v1AccountSubtype.ACCOUNT_SUBTYPE_UNSPECIFIED) {
+        form.setValue('subtype', v1AccountSubtype.ACCOUNT_SUBTYPE_UNSPECIFIED)
+      }
+      return
+    }
+    if (!allowedSubtypes.includes(subtype)) {
+      form.setValue('subtype', allowedSubtypes[0])
+    }
+  }, [kind, allowedSubtypes, subtype, form])
 
   return (
     <main className="container max-w-2xl space-y-4 py-8">
@@ -117,18 +137,18 @@ function NewAccount() {
                 ))}
             </Select>
           </div>
-          <div>
-            <Label>Podtip</Label>
-            <Select {...form.register('subtype')}>
-              {Object.values(v1AccountSubtype)
-                .filter((s) => s !== v1AccountSubtype.ACCOUNT_SUBTYPE_UNSPECIFIED)
-                .map((s) => (
+          {showSubtype && (
+            <div>
+              <Label>Podtip</Label>
+              <Select {...form.register('subtype')}>
+                {allowedSubtypes.map((s) => (
                   <option key={s} value={s}>
                     {accountSubtypeLabel[s]}
                   </option>
                 ))}
-            </Select>
-          </div>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

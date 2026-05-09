@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { getClient, updateClient } from '@/lib/api/clients'
+import { apiError } from '@/lib/api/error'
 import { listAccounts } from '@/lib/api/accounts'
 import { listLoans } from '@/lib/api/loans'
 import { keys } from '@/lib/query-keys'
@@ -85,10 +86,7 @@ function ClientDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.client.detail(id) }),
   })
 
-  const errMsg = update.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((update.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri ažuriranju.'
-    : null
+  const errMsg = update.error ? apiError(update.error, 'Greška pri ažuriranju.') : null
 
   if (client.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
   if (!client.data) return <p className="container py-8 text-red-600">Greška.</p>

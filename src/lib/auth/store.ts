@@ -9,10 +9,19 @@ export interface AuthSnapshot {
   userId: string | null
   userKind: UserKind | null
   permissions: string[]
+  firstName: string | null
+  lastName: string | null
 }
 
 interface AuthState extends AuthSnapshot {
-  setLogin: (s: { accessToken: string; userId: string; userKind: UserKind; permissions: string[] }) => void
+  setLogin: (s: {
+    accessToken: string
+    userId: string
+    userKind: UserKind
+    permissions: string[]
+    firstName?: string
+    lastName?: string
+  }) => void
   setAccessToken: (token: string) => void
   clear: () => void
   has: (perm: string) => boolean
@@ -29,9 +38,18 @@ export const useAuthStore = create<AuthState>()(
       userId: null,
       userKind: null,
       permissions: [],
+      firstName: null,
+      lastName: null,
 
-      setLogin: ({ accessToken, userId, userKind, permissions }) =>
-        set({ accessToken, userId, userKind, permissions }),
+      setLogin: ({ accessToken, userId, userKind, permissions, firstName, lastName }) =>
+        set({
+          accessToken,
+          userId,
+          userKind,
+          permissions,
+          firstName: firstName ?? null,
+          lastName: lastName ?? null,
+        }),
 
       setAccessToken: (accessToken) => {
         // Refresh response doesn't echo back the user identity; keep
@@ -40,7 +58,15 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken, permissions: perms ?? get().permissions })
       },
 
-      clear: () => set({ accessToken: null, userId: null, userKind: null, permissions: [] }),
+      clear: () =>
+        set({
+          accessToken: null,
+          userId: null,
+          userKind: null,
+          permissions: [],
+          firstName: null,
+          lastName: null,
+        }),
 
       has: (perm) => get().permissions.includes(perm) || get().permissions.includes('admin'),
     }),
@@ -58,6 +84,8 @@ export const useAuthStore = create<AuthState>()(
         userId: s.userId,
         userKind: s.userKind,
         permissions: s.permissions,
+        firstName: s.firstName,
+        lastName: s.lastName,
       }),
     },
   ),

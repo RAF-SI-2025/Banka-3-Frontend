@@ -95,8 +95,22 @@ describe('Celina 2 — plaćanje (klijent)', () => {
     }).as('recipients')
   })
 
-  it('klijent kreira novo plaćanje sa svog tekućeg računa', () => {
+  it('klijent kreira novo plaćanje sa svog tekućeg računa (preko verifikacionog koda)', () => {
+    // Spec p.11: verifikacioni kod step. The dialog auto-fetches an
+    // issued code from the gateway; we stub it so the test sees a
+    // known value, then type it back in.
+    cy.intercept('POST', '/api/v1/verification/request', (req) => {
+      expect(req.body.actionKind).to.eq('payment')
+      req.reply({
+        statusCode: 200,
+        body: { verificationId: 'v-1', code: '123456', expiresAt: TODAY },
+      })
+    }).as('verifReq')
+
     cy.intercept('POST', '/api/v1/payments', (req) => {
+      // Verification headers must have ridden along.
+      expect(req.headers['x-verification-id']).to.eq('v-1')
+      expect(req.headers['x-verification-code']).to.eq('123456')
       // Assert the payload shape.
       expect(req.body.fromAccountId).to.eq('acc-rsd')
       expect(req.body.toAccountNumber).to.match(/^\d{18}$/)
@@ -127,15 +141,50 @@ describe('Celina 2 — plaćanje (klijent)', () => {
     cy.visit('/banking/placanja')
     cy.get('select[name="fromAccountId"]').select('acc-rsd')
     cy.get('input[name="recipientName"]').type('EPS Snabdevanje')
-    cy.get('input[name="toAccountNumber"]').type('160005412345678901')
+    // 18 digits, sum-of-digits = 66 → mod-11 clean (validated by
+    // src/lib/account-number.ts and the backend's pkg/account.Validate).
+    cy.get('input[name="toAccountNumber"]').type('160005412345678905')
     cy.get('input[name="amount"]').type('1500')
     cy.get('input[name="paymentCode"]').clear().type('221')
     cy.get('input[name="purpose"]').type('Račun za struju — april')
     cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
-    cy.wait('@createPayment')
 
+    // Verification dialog opens, displays the issued code, accepts input.
+    cy.wait('@verifReq')
+    cy.findByLabelText('verifikacioni-kod').should('have.text', '123456')
+    cy.get('#verif-code').type('123456')
+    cy.findByRole('button', { name: /^Potvrdi$/ }).click()
+
+    cy.wait('@createPayment')
     // After success, the FE redirects to /banking/racuni.
     cy.url({ timeout: 5000 }).should('include', '/banking/racuni')
+  })
+
+  it('pogrešan verifikacioni kod prikazuje grešku i ne šalje plaćanje', () => {
+    cy.intercept('POST', '/api/v1/verification/request', {
+      statusCode: 200,
+      body: { verificationId: 'v-2', code: '987654', expiresAt: TODAY },
+    }).as('verifReq')
+    cy.intercept('POST', '/api/v1/payments', {
+      statusCode: 401,
+      body: { code: 401, message: 'Pogrešan verifikacioni kod.' },
+    }).as('createPayment')
+
+    cy.visit('/banking/placanja')
+    cy.get('select[name="fromAccountId"]').select('acc-rsd')
+    cy.get('input[name="recipientName"]').type('EPS Snabdevanje')
+    cy.get('input[name="toAccountNumber"]').type('160005412345678905')
+    cy.get('input[name="amount"]').type('1500')
+    cy.get('input[name="purpose"]').type('Račun za struju')
+    cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
+    cy.wait('@verifReq')
+    // Type a wrong code — backend rejects, dialog stays open with the
+    // server's Serbian message and the user can retry.
+    cy.get('#verif-code').type('111222')
+    cy.findByRole('button', { name: /^Potvrdi$/ }).click()
+    cy.wait('@createPayment')
+    cy.contains('Pogrešan verifikacioni kod').should('be.visible')
+    cy.url().should('include', '/banking/placanja')
   })
 
   it('klijent vidi grešku ako račun primaoca nema 18 cifara', () => {
@@ -147,5 +196,19 @@ describe('Celina 2 — plaćanje (klijent)', () => {
     cy.get('input[name="purpose"]').type('test')
     cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
     cy.contains('Račun mora imati 18 cifara').should('be.visible')
+  })
+
+  it('klijent vidi grešku za neispravan kontrolni broj (mod-11)', () => {
+    // 18 digits but checksum fails — same length, off-by-one mistake.
+    // Original valid: 160005412345678905 (sum 66). Bumping the last
+    // digit by 1 turns sum into 67 → mod-11 = 1 → invalid.
+    cy.visit('/banking/placanja')
+    cy.get('select[name="fromAccountId"]').select('acc-rsd')
+    cy.get('input[name="recipientName"]').type('Test')
+    cy.get('input[name="toAccountNumber"]').type('160005412345678906')
+    cy.get('input[name="amount"]').type('100')
+    cy.get('input[name="purpose"]').type('test')
+    cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
+    cy.contains('Neispravan kontrolni broj računa').should('be.visible')
   })
 })

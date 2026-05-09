@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { listAccounts } from '@/lib/api/accounts'
 import { quoteExchange, createTransfer } from '@/lib/api/payments'
 import { listRates } from '@/lib/api/rates'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
 import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
@@ -17,7 +19,9 @@ import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
 import { Card } from '@/components/ui/card'
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
 import { bankaExchangeV1Currency } from '@/lib/api/generated/models/bankaExchangeV1Currency'
+import type { v1CreateTransferRequest } from '@/lib/api/generated/models/v1CreateTransferRequest'
 
 export const Route = createFileRoute('/_authed/banking/menjacnica')({
   component: Menjacnica,
@@ -41,6 +45,7 @@ function Menjacnica() {
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
   const [confirmed, setConfirmed] = useState(false)
+  const [pending, setPending] = useState<v1CreateTransferRequest | null>(null)
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -81,7 +86,8 @@ function Menjacnica() {
   })
 
   const exec = useMutation({
-    mutationFn: createTransfer,
+    mutationFn: ({ payload, proof }: { payload: v1CreateTransferRequest; proof: VerificationProof }) =>
+      createTransfer(payload, proof),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.account.all })
       qc.invalidateQueries({ queryKey: keys.transaction.all })
@@ -89,18 +95,14 @@ function Menjacnica() {
     },
   })
 
-  const errMsg = exec.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((exec.error as any)?.response?.data?.message as string | undefined) ??
-      'Greška pri zameni valuta.'
-    : null
+  const errMsg = exec.error ? apiError(exec.error, 'Greška pri zameni valuta.') : null
 
   function onSubmit(v: FormValues) {
     if (!confirmed) {
       setConfirmed(true)
       return
     }
-    exec.mutate({ fromAccountId: v.fromAccountId, toAccountId: v.toAccountId, amount: v.amount })
+    setPending({ fromAccountId: v.fromAccountId, toAccountId: v.toAccountId, amount: v.amount })
   }
 
   return (
@@ -221,6 +223,18 @@ function Menjacnica() {
           <Card className="p-6 text-sm text-gray-500">Kursna lista nije dostupna.</Card>
         )}
       </section>
+      <VerificationDialog
+        open={!!pending}
+        kind="transfer"
+        title="Potvrda menjačnice"
+        description="Unesite verifikacioni kod kako biste potvrdili zamenu valuta."
+        onCancel={() => setPending(null)}
+        onConfirm={async (proof) => {
+          if (!pending) return
+          await exec.mutateAsync({ payload: pending, proof })
+          setPending(null)
+        }}
+      />
     </main>
   )
 }

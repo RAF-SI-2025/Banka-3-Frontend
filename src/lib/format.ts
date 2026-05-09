@@ -50,3 +50,25 @@ export function formatAccountNumber(n: string | undefined): string {
   if (n.length !== 18) return n
   return `${n.slice(0, 3)}-${n.slice(3, 7)}-${n.slice(7, 16)}-${n.slice(16, 18)}`
 }
+
+// formatCardNumber renders a PAN in the standard four-by-four layout
+// regardless of whether the backend sent a raw 16-digit number (which
+// employees see) or the already-masked client form ("4111********1111"
+// per spec p.29 / pkg/card.Mask). Stars are passed through unchanged
+// so the masking is preserved.
+//
+//   "4111111111111111"  → "4111 1111 1111 1111"
+//   "4111********1111"  → "4111 **** **** 1111"
+//   "****1234"          → "****1234"  (notification short form, untouched)
+//
+// The fall-through "leave unchanged" branch keeps the function safe to
+// drop into existing render sites without exhaustive enumeration of
+// what the API might emit in future.
+export function formatCardNumber(n: string | undefined): string {
+  if (!n) return '—'
+  // Spec form is exactly 16 chars; anything else (incl. the 8-char
+  // notification short form `****1234`) we render verbatim so we don't
+  // misalign a non-PAN string.
+  if (n.length !== 16) return n
+  return `${n.slice(0, 4)} ${n.slice(4, 8)} ${n.slice(8, 12)} ${n.slice(12, 16)}`
+}

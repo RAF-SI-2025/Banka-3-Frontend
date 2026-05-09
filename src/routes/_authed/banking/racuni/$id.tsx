@@ -1,35 +1,80 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { getAccount } from '@/lib/api/accounts'
+import { useState } from 'react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import {
+  getAccount,
+  updateAccountLimits,
+  updateAccountName,
+} from '@/lib/api/accounts'
 import { listTransactions } from '@/lib/api/payments'
 import { listCards } from '@/lib/api/cards'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { keys } from '@/lib/query-keys'
+import { useAuthStore } from '@/lib/auth/store'
 import {
   formatMoney,
   formatAccountNumber,
+  formatCardNumber,
   formatDateTime,
   currencyLabel,
 } from '@/lib/format'
 import {
   accountKindLabel,
   accountSubtypeLabel,
-  accountStatusLabel,
   txKindLabel,
   txStatusLabel,
   cardBrandLabel,
   cardStatusLabel,
 } from '@/lib/labels'
-import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
+import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { ErrorBanner } from '@/components/ui/error'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
 import { v1TransactionStatus } from '@/lib/api/generated/models/v1TransactionStatus'
 
 export const Route = createFileRoute('/_authed/banking/racuni/$id')({
   component: AccountDetail,
 })
 
+const renameSchema = z.object({
+  name: z.string().min(1, 'Naziv je obavezan').max(64, 'Najviše 64 karaktera'),
+})
+type RenameValues = z.infer<typeof renameSchema>
+
+const limitsSchema = z.object({
+  dailyLimit: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
+  monthlyLimit: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
+})
+type LimitsValues = z.infer<typeof limitsSchema>
+
 function AccountDetail() {
   const { id } = Route.useParams()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
+  // Use atomic selectors. Returning a fresh object on every render
+  // triggers an infinite render loop because the new identity makes
+  // zustand re-emit on each schedule.
+  const meFirstName = useAuthStore((s) => s.firstName)
+  const meLastName = useAuthStore((s) => s.lastName)
+  const meUserId = useAuthStore((s) => s.userId)
+
+  const [renameOpen, setRenameOpen] = useState(false)
+  const [limitsOpen, setLimitsOpen] = useState(false)
+  const [pendingLimits, setPendingLimits] = useState<LimitsValues | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [minAmount, setMinAmount] = useState('')
+  const [maxAmount, setMaxAmount] = useState('')
+
   const account = useQuery({
     queryKey: keys.account.detail(id),
     queryFn: () => getAccount(id),
@@ -47,6 +92,29 @@ function AccountDetail() {
   if (!account.data) return <p className="container py-8 text-red-600">Greška pri učitavanju.</p>
 
   const a = account.data
+  const cur = currencyLabel(a.currency!)
+  const isOwner = a.ownerClientId === meUserId
+  const ownerName = isOwner
+    ? [meFirstName, meLastName].filter(Boolean).join(' ').trim() || '—'
+    : a.ownerClientId ?? '—'
+
+  // Spec p.20: Reserved funds is always 0 for now (no inter-bank delays
+  // until c5). Always render the field so the layout is stable when
+  // c5 lands.
+  const reserved = '0'
+
+  // Filter transactions client-side per spec p.18 ("filtriranje po
+  // datumu, iznosu, statusu").
+  const txList = transactions.data?.transactions ?? []
+  const filteredTx = txList.filter((t) => {
+    if (statusFilter && t.status !== statusFilter) return false
+    const outflow = t.fromAccountId === id
+    const amt = Number((outflow ? t.fromAmount : t.toAmount) ?? 0)
+    if (minAmount && amt < Number(minAmount)) return false
+    if (maxAmount && amt > Number(maxAmount)) return false
+    return true
+  })
+
   return (
     <main className="container space-y-6 py-8">
       <div>
@@ -61,21 +129,35 @@ function AccountDetail() {
             <h1 className="text-2xl font-semibold">{a.name || formatAccountNumber(a.number)}</h1>
             <div className="font-mono text-sm text-gray-500">{formatAccountNumber(a.number)}</div>
           </div>
-          <Badge tone={a.status === 'ACCOUNT_STATUS_ACTIVE' ? 'green' : 'red'}>
-            {accountStatusLabel[a.status!]}
-          </Badge>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <Field label="Vrsta">{accountKindLabel[a.kind!]}</Field>
+          <Field label="Vlasnik">{ownerName}</Field>
+          <Field label="Tip">{accountKindLabel[a.kind!]}</Field>
           <Field label="Podtip">{accountSubtypeLabel[a.subtype!]}</Field>
-          <Field label="Valuta">{currencyLabel(a.currency!)}</Field>
-          <Field label="Mesečno održavanje">{formatMoney(a.maintenanceFee, currencyLabel(a.currency!))}</Field>
-          <Field label="Stanje">{formatMoney(a.balance, currencyLabel(a.currency!))}</Field>
-          <Field label="Raspoloživo">{formatMoney(a.availableBalance, currencyLabel(a.currency!))}</Field>
-          <Field label="Dnevni limit">{formatMoney(a.dailyLimit, currencyLabel(a.currency!))}</Field>
-          <Field label="Mesečni limit">{formatMoney(a.monthlyLimit, currencyLabel(a.currency!))}</Field>
-          <Field label="Dnevno potrošeno">{formatMoney(a.dailySpent, currencyLabel(a.currency!))}</Field>
-          <Field label="Mesečno potrošeno">{formatMoney(a.monthlySpent, currencyLabel(a.currency!))}</Field>
+          <Field label="Valuta">{cur}</Field>
+          <Field label="Mesečno održavanje">{formatMoney(a.maintenanceFee, cur)}</Field>
+          <Field label="Stanje">{formatMoney(a.balance, cur)}</Field>
+          <Field label="Raspoloživo">{formatMoney(a.availableBalance, cur)}</Field>
+          <Field label="Rezervisana sredstva">{formatMoney(reserved, cur)}</Field>
+          <Field label="Dnevni limit">{formatMoney(a.dailyLimit, cur)}</Field>
+          <Field label="Mesečni limit">{formatMoney(a.monthlyLimit, cur)}</Field>
+          <Field label="Dnevno potrošeno">{formatMoney(a.dailySpent, cur)}</Field>
+          <Field label="Mesečno potrošeno">{formatMoney(a.monthlySpent, cur)}</Field>
+        </div>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {isOwner && (
+            <Button variant="secondary" onClick={() => setRenameOpen(true)}>
+              Promena naziva računa
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => navigate({ to: '/banking/placanja' })}>
+            Novo plaćanje
+          </Button>
+          {isOwner && (
+            <Button variant="secondary" onClick={() => setLimitsOpen(true)}>
+              Promena limita
+            </Button>
+          )}
         </div>
       </Card>
 
@@ -97,8 +179,8 @@ function AccountDetail() {
                 <TR key={c.id}>
                   <TD>{c.name || '—'}</TD>
                   <TD>{cardBrandLabel[c.brand!]}</TD>
-                  <TD className="font-mono text-xs">{c.number}</TD>
-                  <TD className="text-right">{formatMoney(c.cardLimit, currencyLabel(a.currency!))}</TD>
+                  <TD className="font-mono text-xs">{formatCardNumber(c.number)}</TD>
+                  <TD className="text-right">{formatMoney(c.cardLimit, cur)}</TD>
                   <TD>
                     <Badge tone={c.status === 'CARD_STATUS_ACTIVE' ? 'green' : 'red'}>
                       {cardStatusLabel[c.status!]}
@@ -114,8 +196,27 @@ function AccountDetail() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Transakcije</h2>
-        {transactions.data && transactions.data.transactions && transactions.data.transactions.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <h2 className="mr-auto text-lg font-semibold">Transakcije</h2>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="">Svi</option>
+              <option value={v1TransactionStatus.TRANSACTION_STATUS_REALIZED}>Realizovano</option>
+              <option value={v1TransactionStatus.TRANSACTION_STATUS_PROCESSING}>U obradi</option>
+              <option value={v1TransactionStatus.TRANSACTION_STATUS_REJECTED}>Odbijeno</option>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Min iznos</Label>
+            <Input inputMode="decimal" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="w-28" />
+          </div>
+          <div>
+            <Label className="text-xs">Max iznos</Label>
+            <Input inputMode="decimal" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="w-28" />
+          </div>
+        </div>
+        {transactions.data && filteredTx.length > 0 ? (
           <Table>
             <THead>
               <TR>
@@ -129,7 +230,7 @@ function AccountDetail() {
               </TR>
             </THead>
             <TBody>
-              {transactions.data.transactions.map((t) => {
+              {filteredTx.map((t) => {
                 const outflow = t.fromAccountId === id
                 const counterparty = outflow ? t.toAccountId : t.fromAccountId
                 const amount = outflow ? t.fromAmount : t.toAmount
@@ -160,16 +261,161 @@ function AccountDetail() {
                   </TR>
                 )
               })}
-              {(!transactions.data.transactions || transactions.data.transactions.length === 0) && (
-                <EmptyRow colSpan={7}>Nema transakcija.</EmptyRow>
-              )}
             </TBody>
           </Table>
         ) : (
-          <p className="text-sm text-gray-500">Nema transakcija.</p>
+          <p className="text-sm text-gray-500">Nema transakcija za odabrani filter.</p>
         )}
       </section>
+
+      <RenameDialog
+        open={renameOpen}
+        currentName={a.name ?? ''}
+        onClose={() => setRenameOpen(false)}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: keys.account.detail(id) })
+          qc.invalidateQueries({ queryKey: keys.account.all })
+          setRenameOpen(false)
+        }}
+        accountId={id}
+      />
+
+      <LimitsDialog
+        open={limitsOpen}
+        defaultValues={{
+          dailyLimit: a.dailyLimit ?? '0',
+          monthlyLimit: a.monthlyLimit ?? '0',
+        }}
+        onClose={() => setLimitsOpen(false)}
+        onSubmit={(values) => {
+          setPendingLimits(values)
+          setLimitsOpen(false)
+        }}
+      />
+
+      <VerificationDialog
+        open={!!pendingLimits}
+        kind="limit_change"
+        title="Potvrda promene limita"
+        description="Spec p.20: promena limita zahteva verifikaciju."
+        onCancel={() => setPendingLimits(null)}
+        onConfirm={async (proof: VerificationProof) => {
+          if (!pendingLimits) return
+          await updateAccountLimits(id, pendingLimits, proof)
+          qc.invalidateQueries({ queryKey: keys.account.detail(id) })
+          qc.invalidateQueries({ queryKey: keys.account.all })
+          setPendingLimits(null)
+        }}
+      />
     </main>
+  )
+}
+
+function RenameDialog({
+  open,
+  currentName,
+  accountId,
+  onClose,
+  onSaved,
+}: {
+  open: boolean
+  currentName: string
+  accountId: string
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const form = useForm<RenameValues>({
+    resolver: zodResolver(renameSchema),
+    defaultValues: { name: currentName },
+  })
+
+  const submit = useMutation({
+    mutationFn: (v: RenameValues) => updateAccountName(accountId, v.name.trim()),
+    onSuccess: onSaved,
+  })
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Promena naziva računa"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={submit.isPending}>
+            Otkaži
+          </Button>
+          <Button onClick={form.handleSubmit((v) => submit.mutate(v))} disabled={submit.isPending}>
+            {submit.isPending ? 'Čuvam…' : 'Sačuvaj'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div>
+          <Label className="text-xs uppercase tracking-wide text-gray-500">Trenutno ime</Label>
+          <p className="text-sm">{currentName || '—'}</p>
+        </div>
+        <div>
+          <Label>Novo ime računa</Label>
+          <Input {...form.register('name')} autoFocus />
+          {form.formState.errors.name && (
+            <p className="mt-1 text-xs text-red-600">{form.formState.errors.name.message}</p>
+          )}
+        </div>
+        {submit.error && <ErrorBanner>{apiError(submit.error, 'Greška pri promeni naziva.')}</ErrorBanner>}
+      </div>
+    </Dialog>
+  )
+}
+
+function LimitsDialog({
+  open,
+  defaultValues,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  defaultValues: LimitsValues
+  onClose: () => void
+  onSubmit: (v: LimitsValues) => void
+}) {
+  const form = useForm<LimitsValues>({
+    resolver: zodResolver(limitsSchema),
+    defaultValues,
+  })
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Promena limita"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Otkaži
+          </Button>
+          <Button onClick={form.handleSubmit(onSubmit)}>Nastavi</Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-3">
+        <div>
+          <Label>Dnevni limit</Label>
+          <Input inputMode="decimal" {...form.register('dailyLimit')} />
+          {form.formState.errors.dailyLimit && (
+            <p className="mt-1 text-xs text-red-600">{form.formState.errors.dailyLimit.message}</p>
+          )}
+        </div>
+        <div>
+          <Label>Mesečni limit</Label>
+          <Input inputMode="decimal" {...form.register('monthlyLimit')} />
+          {form.formState.errors.monthlyLimit && (
+            <p className="mt-1 text-xs text-red-600">{form.formState.errors.monthlyLimit.message}</p>
+          )}
+        </div>
+        <p className="text-xs text-gray-500">Sledeći korak: verifikacioni kod (spec p.20).</p>
+      </div>
+    </Dialog>
   )
 }
 

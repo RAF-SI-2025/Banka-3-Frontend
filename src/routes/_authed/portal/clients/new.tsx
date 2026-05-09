@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/api/clients'
+import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,10 +53,7 @@ function NewClient() {
     },
   })
 
-  const errMsg = create.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((create.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri kreiranju klijenta.'
-    : null
+  const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju klijenta.') : null
 
   return (
     <main className="container max-w-2xl space-y-4 py-8">

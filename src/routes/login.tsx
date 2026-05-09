@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, type FormEvent } from 'react'
-import { AxiosError } from 'axios'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { login } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/error'
 import { useAuthStore } from '@/lib/auth/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,20 +15,24 @@ export const Route = createFileRoute('/login')({
   component: LoginPage,
 })
 
+const schema = z.object({
+  email: z.string().email('Unesite ispravan email'),
+  password: z.string().min(1, 'Lozinka je obavezna'),
+})
+
+type Values = z.infer<typeof schema>
+
 function LoginPage() {
   const navigate = useNavigate()
   const setLogin = useAuthStore((s) => s.setLogin)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+  })
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSubmitting(true)
+  const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const r = await login({ email, password })
+      const r = await login(values)
       setLogin({
         accessToken: r.accessToken,
         userId: r.userId,
@@ -35,16 +41,11 @@ function LoginPage() {
       })
       navigate({ to: '/' })
     } catch (err) {
-      if (err instanceof AxiosError) {
-        const msg = err.response?.data?.message ?? 'Greška pri prijavi'
-        setError(typeof msg === 'string' ? msg : 'Greška pri prijavi')
-      } else {
-        setError('Greška pri prijavi')
-      }
-    } finally {
-      setSubmitting(false)
+      form.setError('root', { message: apiError(err, 'Greška pri prijavi') })
     }
-  }
+  })
+
+  const rootError = form.formState.errors.root?.message
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
@@ -54,17 +55,13 @@ function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
-            {error && <ErrorBanner>{error}</ErrorBanner>}
+            {rootError && <ErrorBanner>{rootError}</ErrorBanner>}
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Input id="email" type="email" autoComplete="email" {...form.register('email')} />
+              {form.formState.errors.email && (
+                <p className="mt-1 text-xs text-red-600">{form.formState.errors.email.message}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="password">Lozinka</Label>
@@ -72,13 +69,14 @@ function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...form.register('password')}
               />
+              {form.formState.errors.password && (
+                <p className="mt-1 text-xs text-red-600">{form.formState.errors.password.message}</p>
+              )}
             </div>
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? 'Prijavljivanje…' : 'Prijavi se'}
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Prijavljivanje…' : 'Prijavi se'}
             </Button>
             <div className="text-center text-sm">
               <Link to="/password-reset" className="text-blue-600 hover:underline">

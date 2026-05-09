@@ -6,6 +6,7 @@ import type { v1ListTransactionsResponse } from './generated/models/v1ListTransa
 import type { v1Transaction } from './generated/models/v1Transaction'
 import type { v1QuoteExchangeRequest } from './generated/models/v1QuoteExchangeRequest'
 import type { v1QuoteExchangeResponse } from './generated/models/v1QuoteExchangeResponse'
+import { proofHeaders, type VerificationProof } from './verification'
 
 export type Transaction = v1Transaction
 export type PaymentResult = v1PaymentResult
@@ -23,13 +24,13 @@ export async function listTransactions(args: ListTransactionsArgs = {}): Promise
   return data
 }
 
-export async function createPayment(input: v1CreatePaymentRequest): Promise<PaymentResult> {
-  const { data } = await api.post<PaymentResult>('/v1/payments', input)
+export async function createPayment(input: v1CreatePaymentRequest, proof: VerificationProof): Promise<PaymentResult> {
+  const { data } = await api.post<PaymentResult>('/v1/payments', input, { headers: proofHeaders(proof) })
   return data
 }
 
-export async function createTransfer(input: v1CreateTransferRequest): Promise<PaymentResult> {
-  const { data } = await api.post<PaymentResult>('/v1/transfers', input)
+export async function createTransfer(input: v1CreateTransferRequest, proof: VerificationProof): Promise<PaymentResult> {
+  const { data } = await api.post<PaymentResult>('/v1/transfers', input, { headers: proofHeaders(proof) })
   return data
 }
 

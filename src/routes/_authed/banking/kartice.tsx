@@ -5,7 +5,7 @@ import { listCards, setCardStatus } from '@/lib/api/cards'
 import { listAccounts } from '@/lib/api/accounts'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
-import { formatMoney, formatAccountNumber } from '@/lib/format'
+import { formatMoney, formatAccountNumber, formatCardNumber } from '@/lib/format'
 import { cardBrandLabel, cardStatusLabel } from '@/lib/labels'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -73,7 +73,7 @@ function ClientCards() {
                 <TR key={c.id}>
                   <TD>{c.name || '—'}</TD>
                   <TD>{cardBrandLabel[c.brand!]}</TD>
-                  <TD className="font-mono text-xs">{c.number}</TD>
+                  <TD className="font-mono text-xs">{formatCardNumber(c.number)}</TD>
                   <TD className="font-mono text-xs">{formatAccountNumber(a?.number)}</TD>
                   <TD className="text-right">{formatMoney(c.cardLimit, currency ? currency.replace('CURRENCY_', '') : '')}</TD>
                   <TD className="text-xs text-gray-600">{c.expiresAt?.slice(0, 10) ?? '—'}</TD>

@@ -1,8 +1,15 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useAuthStore } from '@/lib/auth/store'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
 
+// /banking/* is the client-facing app. Employees use /portal — push
+// them there if they wander in.
 export const Route = createFileRoute('/_authed/banking')({
+  beforeLoad: () => {
+    const { userKind } = useAuthStore.getState()
+    if (userKind === 'employee') throw redirect({ to: '/portal' })
+  },
   component: BankingLayout,
 })
 

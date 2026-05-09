@@ -40,28 +40,15 @@ describe('Celina 1 — autentifikacija', () => {
     cy.contains('Neispravni kredencijali').should('be.visible')
   })
 
-  it('4: nakon 3 neuspela pokušaja prikazuje se poruka o zaključavanju', () => {
+  it('3: nepostojeći korisnik vidi "Neispravni kredencijali" (anti-enumeracija)', () => {
+    // Spec/E2E originally distinguished "Korisnik ne postoji" from
+    // "Neispravni kredencijali", but that leaks valid emails to a
+    // brute-force attacker. The user service now collapses both paths
+    // to 401/Neispravni kredencijali — see services/user/internal/
+    // service/auth.go and TestIntegration_Login_UnknownUser.
     cy.intercept('POST', '/api/v1/auth/login', {
-      statusCode: 403,
-      body: {
-        code: 403,
-        message:
-          'Nalog je privremeno zaključan zbog previše neuspešnih pokušaja. Pokušajte ponovo za 15 min.',
-      },
-    }).as('login')
-
-    cy.visit('/login')
-    cy.findByLabelText('Email').type('luka@banka.rs')
-    cy.findByLabelText('Lozinka').type('pogresna123')
-    cy.findByRole('button', { name: /Prijavi se/ }).click()
-    cy.wait('@login')
-    cy.contains('Nalog je privremeno zaključan').should('be.visible')
-  })
-
-  it('3: nepostojeći korisnik prikazuje "Korisnik ne postoji"', () => {
-    cy.intercept('POST', '/api/v1/auth/login', {
-      statusCode: 404,
-      body: { code: 404, message: 'Korisnik ne postoji' },
+      statusCode: 401,
+      body: { code: 401, message: 'Neispravni kredencijali' },
     }).as('login')
 
     cy.visit('/login')
@@ -69,6 +56,7 @@ describe('Celina 1 — autentifikacija', () => {
     cy.findByLabelText('Lozinka').type('Sifra123')
     cy.findByRole('button', { name: /Prijavi se/ }).click()
     cy.wait('@login')
-    cy.contains('Korisnik ne postoji').should('be.visible')
+    cy.contains('Neispravni kredencijali').should('be.visible')
+    cy.contains('Korisnik ne postoji').should('not.exist')
   })
 })

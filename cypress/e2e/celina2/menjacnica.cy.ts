@@ -94,13 +94,21 @@ describe('Celina 2 — menjačnica', () => {
       },
     }).as('quote')
 
-    cy.intercept('POST', '/api/v1/transfers', {
-      statusCode: 200,
-      body: {
-        opId: 'op-fx',
-        status: 'TRANSACTION_STATUS_REALIZED',
-        transactions: [],
-      },
+    cy.intercept('POST', '/api/v1/verification/request', (req) => {
+      expect(req.body.actionKind).to.eq('transfer')
+      req.reply({
+        statusCode: 200,
+        body: { verificationId: 'v-fx', code: '424242', expiresAt: TODAY },
+      })
+    }).as('verifReq')
+
+    cy.intercept('POST', '/api/v1/transfers', (req) => {
+      expect(req.headers['x-verification-id']).to.eq('v-fx')
+      expect(req.headers['x-verification-code']).to.eq('424242')
+      req.reply({
+        statusCode: 200,
+        body: { opId: 'op-fx', status: 'TRANSACTION_STATUS_REALIZED', transactions: [] },
+      })
     }).as('transfer')
 
     cy.visit('/banking/menjacnica')
@@ -114,9 +122,13 @@ describe('Celina 2 — menjačnica', () => {
     cy.contains('9,95 EUR').should('be.visible')
     cy.contains('Provizija').parent().should('contain', '0,05 EUR')
 
-    // First click = Pregled, switches the button label to Realizuj.
+    // First click = Pregled, switches the button label to Realizuj. The
+    // Realizuj click opens the verifikacioni-kod dialog.
     cy.findByRole('button', { name: /Pregled/ }).click()
     cy.findByRole('button', { name: /Realizuj/ }).click()
+    cy.wait('@verifReq')
+    cy.get('#verif-code').type('424242')
+    cy.findByRole('button', { name: /^Potvrdi$/ }).click()
     cy.wait('@transfer')
     cy.url({ timeout: 5000 }).should('include', '/banking/racuni')
   })

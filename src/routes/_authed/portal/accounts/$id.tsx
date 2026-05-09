@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,6 +9,8 @@ import {
   updateAccountLimits,
   setAccountStatus,
 } from '@/lib/api/accounts'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
@@ -28,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ErrorBanner } from '@/components/ui/error'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
 import { v1AccountStatus } from '@/lib/api/generated/models/v1AccountStatus'
 
 export const Route = createFileRoute('/_authed/portal/accounts/$id')({
@@ -45,6 +48,7 @@ function PortalAccountDetail() {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const canWrite = has(perms, Permissions.AccountWrite)
+  const [pending, setPending] = useState<LimitsValues | null>(null)
 
   const account = useQuery({
     queryKey: keys.account.detail(id),
@@ -66,7 +70,8 @@ function PortalAccountDetail() {
   }, [account.data, form])
 
   const update = useMutation({
-    mutationFn: (body: LimitsValues) => updateAccountLimits(id, body),
+    mutationFn: ({ body, proof }: { body: LimitsValues; proof: VerificationProof }) =>
+      updateAccountLimits(id, body, proof),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.account.detail(id) }),
   })
 
@@ -87,10 +92,7 @@ function PortalAccountDetail() {
   const a = account.data
   const cur = currencyLabel(a.currency!)
 
-  const errMsg = update.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((update.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri ažuriranju limita.'
-    : null
+  const errMsg = update.error ? apiError(update.error, 'Greška pri ažuriranju limita.') : null
 
   return (
     <main className="container space-y-6 py-8">
@@ -134,7 +136,7 @@ function PortalAccountDetail() {
         <p className="mb-4 text-sm text-gray-500">
           Spec p.12: dnevni i mesečni limit transakcija. Ostala polja računa su nepromenljiva.
         </p>
-        <form onSubmit={form.handleSubmit((v) => update.mutate(v))} className="grid grid-cols-2 gap-3">
+        <form onSubmit={form.handleSubmit((v) => setPending(v))} className="grid grid-cols-2 gap-3">
           <div>
             <Label>Dnevni limit ({cur})</Label>
             <Input inputMode="decimal" {...form.register('dailyLimit')} disabled={!canWrite} />
@@ -163,6 +165,18 @@ function PortalAccountDetail() {
           )}
         </form>
       </Card>
+      <VerificationDialog
+        open={!!pending}
+        kind="limit_change"
+        title="Potvrda promene limita"
+        description="Spec p.20: promena limita zahteva verifikaciju."
+        onCancel={() => setPending(null)}
+        onConfirm={async (proof) => {
+          if (!pending) return
+          await update.mutateAsync({ body: pending, proof })
+          setPending(null)
+        }}
+      />
     </main>
   )
 }

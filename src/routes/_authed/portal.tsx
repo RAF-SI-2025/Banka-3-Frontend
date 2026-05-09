@@ -1,10 +1,17 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
 
+// /portal/* is the employee back-office. Clients have no business
+// here — even if a route renders an empty "Nemate dozvolu" body, we
+// shouldn't show the chrome. Redirect them straight to /banking.
 export const Route = createFileRoute('/_authed/portal')({
+  beforeLoad: () => {
+    const { userKind } = useAuthStore.getState()
+    if (userKind === 'client') throw redirect({ to: '/banking' })
+  },
   component: PortalLayout,
 })
 

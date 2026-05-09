@@ -1,13 +1,21 @@
 // Shared "Nova kartica" form, used by /banking/kartice (client requesting
 // a card on their own account) and /portal/cards (employee on any
 // account — and AuthorizedPerson selection for business accounts).
+//
+// Spec p.28 mandates an email-confirmation step before issuance. We
+// reuse the verifikacioni-kod primitive (5-min code, 3 attempts) for
+// this — same UX as payments, different action kind. After the form
+// is submitted the verification dialog is opened on top; only after
+// the code is consumed does the card actually get created.
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createCard } from '@/lib/api/cards'
+import { apiError } from '@/lib/api/error'
+import type { VerificationProof } from '@/lib/api/verification'
 import { listAuthorizedPersons } from '@/lib/api/companies'
 import { keys } from '@/lib/query-keys'
 import { Dialog } from '@/components/ui/dialog'
@@ -16,9 +24,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { ErrorBanner } from '@/components/ui/error'
+import { VerificationDialog } from '@/components/verification/verification-dialog'
 import { v1CardBrand } from '@/lib/api/generated/models/v1CardBrand'
 import { cardBrandLabel } from '@/lib/labels'
 import type { Account } from '@/lib/api/accounts'
+import type { v1CreateCardRequest } from '@/lib/api/generated/models/v1CreateCardRequest'
 
 const schema = z.object({
   accountId: z.string().min(1, 'Izaberite račun'),
@@ -42,6 +52,7 @@ export function CardCreateDialog({
   preselectAccountId?: string
 }) {
   const qc = useQueryClient()
+  const [pending, setPending] = useState<v1CreateCardRequest | null>(null)
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -55,6 +66,7 @@ export function CardCreateDialog({
 
   useEffect(() => {
     if (open) {
+      setPending(null)
       form.reset({
         accountId: preselectAccountId ?? '',
         brand: v1CardBrand.CARD_BRAND_VISA,
@@ -78,17 +90,15 @@ export function CardCreateDialog({
   })
 
   const create = useMutation({
-    mutationFn: createCard,
+    mutationFn: ({ payload, proof }: { payload: v1CreateCardRequest; proof: VerificationProof }) =>
+      createCard(payload, proof),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.card.all })
       onClose()
     },
   })
 
-  const errMsg = create.error
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((create.error as any)?.response?.data?.message as string | undefined) ?? 'Greška pri kreiranju kartice.'
-    : null
+  const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju kartice.') : null
 
   return (
     <Dialog
@@ -102,7 +112,7 @@ export function CardCreateDialog({
           </Button>
           <Button
             onClick={form.handleSubmit((v) =>
-              create.mutate({
+              setPending({
                 accountId: v.accountId,
                 brand: v.brand,
                 name: v.name,
@@ -176,6 +186,18 @@ export function CardCreateDialog({
 
         {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
       </div>
+      <VerificationDialog
+        open={!!pending}
+        kind="card_issue"
+        title="Potvrda izdavanja kartice"
+        description="Spec p.28: izdavanje kartice zahteva potvrdu kodom."
+        onCancel={() => setPending(null)}
+        onConfirm={async (proof) => {
+          if (!pending) return
+          await create.mutateAsync({ payload: pending, proof })
+          setPending(null)
+        }}
+      />
     </Dialog>
   )
 }

@@ -37,6 +37,37 @@ export const accountSubtypeLabel: Record<v1AccountSubtype, string> = {
   [v1AccountSubtype.ACCOUNT_SUBTYPE_FOUNDATION]: 'Fondacija',
 }
 
+// subtypesForKind returns the AccountSubtype values that are valid for a
+// given AccountKind, in display order. Encodes the spec-p.12 contract
+// the backend (services/bank/internal/service/accounts.go) checks: only
+// RSD checking accounts carry a subtype; FX + system accounts collapse
+// to UNSPECIFIED. Personal-RSD allows STANDARD or any of the special
+// social variants; Business-RSD takes one of three legal-entity forms.
+//
+// Returning an empty array signals "no subtype field — submit
+// UNSPECIFIED" so the new-account form can hide the dropdown.
+export function subtypesForKind(kind: v1AccountKind): v1AccountSubtype[] {
+  switch (kind) {
+    case v1AccountKind.ACCOUNT_KIND_PERSONAL_CHECKING_RSD:
+      return [
+        v1AccountSubtype.ACCOUNT_SUBTYPE_STANDARD,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_SAVINGS,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_PENSIONER,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_YOUTH,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_STUDENT,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_UNEMPLOYED,
+      ]
+    case v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD:
+      return [
+        v1AccountSubtype.ACCOUNT_SUBTYPE_DOO,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_AD,
+        v1AccountSubtype.ACCOUNT_SUBTYPE_FOUNDATION,
+      ]
+    default:
+      return []
+  }
+}
+
 export const accountStatusLabel: Record<v1AccountStatus, string> = {
   [v1AccountStatus.ACCOUNT_STATUS_UNSPECIFIED]: '—',
   [v1AccountStatus.ACCOUNT_STATUS_ACTIVE]: 'Aktivan',
