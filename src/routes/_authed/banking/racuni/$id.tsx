@@ -11,6 +11,8 @@ import {
 } from '@/lib/api/accounts'
 import { listTransactions } from '@/lib/api/payments'
 import { listCards } from '@/lib/api/cards'
+import { getCompany } from '@/lib/api/companies'
+import { getClient } from '@/lib/api/clients'
 import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { keys } from '@/lib/query-keys'
@@ -87,6 +89,16 @@ function AccountDetail() {
     queryKey: keys.card.list({ accountId: id }),
     queryFn: () => listCards(id),
   })
+  const company = useQuery({
+    queryKey: ['company', account.data?.companyId],
+    queryFn: () => getCompany(account.data!.companyId!),
+    enabled: !!account.data?.companyId,
+  })
+  const owner = useQuery({
+    queryKey: ['client', account.data?.ownerClientId],
+    queryFn: () => getClient(account.data!.ownerClientId!),
+    enabled: !!account.data?.ownerClientId,
+  })
 
   if (account.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
   if (!account.data) return <p className="container py-8 text-red-600">Greška pri učitavanju.</p>
@@ -94,9 +106,16 @@ function AccountDetail() {
   const a = account.data
   const cur = currencyLabel(a.currency!)
   const isOwner = a.ownerClientId === meUserId
-  const ownerName = isOwner
-    ? [meFirstName, meLastName].filter(Boolean).join(' ').trim() || '—'
-    : a.ownerClientId ?? '—'
+  const ownerFromQuery = owner.data
+    ? [owner.data.firstName, owner.data.lastName].filter(Boolean).join(' ').trim()
+    : ''
+  const ownerFromStore = isOwner
+    ? [meFirstName, meLastName].filter(Boolean).join(' ').trim()
+    : ''
+  const ownerName = ownerFromQuery || ownerFromStore || '—'
+  const isBusiness =
+    a.kind === 'ACCOUNT_KIND_BUSINESS_CHECKING_RSD' ||
+    a.kind === 'ACCOUNT_KIND_BUSINESS_FX'
 
   // Spec p.20: Reserved funds is always 0 for now (no inter-bank delays
   // until c5). Always render the field so the layout is stable when
@@ -132,6 +151,7 @@ function AccountDetail() {
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
           <Field label="Vlasnik">{ownerName}</Field>
+          {isBusiness && <Field label="Firma">{company.data?.name ?? '—'}</Field>}
           <Field label="Tip">{accountKindLabel[a.kind!]}</Field>
           <Field label="Podtip">{accountSubtypeLabel[a.subtype!]}</Field>
           <Field label="Valuta">{cur}</Field>
@@ -297,7 +317,7 @@ function AccountDetail() {
         open={!!pendingLimits}
         kind="limit_change"
         title="Potvrda promene limita"
-        description="Spec p.20: promena limita zahteva verifikaciju."
+        description="Promena limita zahteva potvrdu verifikacionim kodom."
         onCancel={() => setPendingLimits(null)}
         onConfirm={async (proof: VerificationProof) => {
           if (!pendingLimits) return
@@ -413,7 +433,7 @@ function LimitsDialog({
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.monthlyLimit.message}</p>
           )}
         </div>
-        <p className="text-xs text-gray-500">Sledeći korak: verifikacioni kod (spec p.20).</p>
+        <p className="text-xs text-gray-500">Sledeći korak: unos verifikacionog koda.</p>
       </div>
     </Dialog>
   )

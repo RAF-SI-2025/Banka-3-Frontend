@@ -38,6 +38,8 @@ function LoginPage() {
         userId: r.userId,
         userKind: r.userKind,
         permissions: r.permissions,
+        firstName: r.firstName,
+        lastName: r.lastName,
       })
       navigate({ to: '/' })
     } catch (err) {

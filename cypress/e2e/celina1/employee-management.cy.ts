@@ -30,7 +30,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     cy.findByRole('button', { name: /Kreiraj zaposlenog/ }).click()
 
     // Lands on the portal list with Marko visible.
-    cy.url({ timeout: 5000 }).should('match', /\/portal\/?$/)
+    cy.url({ timeout: 5000 }).should('match', /\/portal\/employees\/?$/)
     cy.contains('Marko Marković').should('be.visible')
 
     // Backend dispatched an activation email.
@@ -51,7 +51,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     cy.findByLabelText('Departman').type('Trgovina')
     cy.findByLabelText('Uloga').select('agent')
     cy.findByRole('button', { name: /Kreiraj zaposlenog/ }).click()
-    cy.url().should('match', /\/portal\/?$/)
+    cy.url().should('match', /\/portal\/employees\/?$/)
 
     // Open edit page.
     cy.contains('tr', 'Marko Marković').findByRole('link', { name: /Izmeni/ }).click()
@@ -63,7 +63,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     cy.findByRole('button', { name: /Sačuvaj izmene/ }).click()
 
     // Re-open list, confirm Marko's phone is updated.
-    cy.visit('/portal')
+    cy.visit('/portal/employees')
     cy.contains('tr', 'Marko Marković').should('contain.text', '+381645555556')
   })
 
@@ -82,7 +82,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     cy.findByLabelText('Departman').type('Trgovina')
     cy.findByLabelText('Uloga').select('agent')
     cy.findByRole('button', { name: /Kreiraj zaposlenog/ }).click()
-    cy.url().should('match', /\/portal\/?$/)
+    cy.url().should('match', /\/portal\/employees\/?$/)
 
     cy.captureLink('marko@banka.local', '/activate?token=').then((token) => {
       cy.visit('/activate?token=' + token)
@@ -94,6 +94,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
 
     // Re-login as admin (activation cleared store).
     cy.loginAsAdmin()
+    cy.visit('/portal/employees')
     cy.contains('tr', 'Marko Marković').findByRole('link', { name: /Izmeni/ }).click()
     cy.findByRole('button', { name: /Deaktiviraj/ }).click()
     cy.contains(/Aktiviraj/).should('be.visible') // button label flips

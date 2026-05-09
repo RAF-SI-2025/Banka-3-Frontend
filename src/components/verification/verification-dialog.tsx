@@ -8,18 +8,18 @@ import { Label } from '@/components/ui/label'
 import { ErrorBanner } from '@/components/ui/error'
 import { requestVerification, type VerificationKind, type VerificationProof } from '@/lib/api/verification'
 
-// VerificationDialog implements the spec p.11 verifikacioni-kod step.
-// On open it asks the gateway for a fresh 6-digit code (5-minute TTL,
-// 3-attempt budget enforced server-side). The mobile app is deferred
-// until c5 — until then we render the issued code inside the dialog
-// itself so the user can "see it on mobile" without the mobile app,
-// and a fake QR placeholder hints at the eventual flow.
+// VerificationDialog drives the 6-digit verification step (5-minute
+// TTL, 3-attempt budget, enforced server-side). Two delivery modes:
+//   - inline: backend returns the code in the issue response; we
+//     render it next to the input (mobile-app placeholder).
+//   - email:  backend has emailed the code; we tell the user to check
+//     their inbox and only render the input.
 //
 // Caller usage: gate the actual mutation behind onConfirm so the
 // proof arrives only after the user types the matching code. If the
-// downstream mutation rejects with a 401 (wrong / expired / mismatch
-// per pkg/verification), the dialog stays open with the backend's
-// Serbian message and the user can retry or request a fresh code.
+// downstream mutation rejects with a 401 (wrong / expired / mismatch),
+// the dialog stays open with the backend's Serbian message and the
+// user can retry or request a fresh code.
 export function VerificationDialog({
   open,
   kind,
@@ -109,20 +109,30 @@ export function VerificationDialog({
 
       {issue.data && (
         <>
-          <div className="mb-4 flex items-center gap-4">
-            <FakeQR />
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Kod sa mobilne aplikacije
-              </p>
-              <p className="font-mono text-2xl font-semibold tracking-widest" aria-label="verifikacioni-kod">
-                {issue.data.code}
-              </p>
-              <p className="text-xs text-gray-500">
-                Mobilna aplikacija stiže u celini 5; do tada kod prikazujemo ovde.
-              </p>
+          {issue.data.delivery === 'email' ? (
+            <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-900">
+              Verifikacioni kod je poslat na vašu email adresu. Proverite
+              poštu i unesite šestocifreni kod ispod.
             </div>
-          </div>
+          ) : (
+            <div className="mb-4 flex items-center gap-4">
+              <FakeQR />
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Kod sa mobilne aplikacije
+                </p>
+                <p
+                  className="font-mono text-2xl font-semibold tracking-widest"
+                  aria-label="verifikacioni-kod"
+                >
+                  {issue.data.code}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Mobilna aplikacija stiže u celini 5; do tada kod prikazujemo ovde.
+                </p>
+              </div>
+            </div>
+          )}
 
           <Label htmlFor="verif-code">Unesite kod</Label>
           <Input

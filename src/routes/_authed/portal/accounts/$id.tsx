@@ -9,6 +9,8 @@ import {
   updateAccountLimits,
   setAccountStatus,
 } from '@/lib/api/accounts'
+import { getClient } from '@/lib/api/clients'
+import { getCompany } from '@/lib/api/companies'
 import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { keys } from '@/lib/query-keys'
@@ -54,6 +56,16 @@ function PortalAccountDetail() {
     queryKey: keys.account.detail(id),
     queryFn: () => getAccount(id),
   })
+  const owner = useQuery({
+    queryKey: ['client', account.data?.ownerClientId],
+    queryFn: () => getClient(account.data!.ownerClientId!),
+    enabled: !!account.data?.ownerClientId,
+  })
+  const company = useQuery({
+    queryKey: ['company', account.data?.companyId],
+    queryFn: () => getCompany(account.data!.companyId!),
+    enabled: !!account.data?.companyId,
+  })
 
   const form = useForm<LimitsValues>({
     resolver: zodResolver(limitsSchema),
@@ -91,6 +103,12 @@ function PortalAccountDetail() {
 
   const a = account.data
   const cur = currencyLabel(a.currency!)
+  const isBusiness =
+    a.kind === 'ACCOUNT_KIND_BUSINESS_CHECKING_RSD' ||
+    a.kind === 'ACCOUNT_KIND_BUSINESS_FX'
+  const ownerName = owner.data
+    ? [owner.data.firstName, owner.data.lastName].filter(Boolean).join(' ').trim() || '—'
+    : '—'
 
   const errMsg = update.error ? apiError(update.error, 'Greška pri ažuriranju limita.') : null
 
@@ -120,6 +138,8 @@ function PortalAccountDetail() {
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+          <Field label="Vlasnik">{ownerName}</Field>
+          {isBusiness && <Field label="Firma">{company.data?.name ?? '—'}</Field>}
           <Field label="Vrsta">{accountKindLabel[a.kind!]}</Field>
           <Field label="Podtip">{accountSubtypeLabel[a.subtype!]}</Field>
           <Field label="Valuta">{cur}</Field>
@@ -134,7 +154,7 @@ function PortalAccountDetail() {
       <Card className="p-6">
         <h2 className="text-lg font-semibold">Limiti</h2>
         <p className="mb-4 text-sm text-gray-500">
-          Spec p.12: dnevni i mesečni limit transakcija. Ostala polja računa su nepromenljiva.
+          Dnevni i mesečni limit transakcija. Ostala polja računa su nepromenljiva.
         </p>
         <form onSubmit={form.handleSubmit((v) => setPending(v))} className="grid grid-cols-2 gap-3">
           <div>
@@ -169,7 +189,7 @@ function PortalAccountDetail() {
         open={!!pending}
         kind="limit_change"
         title="Potvrda promene limita"
-        description="Spec p.20: promena limita zahteva verifikaciju."
+        description="Promena limita zahteva potvrdu verifikacionim kodom."
         onCancel={() => setPending(null)}
         onConfirm={async (proof) => {
           if (!pending) return

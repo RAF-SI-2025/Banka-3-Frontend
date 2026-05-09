@@ -1,14 +1,10 @@
 // Shared "Nova kartica" form, used by /banking/kartice (client requesting
 // a card on their own account) and /portal/cards (employee on any
 // account — and AuthorizedPerson selection for business accounts).
-//
-// Spec p.28 mandates an email-confirmation step before issuance. We
-// reuse the verifikacioni-kod primitive (5-min code, 3 attempts) for
-// this — same UX as payments, different action kind. After the form
-// is submitted the verification dialog is opened on top; only after
-// the code is consumed does the card actually get created.
+// Issuance is gated by the verifikacioni-kod primitive; for clients
+// the code is delivered by email.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,6 +14,7 @@ import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { listAuthorizedPersons } from '@/lib/api/companies'
 import { keys } from '@/lib/query-keys'
+import { formatAccountNumber, currencyLabel } from '@/lib/format'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,6 +50,7 @@ export function CardCreateDialog({
 }) {
   const qc = useQueryClient()
   const [pending, setPending] = useState<v1CreateCardRequest | null>(null)
+  const [accountSearch, setAccountSearch] = useState('')
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -67,6 +65,7 @@ export function CardCreateDialog({
   useEffect(() => {
     if (open) {
       setPending(null)
+      setAccountSearch('')
       form.reset({
         accountId: preselectAccountId ?? '',
         brand: v1CardBrand.CARD_BRAND_VISA,
@@ -79,6 +78,17 @@ export function CardCreateDialog({
 
   const accountId = form.watch('accountId')
   const account = accounts.find((a) => a.id === accountId)
+
+  const filteredAccounts = useMemo(() => {
+    const q = accountSearch.trim().toLowerCase()
+    if (!q) return accounts
+    return accounts.filter((a) => {
+      const hay = [a.name ?? '', a.number ?? '', currencyLabel(a.currency!)]
+        .join(' ')
+        .toLowerCase()
+      return hay.includes(q)
+    })
+  }, [accounts, accountSearch])
   // Business accounts let the caller pick an OvlascenoLice; personal
   // accounts implicitly assign to the owner.
   const isBusiness = account?.kind === 'ACCOUNT_KIND_BUSINESS_CHECKING_RSD' || account?.kind === 'ACCOUNT_KIND_BUSINESS_FX'
@@ -130,14 +140,63 @@ export function CardCreateDialog({
       <div className="space-y-3">
         <div>
           <Label>Račun</Label>
-          <Select {...form.register('accountId')} disabled={!!preselectAccountId}>
-            <option value="">— izaberite —</option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name || a.number}
-              </option>
-            ))}
-          </Select>
+          {preselectAccountId ? (
+            <Input
+              value={
+                account
+                  ? `${formatAccountNumber(account.number)} · ${currencyLabel(account.currency!)}${account.name ? ` · ${account.name}` : ''}`
+                  : ''
+              }
+              disabled
+            />
+          ) : (
+            <>
+              <Input
+                value={accountSearch}
+                onChange={(e) => setAccountSearch(e.target.value)}
+                placeholder="Pretraga po nazivu, broju ili valuti…"
+                autoComplete="off"
+              />
+              {account && (
+                <p className="mt-1 text-xs text-gray-600">
+                  Izabrano:{' '}
+                  <span className="font-mono">{formatAccountNumber(account.number)}</span>
+                  {' · '}
+                  {currencyLabel(account.currency!)}
+                  {account.name ? ` · ${account.name}` : ''}
+                </p>
+              )}
+              <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200">
+                {filteredAccounts.length === 0 && (
+                  <p className="px-3 py-2 text-xs text-gray-500">Nema rezultata.</p>
+                )}
+                {filteredAccounts.map((a) => {
+                  const selected = a.id === accountId
+                  return (
+                    <button
+                      type="button"
+                      key={a.id}
+                      onClick={() => {
+                        form.setValue('accountId', a.id!, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        })
+                      }}
+                      className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                        selected ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <span className="font-mono text-xs">{formatAccountNumber(a.number)}</span>
+                      <span className="text-xs text-gray-600">
+                        {currencyLabel(a.currency!)}
+                        {a.name ? ` · ${a.name}` : ''}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
           {form.formState.errors.accountId && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.accountId.message}</p>
           )}
@@ -190,7 +249,7 @@ export function CardCreateDialog({
         open={!!pending}
         kind="card_issue"
         title="Potvrda izdavanja kartice"
-        description="Spec p.28: izdavanje kartice zahteva potvrdu kodom."
+        description="Poslali smo verifikacioni kod na vašu email adresu."
         onCancel={() => setPending(null)}
         onConfirm={async (proof) => {
           if (!pending) return

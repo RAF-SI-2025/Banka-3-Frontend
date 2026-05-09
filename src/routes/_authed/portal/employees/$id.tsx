@@ -137,7 +137,7 @@ function EditEmployeePage() {
         <h1 className="text-2xl font-semibold">
           {emp.firstName} {emp.lastName}
         </h1>
-        <Link to="/portal" className="text-blue-600 hover:underline">
+        <Link to="/portal/employees" className="text-blue-600 hover:underline">
           ← Nazad na listu
         </Link>
       </div>

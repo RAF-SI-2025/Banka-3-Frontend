@@ -27,8 +27,10 @@ function dockerExec(container: string, args: string[]): string {
   })
 }
 
-function resetBackend(opts: { c2?: boolean } | null): { ok: true } {
-  // Truncate every c1 user-schema table.
+function resetBackend(): { ok: true } {
+  // Wipe both schemas in one shot. The bank container re-seeds its
+  // house accounts on boot, so we bounce it after the truncate to
+  // let EnsureSystemAccounts re-run.
   dockerExec(POSTGRES_CONTAINER, [
     'psql',
     '-U',
@@ -37,33 +39,14 @@ function resetBackend(opts: { c2?: boolean } | null): { ok: true } {
     PG_DB,
     '-c',
     `truncate "user".employees, "user".clients, "user".refresh_tokens,
-              "user".activation_tokens, "user".password_reset_tokens
+              "user".activation_tokens, "user".password_reset_tokens,
+              "bank".loan_installments, "bank".loans, "bank".loan_requests,
+              "bank".cards, "bank".authorized_persons, "bank".payment_recipients,
+              "bank".transactions, "bank".accounts, "bank".companies
      restart identity cascade`,
   ])
-  // For c2 specs, also truncate bank schema (everything except system
-  // accounts which the bank service re-seeds at boot, but here we let
-  // EnsureSystemAccounts re-create them on next boot — easier to just
-  // wipe everything and rely on the live container to re-seed).
-  if (opts?.c2) {
-    dockerExec(POSTGRES_CONTAINER, [
-      'psql',
-      '-U',
-      PG_USER,
-      '-d',
-      PG_DB,
-      '-c',
-      `truncate
-         "bank".loan_installments, "bank".loans, "bank".loan_requests,
-         "bank".cards, "bank".authorized_persons, "bank".payment_recipients,
-         "bank".transactions, "bank".accounts, "bank".companies
-       restart identity cascade`,
-    ])
-    // Bank's house accounts are seeded at boot — bounce the container so
-    // EnsureSystemAccounts runs again.
-    execFileSync('docker', ['restart', 'banka-bank-1'], { encoding: 'utf8' })
-    // Wait for bank to be healthy again (~3-4s typically).
-    waitForHealthy('banka-bank-1', 15)
-  }
+  execFileSync('docker', ['restart', 'banka-bank-1'], { encoding: 'utf8' })
+  waitForHealthy('banka-bank-1', 15)
   // Re-seed the bootstrap admin via the existing seed program. The go
   // toolchain may live in a nix path that cypress didn't inherit;
   // augment PATH from CYPRESS_GO_BIN if provided, otherwise scan

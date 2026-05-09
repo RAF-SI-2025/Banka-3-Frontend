@@ -12,9 +12,7 @@
 
 describe('Celina 2 (live) — kompletan tok plaćanja', () => {
   beforeEach(() => {
-    // c2 reset wipes the bank schema and bounces the bank container so
-    // EnsureSystemAccounts re-seeds the house accounts.
-    cy.resetBackend({ c2: true })
+    cy.resetBackend()
   })
 
   it('admin otvara račun → klijent uplaćuje → stanje se ažurira', () => {
@@ -50,7 +48,10 @@ describe('Celina 2 (live) — kompletan tok plaćanja', () => {
     cy.contains('5.000,00').should('be.visible')
 
     // ---- Phase 3: client opens detail page, sees the maintenance fee ----
-    cy.contains('a', 'Detalji').first().click()
+    // The list is sorted by raspoloživo desc (spec p.19) so the seeded
+    // Poslovni account (500k RSD) sits at the top — target the row by
+    // the new account's balance instead of `.first()`.
+    cy.contains('tr', '5.000,00').findByRole('link', { name: /Detalji/ }).click()
     cy.url().should('match', /\/banking\/racuni\/[0-9a-f-]+/)
     // Spec p.12: 255 RSD monthly maintenance for standard RSD account.
     cy.contains('Mesečno održavanje').parent().should('contain', '255,00')

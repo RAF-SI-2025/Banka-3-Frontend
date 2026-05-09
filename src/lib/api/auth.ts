@@ -11,6 +11,8 @@ export interface LoginResponse {
   userId: string
   userKind: 'employee' | 'client'
   permissions: string[]
+  firstName?: string
+  lastName?: string
 }
 
 export async function login(input: LoginInput): Promise<LoginResponse> {

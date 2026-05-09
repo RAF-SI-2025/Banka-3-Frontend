@@ -19,7 +19,8 @@ function PortalLayout() {
   const perms = useAuthStore((s) => s.permissions)
 
   const items: NavItem[] = [
-    { to: '/portal', label: 'Zaposleni', hidden: !has(perms, Permissions.EmployeeRead) },
+    { to: '/portal', label: 'Početna' },
+    { to: '/portal/employees', label: 'Zaposleni', hidden: !has(perms, Permissions.EmployeeRead) },
     { to: '/portal/clients', label: 'Klijenti', hidden: !has(perms, Permissions.ClientRead) },
     { to: '/portal/companies', label: 'Firme', hidden: !has(perms, Permissions.CompanyRead) },
     { to: '/portal/accounts', label: 'Računi', hidden: !has(perms, Permissions.AccountRead) },

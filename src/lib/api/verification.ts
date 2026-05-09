@@ -17,11 +17,13 @@ export interface VerificationProof {
 
 export interface IssuedVerification {
   verificationId: string
-  // The mobile app is deferred until c5; until then the backend
-  // returns the code in the response so the FE can render it inline
-  // (CLAUDE.md edge case: fake QR + 6-digit code in dev).
+  // For inline-delivery actions (payment/transfer/limit) the backend
+  // returns the code in the response and the FE renders it directly.
+  // For email-delivery actions (card issuance) the code is sent by
+  // email; this field is empty and `delivery` is "email".
   code: string
   expiresAt: string
+  delivery: 'inline' | 'email'
 }
 
 export async function requestVerification(actionKind: VerificationKind): Promise<IssuedVerification> {

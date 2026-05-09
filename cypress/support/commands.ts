@@ -13,8 +13,8 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      /** Truncate the user schema, flush login:* keys in Redis, and re-seed the bootstrap admin. Pass {c2:true} to also wipe bank schema. */
-      resetBackend(opts?: { c2?: boolean }): Chainable<void>
+      /** Truncate user + bank schemas, bounce bank to re-seed house accounts, and re-run the seed program. */
+      resetBackend(): Chainable<void>
       /** Programmatic login via /api/v1/auth/login; populates the auth store and returns the token. */
       loginAsAdmin(): Chainable<string> // resolves to admin email; navigates browser to /portal
       /** Login as the seeded c2 test client (planted by `task seed`). */
@@ -25,8 +25,8 @@ declare global {
   }
 }
 
-Cypress.Commands.add('resetBackend', (opts?: { c2?: boolean }) => {
-  cy.task('resetBackend', opts ?? null).then((res) => {
+Cypress.Commands.add('resetBackend', () => {
+  cy.task('resetBackend').then((res) => {
     if ((res as { ok: boolean }).ok !== true) {
       throw new Error('resetBackend failed: ' + JSON.stringify(res))
     }

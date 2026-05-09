@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/button'
 
 export function Header({ title, homeTo }: { title: string; homeTo: string }) {
   const navigate = useNavigate()
+  const firstName = useAuthStore((s) => s.firstName)
+  const lastName = useAuthStore((s) => s.lastName)
   const userId = useAuthStore((s) => s.userId)
   const clear = useAuthStore((s) => s.clear)
+  const fullName = [firstName, lastName].filter(Boolean).join(' ')
+  const greeting = fullName || userId || ''
 
   async function onLogout() {
     try {
@@ -23,7 +27,7 @@ export function Header({ title, homeTo }: { title: string; homeTo: string }) {
         {title}
       </Link>
       <div className="flex items-center gap-4 text-sm">
-        <span className="text-gray-500">{userId}</span>
+        <span className="text-gray-500">{greeting}</span>
         <Button variant="secondary" onClick={onLogout}>
           Odjava
         </Button>

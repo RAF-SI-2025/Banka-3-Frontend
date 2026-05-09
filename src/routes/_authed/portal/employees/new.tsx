@@ -60,7 +60,7 @@ function NewEmployeePage() {
     mutationFn: (input: CreateEmployeeInput) => createEmployee(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.employee.all })
-      navigate({ to: '/portal' })
+      navigate({ to: '/portal/employees' })
     },
   })
 
@@ -126,7 +126,7 @@ function NewEmployeePage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Link to="/portal">
+              <Link to="/portal/employees">
                 <Button type="button" variant="secondary">
                   Odustani
                 </Button>
