@@ -146,6 +146,7 @@ export const txKindLabel: Record<v1TransactionKind, string> = {
   [v1TransactionKind.TRANSACTION_KIND_EXCHANGE]: 'Menjačnica',
   [v1TransactionKind.TRANSACTION_KIND_FEE]: 'Provizija',
   [v1TransactionKind.TRANSACTION_KIND_TRADE]: 'Trgovina',
+  [v1TransactionKind.TRANSACTION_KIND_TAX]: 'Porez',
 }
 
 export const txStatusLabel: Record<v1TransactionStatus, string> = {
