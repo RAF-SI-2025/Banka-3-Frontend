@@ -28,9 +28,11 @@ function dockerExec(container: string, args: string[]): string {
 }
 
 function resetBackend(): { ok: true } {
-  // Wipe both schemas in one shot. The bank container re-seeds its
-  // house accounts on boot, so we bounce it after the truncate to
-  // let EnsureSystemAccounts re-run.
+  // Wipe user + bank + trading schemas in one shot. The bank container
+  // re-seeds its house accounts (KindSystem + KindForexBook + KindStateTax)
+  // on boot; the trading container's in-memory price-tick / order-fill
+  // workers self-recover on next iteration but bouncing it gets us a
+  // clean slate quickly.
   dockerExec(POSTGRES_CONTAINER, [
     'psql',
     '-U',
@@ -42,11 +44,22 @@ function resetBackend(): { ok: true } {
               "user".activation_tokens, "user".password_reset_tokens,
               "bank".loan_installments, "bank".loans, "bank".loan_requests,
               "bank".cards, "bank".authorized_persons, "bank".payment_recipients,
-              "bank".transactions, "bank".accounts, "bank".companies
+              "bank".transactions, "bank".accounts, "bank".companies,
+              "trading".realized_gains, "trading".saga_executions,
+              "trading".order_executions, "trading".orders,
+              "trading".portfolio_holdings, "trading".listing_daily_price_info,
+              "trading".listings, "trading".securities,
+              "trading".exchanges, "trading".actuary_info
      restart identity cascade`,
   ])
-  execFileSync('docker', ['restart', 'banka-bank-1'], { encoding: 'utf8' })
+  execFileSync('docker', ['restart', 'banka-bank-1', 'banka-trading-1'], { encoding: 'utf8' })
   waitForHealthy('banka-bank-1', 15)
+  waitForHealthy('banka-trading-1', 15)
+  // Container "running" isn't the same as "serving" — poll the
+  // services' readiness probes so the gateway has a real backend
+  // to call when the test starts.
+  waitForReady('http://localhost:8082/readyz', 30)
+  waitForReady('http://localhost:8083/readyz', 30)
   // Re-seed the bootstrap admin via the existing seed program. The go
   // toolchain may live in a nix path that cypress didn't inherit;
   // augment PATH from CYPRESS_GO_BIN if provided, otherwise scan
@@ -75,6 +88,20 @@ function waitForHealthy(container: string, maxSeconds: number): void {
       if (out === 'running') return
     } catch {
       // ignore — container may not exist yet
+    }
+    execFileSync('sleep', ['1'])
+  }
+}
+
+function waitForReady(url: string, maxSeconds: number): void {
+  for (let i = 0; i < maxSeconds; i++) {
+    try {
+      const code = execFileSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', url], {
+        encoding: 'utf8',
+      }).trim()
+      if (code === '200') return
+    } catch {
+      // not up yet
     }
     execFileSync('sleep', ['1'])
   }

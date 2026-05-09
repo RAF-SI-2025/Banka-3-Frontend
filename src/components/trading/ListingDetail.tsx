@@ -45,8 +45,10 @@ function isoNDaysAgo(n: number): string {
 }
 
 export function ListingDetail({ listingId, basePath, initialDirection, initialQuantity }: ListingDetailProps) {
-  // The route param is whatever the catalog row passed — listing id or
-  // security id. getSecurity accepts either; backend resolves.
+  // The route param is the security id; the catalog passes it from
+  // the listing-row's nested security.id. The response carries the
+  // matching listing payload so history fetches don't need a second
+  // round trip.
   const security = useQuery({
     queryKey: keys.security.detail(listingId),
     queryFn: () => getSecurity(listingId),

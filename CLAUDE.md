@@ -136,26 +136,27 @@ npm run api:gen          # regenerate src/lib/api from gen/openapi/banka.swagger
 `../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto` in
 the backend first.
 
-## C1 + C2 status
+## C1 + C2 + C3 status
 
-c1 + c2 frontend is feature-complete on the `rewrite` branch as of
-2026-05-10. `tsc -b` clean, `npm run lint` clean, vitest 66/66 green,
-cypress 15/15 green (3 c1 login canned, 3 c1 employee-management
-live, 1 c1 reset live, 6 c2 canned including verification-dialog
-flows, 1 c2 live admin-opens-account → client-sees-balance, 2 c2
-portal-loan canned).
+c1 + c2 + c3 frontend is feature-complete on the `rewrite` branch as
+of 2026-05-10. `tsc -b` clean, `npm run lint` clean, vitest 121 green,
+cypress c3 canned suite green plus 3 c3 live specs (tax-run,
+exchange-halt, client-trading) — see "Open carryovers" below for the
+two live specs deferred on the actuary account-picker gap.
 
 **Routes**:
 - `/login`, `/activate`, `/password-reset[/confirm]` — c1 auth surface
   (all RHF + Zod, password rule shared via `lib/auth/password.ts`)
 - `_authed/portal/*` — employee portal (clients redirected to
   `/banking`): employees, clients, companies, accounts, cards,
-  loan-requests, loans, exchange (rates editor)
+  loan-requests, loans, exchange (rates editor), trgovina (catalog +
+  detail + nalozi), portfolio, aktuari, porez, berze
 - `_authed/banking/*` — client portal (employees redirected to
   `/portal`): home, racuni (list filtered to active + sorted by
   raspoloživo desc; detail page covers spec p.20 — Vlasnik, Rezervisana
   sredstva, Promena naziva, Promena limita, transaction filters),
-  kartice, placanja, transferi, menjacnica, primaoci, krediti
+  kartice, placanja, transferi, menjacnica, primaoci, krediti,
+  trgovina (catalog + detail + nalozi), portfolio
 
 **Conventions in place**:
 - Idempotency-Key on every mutation (axios request interceptor)
@@ -173,7 +174,34 @@ portal-loan canned).
   vitest test in `labels.test.ts` walks each enum and fails if a
   value is missing a Serbian string
 
-Next steps: c3 frontend (trading — listings/orders/portfolio).
+**Open carryovers**:
+- *Actuary account picker.* The `OrderForm` filters source accounts
+  by `ownerClientId === userId`, which returns nothing for actuary
+  employees (clients table has no row keyed by employee id). The
+  carryover memo in the top-level CLAUDE.md says actuary order forms
+  should default to the bank's per-currency `forex_book` accounts;
+  fixing it requires a list-bank-accounts surface or an explicit
+  user-kind branch in the form. The `agent-pending-approval` and
+  `supervisor-cancel` live cypress specs in the FE-15 plan are
+  blocked on this and are intentionally not landed yet.
+- *Order list shows security UUID instead of ticker.*
+  `routes/_authed/.../trgovina/nalozi/index.tsx` renders
+  `o.securityId` directly. Backend `Order` proto doesn't carry
+  the ticker; either denormalize the ticker on the order row
+  (backend) or have the FE batch-fetch securities for the rows
+  on screen (TanStack `useQueries`). The c3 client-trading live
+  spec works around this by matching by order type, not ticker.
+- *Live cypress flake on first spec of multi-spec run.* Vite-dev's
+  lazy dep bundling means the cold-start first cy.visit can hang
+  the SPA paint. `cy.resetBackend()` warms vite via a /login
+  pre-visit, which is enough to get the spec stable individually,
+  but back-to-back specs occasionally still trip on the first one.
+  Workaround: run live specs with `--spec` per file or accept a
+  retry on the first slot.
+
+Next steps: address the actuary account picker so the two deferred
+live specs can land; consider the order-list-ticker denormalization
+when c4 backend touches the orders proto.
 
 ## Spec edge cases that bite
 

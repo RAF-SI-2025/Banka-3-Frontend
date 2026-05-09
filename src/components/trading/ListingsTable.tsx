@@ -224,8 +224,11 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
           ) : (
             items.map((row) => {
               const sec = row.security!
-              const lst = row.listing
-              const id = lst?.id ?? sec.id!
+              // Route param feeds GetSecurity, which is keyed by
+              // security id. The matching listing comes back inside
+              // the envelope so the detail page doesn't need a second
+              // round trip.
+              const id = sec.id!
               const goDetail = () => {
                 if (basePath === '/portal/trgovina') {
                   navigate({ to: '/portal/trgovina/$listingId', params: { listingId: id } })
