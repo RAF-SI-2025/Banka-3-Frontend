@@ -15,14 +15,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { useAuthStore } from '@/lib/auth/store'
-import { Permissions, has } from '@/lib/permissions'
+import { Permissions, has, hasAny } from '@/lib/permissions'
+import { v1Direction } from '@/lib/api/generated/models/v1Direction'
+import type { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
 import { PriceHistoryChart } from './PriceHistoryChart'
 import { PriceOverrideDialog } from './PriceOverrideDialog'
+import { OrderForm } from './OrderForm'
 
 export interface ListingDetailProps {
   listingId: string
   // Where the option-chain underlying / strike clicks should land.
   basePath: '/portal/trgovina' | '/banking/trgovina'
+  // Deep-link defaults for the order form (FE-8 portfolio sell jumps
+  // here with ?direction=sell&qty=N).
+  initialDirection?: v1Direction.DIRECTION_BUY | v1Direction.DIRECTION_SELL
+  initialQuantity?: number
 }
 
 const RANGES: { label: string; days: number }[] = [
@@ -37,7 +44,7 @@ function isoNDaysAgo(n: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-export function ListingDetail({ listingId, basePath }: ListingDetailProps) {
+export function ListingDetail({ listingId, basePath, initialDirection, initialQuantity }: ListingDetailProps) {
   // The route param is whatever the catalog row passed — listing id or
   // security id. getSecurity accepts either; backend resolves.
   const security = useQuery({
@@ -58,6 +65,11 @@ export function ListingDetail({ listingId, basePath }: ListingDetailProps) {
   })
 
   const isStock = sec?.type === v1SecurityType.SECURITY_TYPE_STOCK
+  const perms = useAuthStore((s) => s.permissions)
+  const canTrade = hasAny(perms, [Permissions.TradingClient, Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin])
+  const tradable = sec?.type === v1SecurityType.SECURITY_TYPE_STOCK || sec?.type === v1SecurityType.SECURITY_TYPE_FUTURE
+  const showOrderForm = canTrade && tradable && Boolean(sec?.id)
+  const contractSize = sec?.contractSize ? Number(sec.contractSize) : (lst?.contractSize ? Number(lst.contractSize) : 1)
 
   return (
     <main className="container space-y-6 py-8">
@@ -110,15 +122,16 @@ export function ListingDetail({ listingId, basePath }: ListingDetailProps) {
         </div>
       )}
 
-      <Card>
-        <CardHeader><CardTitle>Trgovina</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Forma za kreiranje naloga dolazi u FE-6 (klijent) / FE-10 (aktuar).
-          </p>
-          <Button type="button" variant="primary" disabled className="mt-3">Trguj</Button>
-        </CardContent>
-      </Card>
+      {showOrderForm && (
+        <OrderForm
+          securityId={sec!.id!}
+          contractSize={Number.isFinite(contractSize) && contractSize > 0 ? contractSize : 1}
+          currency={sec!.currency as bankaBankV1Currency | undefined}
+          listing={lst}
+          initialDirection={initialDirection}
+          initialQuantity={initialQuantity}
+        />
+      )}
 
       {isStock && sec?.id && <OptionChainCard stockId={sec.id} basePath={basePath} currency={sec.currency} />}
     </main>
