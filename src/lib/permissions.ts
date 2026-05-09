@@ -18,6 +18,15 @@ export const Permissions = {
   CardWrite: 'card.write',
   LoanRead: 'loan.read',
   LoanWrite: 'loan.write',
+  // Marker carried by employees who trade on behalf of the bank
+  // (zeroes out the FX commission on menjačnica + trade legs).
+  // Added in c2 backend so the bank-side branch could short-circuit;
+  // the FE only needs it for label rendering on the perm picker.
+  Actuary: 'actuary',
+  ActuarySupervisor: 'actuary.supervisor',
+  ActuaryAgent: 'actuary.agent',
+  TradingClient: 'trading.client',
+  TradingMargin: 'trading.margin',
 } as const
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions]
@@ -47,4 +56,9 @@ export const permissionLabels: Record<Permission, string> = {
   [Permissions.CardWrite]: 'Upravljanje karticama',
   [Permissions.LoanRead]: 'Pregled kredita',
   [Permissions.LoanWrite]: 'Odobravanje kredita',
+  [Permissions.Actuary]: 'Aktuar (trguje za banku)',
+  [Permissions.ActuarySupervisor]: 'Aktuar — supervizor',
+  [Permissions.ActuaryAgent]: 'Aktuar — agent',
+  [Permissions.TradingClient]: 'Klijent — trgovina',
+  [Permissions.TradingMargin]: 'Trgovina margin nalozima',
 }

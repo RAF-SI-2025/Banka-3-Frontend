@@ -57,4 +57,42 @@ export const keys = {
   rates: {
     all: ['rates'] as const,
   },
+  listing: {
+    all: ['listing'] as const,
+    list: (args: object) => ['listing', 'list', args] as const,
+    detail: (id: string) => ['listing', 'detail', id] as const,
+    history: (id: string) => ['listing', 'history', id] as const,
+  },
+  security: {
+    all: ['security'] as const,
+    list: (args: object) => ['security', 'list', args] as const,
+    detail: (id: string) => ['security', 'detail', id] as const,
+    optionChain: (stockId: string, args: object) => ['security', 'optionChain', stockId, args] as const,
+  },
+  exchange: {
+    all: ['exchange'] as const,
+    list: () => ['exchange', 'list'] as const,
+  },
+  order: {
+    all: ['order'] as const,
+    list: (args: object) => ['order', 'list', args] as const,
+    detail: (id: string) => ['order', 'detail', id] as const,
+    mine: (args: object) => ['order', 'mine', args] as const,
+    pending: (args: object) => ['order', 'pending', args] as const,
+  },
+  portfolio: {
+    all: ['portfolio'] as const,
+    list: (userId: string, kind?: string) => ['portfolio', 'list', userId, kind ?? ''] as const,
+    position: (userId: string, securityId: string) => ['portfolio', 'position', userId, securityId] as const,
+  },
+  actuary: {
+    all: ['actuary'] as const,
+    list: (args: object) => ['actuary', 'list', args] as const,
+    detail: (id: string) => ['actuary', 'detail', id] as const,
+  },
+  tax: {
+    board: ['tax', 'board'] as const,
+    standings: (userId: string) => ['tax', 'standings', userId] as const,
+    runs: ['tax', 'runs'] as const,
+  },
 } as const
