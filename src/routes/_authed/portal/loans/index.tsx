@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listLoans } from '@/lib/api/loans'
@@ -15,6 +15,7 @@ export const Route = createFileRoute('/_authed/portal/loans/')({
 })
 
 function PortalLoans() {
+  const navigate = useNavigate()
   const [status, setStatus] = useState<v1LoanStatus>(v1LoanStatus.LOAN_STATUS_UNSPECIFIED)
 
   const loans = useQuery({
@@ -52,7 +53,10 @@ function PortalLoans() {
           </THead>
           <TBody>
             {loans.data.loans?.map((l) => (
-              <TR key={l.id}>
+              <TR
+                key={l.id}
+                onClick={() => navigate({ to: '/portal/loans/$id', params: { id: l.id! } })}
+              >
                 <TD className="font-mono text-xs">{l.loanNumber}</TD>
                 <TD>{loanTypeLabel[l.loanType!]}</TD>
                 <TD className="text-xs">{interestTypeLabel[l.interestType!]} · {l.effectiveRate}%</TD>

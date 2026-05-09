@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listAccounts } from '@/lib/api/accounts'
@@ -20,6 +20,7 @@ export const Route = createFileRoute('/_authed/portal/accounts/')({
 })
 
 function PortalAccounts() {
+  const navigate = useNavigate()
   const perms = useAuthStore((s) => s.permissions)
   const canRead = has(perms, Permissions.AccountRead)
   const canWrite = has(perms, Permissions.AccountWrite)
@@ -81,12 +82,14 @@ function PortalAccounts() {
               <TH>Valuta</TH>
               <TH className="text-right">Stanje</TH>
               <TH>Status</TH>
-              <TH></TH>
             </TR>
           </THead>
           <TBody>
             {accounts.data.accounts?.map((a) => (
-              <TR key={a.id}>
+              <TR
+                key={a.id}
+                onClick={() => navigate({ to: '/portal/accounts/$id', params: { id: a.id! } })}
+              >
                 <TD className="font-mono text-xs">{formatAccountNumber(a.number)}</TD>
                 <TD>{accountKindLabel[a.kind!]}</TD>
                 <TD>{currencyLabel(a.currency!)}</TD>
@@ -96,15 +99,10 @@ function PortalAccounts() {
                     {accountStatusLabel[a.status!]}
                   </Badge>
                 </TD>
-                <TD>
-                  <Link to="/portal/accounts/$id" params={{ id: a.id! }} className="text-blue-600 hover:underline">
-                    Detalji
-                  </Link>
-                </TD>
               </TR>
             ))}
             {(!accounts.data.accounts || accounts.data.accounts.length === 0) && (
-              <EmptyRow colSpan={6}>Nema rezultata.</EmptyRow>
+              <EmptyRow colSpan={5}>Nema rezultata.</EmptyRow>
             )}
           </TBody>
         </Table>

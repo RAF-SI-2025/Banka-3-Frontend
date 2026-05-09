@@ -8,12 +8,14 @@ export function Dialog({
   title,
   children,
   footer,
+  panelClassName,
 }: {
   open: boolean
   onClose: () => void
   title?: ReactNode
   children: ReactNode
   footer?: ReactNode
+  panelClassName?: string
 }) {
   useEffect(() => {
     if (!open) return
@@ -28,7 +30,7 @@ export function Dialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-lg bg-white shadow-lg"
+        className={`w-full rounded-lg bg-white shadow-lg ${panelClassName ?? 'max-w-lg'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (

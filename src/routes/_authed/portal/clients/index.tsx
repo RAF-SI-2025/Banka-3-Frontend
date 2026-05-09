@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listClients } from '@/lib/api/clients'
@@ -15,6 +15,7 @@ export const Route = createFileRoute('/_authed/portal/clients/')({
 })
 
 function ClientsList() {
+  const navigate = useNavigate()
   const perms = useAuthStore((s) => s.permissions)
   const canRead = has(perms, Permissions.ClientRead)
   const canWrite = has(perms, Permissions.ClientWrite)
@@ -55,27 +56,24 @@ function ClientsList() {
               <TH>Email</TH>
               <TH>Telefon</TH>
               <TH>Aktivan</TH>
-              <TH></TH>
             </TR>
           </THead>
           <TBody>
             {clients.data.clients?.map((c) => (
-              <TR key={c.id}>
+              <TR
+                key={c.id}
+                onClick={() => navigate({ to: '/portal/clients/$id', params: { id: c.id! } })}
+              >
                 <TD>{c.firstName} {c.lastName}</TD>
                 <TD>{c.email}</TD>
                 <TD>{c.phone}</TD>
                 <TD>
                   <Badge tone={c.active ? 'green' : 'red'}>{c.active ? 'Da' : 'Ne'}</Badge>
                 </TD>
-                <TD>
-                  <Link to="/portal/clients/$id" params={{ id: c.id! }} className="text-blue-600 hover:underline">
-                    Detalji
-                  </Link>
-                </TD>
               </TR>
             ))}
             {(!clients.data.clients || clients.data.clients.length === 0) && (
-              <EmptyRow colSpan={5}>Nema klijenata.</EmptyRow>
+              <EmptyRow colSpan={4}>Nema klijenata.</EmptyRow>
             )}
           </TBody>
         </Table>

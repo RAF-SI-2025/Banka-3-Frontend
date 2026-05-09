@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listCompanies } from '@/lib/api/companies'
@@ -14,6 +14,7 @@ export const Route = createFileRoute('/_authed/portal/companies/')({
 })
 
 function CompaniesList() {
+  const navigate = useNavigate()
   const perms = useAuthStore((s) => s.permissions)
   const canRead = has(perms, Permissions.CompanyRead)
   const canWrite = has(perms, Permissions.CompanyWrite)
@@ -54,25 +55,22 @@ function CompaniesList() {
               <TH>Matični broj</TH>
               <TH>PIB</TH>
               <TH>Šifra delatnosti</TH>
-              <TH></TH>
             </TR>
           </THead>
           <TBody>
             {companies.data.companies?.map((c) => (
-              <TR key={c.id}>
+              <TR
+                key={c.id}
+                onClick={() => navigate({ to: '/portal/companies/$id', params: { id: c.id! } })}
+              >
                 <TD>{c.name}</TD>
                 <TD className="font-mono text-xs">{c.registryId}</TD>
                 <TD className="font-mono text-xs">{c.taxId}</TD>
                 <TD>{c.activityCode}</TD>
-                <TD>
-                  <Link to="/portal/companies/$id" params={{ id: c.id! }} className="text-blue-600 hover:underline">
-                    Detalji
-                  </Link>
-                </TD>
               </TR>
             ))}
             {(!companies.data.companies || companies.data.companies.length === 0) && (
-              <EmptyRow colSpan={5}>Nema firmi.</EmptyRow>
+              <EmptyRow colSpan={4}>Nema firmi.</EmptyRow>
             )}
           </TBody>
         </Table>

@@ -1,11 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { listLoanRequests, decideLoanRequest } from '@/lib/api/loans'
+import { listLoanRequests, decideLoanRequest, type LoanRequest } from '@/lib/api/loans'
+import { getClient } from '@/lib/api/clients'
+import { getAccount } from '@/lib/api/accounts'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
-import { formatMoney, formatDate, currencyLabel } from '@/lib/format'
+import { formatMoney, formatDate, formatAccountNumber, currencyLabel } from '@/lib/format'
 import {
   loanTypeLabel,
   interestTypeLabel,
@@ -36,6 +38,7 @@ function LoanRequests() {
     queryFn: () => listLoanRequests({ status, pageSize: 100 }),
   })
 
+  const [detail, setDetail] = useState<LoanRequest | null>(null)
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
 
@@ -47,6 +50,7 @@ function LoanRequests() {
       qc.invalidateQueries({ queryKey: keys.loan.all })
       setRejectId(null)
       setReason('')
+      setDetail(null)
     },
   })
 
@@ -80,7 +84,7 @@ function LoanRequests() {
           </THead>
           <TBody>
             {requests.data.requests?.map((r) => (
-              <TR key={r.id}>
+              <TR key={r.id} onClick={() => setDetail(r)}>
                 <TD className="text-xs">{formatDate(r.createdAt)}</TD>
                 <TD>{loanTypeLabel[r.loanType!]}</TD>
                 <TD>{interestTypeLabel[r.interestType!]}</TD>
@@ -131,6 +135,15 @@ function LoanRequests() {
         </Table>
       )}
 
+      <RequestDetailDialog
+        request={detail}
+        onClose={() => setDetail(null)}
+        canDecide={canDecide}
+        onApprove={(id) => decide.mutate({ id, approve: true })}
+        onRequestReject={(id) => setRejectId(id)}
+        deciding={decide.isPending}
+      />
+
       <Dialog
         open={!!rejectId}
         onClose={() => setRejectId(null)}
@@ -156,5 +169,165 @@ function LoanRequests() {
         </div>
       </Dialog>
     </main>
+  )
+}
+
+function RequestDetailDialog({
+  request,
+  onClose,
+  canDecide,
+  onApprove,
+  onRequestReject,
+  deciding,
+}: {
+  request: LoanRequest | null
+  onClose: () => void
+  canDecide: boolean
+  onApprove: (id: string) => void
+  onRequestReject: (id: string) => void
+  deciding: boolean
+}) {
+  const client = useQuery({
+    queryKey: ['client', request?.clientId],
+    queryFn: () => getClient(request!.clientId!),
+    enabled: !!request?.clientId,
+  })
+  const account = useQuery({
+    queryKey: keys.account.detail(request?.accountId ?? ''),
+    queryFn: () => getAccount(request!.accountId!),
+    enabled: !!request?.accountId,
+  })
+
+  if (!request) return null
+  const cur = currencyLabel(request.currency!)
+  const isPending = request.status === v1LoanRequestStatus.LOAN_REQUEST_STATUS_PENDING
+
+  return (
+    <Dialog
+      open={!!request}
+      onClose={onClose}
+      title={`Zahtev za kredit · ${loanTypeLabel[request.loanType!]}`}
+      panelClassName="max-w-3xl"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Zatvori
+          </Button>
+          {canDecide && isPending && (
+            <>
+              <Button variant="danger" onClick={() => onRequestReject(request.id!)} disabled={deciding}>
+                Odbij
+              </Button>
+              <Button onClick={() => onApprove(request.id!)} disabled={deciding}>
+                Odobri
+              </Button>
+            </>
+          )}
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <section>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Zahtev</h4>
+          <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+            <Field label="Datum">{formatDate(request.createdAt)}</Field>
+            <Field label="Status">
+              <Badge
+                tone={
+                  request.status === v1LoanRequestStatus.LOAN_REQUEST_STATUS_APPROVED
+                    ? 'green'
+                    : request.status === v1LoanRequestStatus.LOAN_REQUEST_STATUS_REJECTED
+                      ? 'red'
+                      : 'yellow'
+                }
+              >
+                {loanRequestStatusLabel[request.status!]}
+              </Badge>
+            </Field>
+            <Field label="Tip">{loanTypeLabel[request.loanType!]}</Field>
+            <Field label="Kamata">{interestTypeLabel[request.interestType!]}</Field>
+            <Field label="Iznos">{formatMoney(request.amount, cur)}</Field>
+            <Field label="Broj rata">{request.installmentsTotal}</Field>
+            <Field label="Mesečna plata">{formatMoney(request.monthlySalary, cur)}</Field>
+            <Field label="Zaposlenje">{employmentStatusLabel[request.employmentStatus!]}</Field>
+            <Field label="Staž (meseci)">{request.employmentDurationMonths ?? '—'}</Field>
+            <Field label="Kontakt telefon">{request.contactPhone}</Field>
+            <Field label="Svrha" wide>
+              {request.purpose || '—'}
+            </Field>
+            {request.rejectionReason && (
+              <Field label="Razlog odbijanja" wide>
+                {request.rejectionReason}
+              </Field>
+            )}
+          </div>
+        </section>
+
+        <section>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Klijent</h4>
+          {client.isLoading ? (
+            <p className="text-sm text-gray-500">Učitavanje…</p>
+          ) : client.data ? (
+            <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+              <Field label="Ime i prezime">
+                <Link
+                  to="/portal/clients/$id"
+                  params={{ id: client.data.id! }}
+                  className="text-blue-600 hover:underline"
+                  onClick={onClose}
+                >
+                  {[client.data.firstName, client.data.lastName].filter(Boolean).join(' ').trim() || '—'}
+                </Link>
+              </Field>
+              <Field label="Email">{client.data.email}</Field>
+              <Field label="Telefon">{client.data.phone}</Field>
+              <Field label="Datum rođenja">{formatDate(client.data.dateOfBirth)}</Field>
+              <Field label="Adresa" wide>
+                {client.data.address || '—'}
+              </Field>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Klijent nije dostupan.</p>
+          )}
+        </section>
+
+        <section>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Račun</h4>
+          {account.isLoading ? (
+            <p className="text-sm text-gray-500">Učitavanje…</p>
+          ) : account.data ? (
+            <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+              <Field label="Broj">
+                <Link
+                  to="/portal/accounts/$id"
+                  params={{ id: account.data.id! }}
+                  className="font-mono text-xs text-blue-600 hover:underline"
+                  onClick={onClose}
+                >
+                  {formatAccountNumber(account.data.number)}
+                </Link>
+              </Field>
+              <Field label="Naziv">{account.data.name || '—'}</Field>
+              <Field label="Valuta">{currencyLabel(account.data.currency!)}</Field>
+              <Field label="Stanje">{formatMoney(account.data.balance, currencyLabel(account.data.currency!))}</Field>
+              <Field label="Raspoloživo">
+                {formatMoney(account.data.availableBalance, currencyLabel(account.data.currency!))}
+              </Field>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Račun nije dostupan.</p>
+          )}
+        </section>
+      </div>
+    </Dialog>
+  )
+}
+
+function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={wide ? 'col-span-2 md:col-span-3' : ''}>
+      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="font-medium">{children}</div>
+    </div>
   )
 }

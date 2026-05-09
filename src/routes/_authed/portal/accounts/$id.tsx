@@ -153,9 +153,7 @@ function PortalAccountDetail() {
 
       <Card className="p-6">
         <h2 className="text-lg font-semibold">Limiti</h2>
-        <p className="mb-4 text-sm text-gray-500">
-          Dnevni i mesečni limit transakcija. Ostala polja računa su nepromenljiva.
-        </p>
+        <p className="mb-4 text-sm text-gray-500">Dnevni i mesečni limit transakcija.</p>
         <form onSubmit={form.handleSubmit((v) => setPending(v))} className="grid grid-cols-2 gap-3">
           <div>
             <Label>Dnevni limit ({cur})</Label>
