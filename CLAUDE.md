@@ -16,11 +16,13 @@ overview; this file is the frontend-specific working memory.
 - **Zustand** — UI/client state (modals, drafts, persisted preferences)
 - **React Hook Form + Zod** — forms with schema validation
 - **shadcn/ui + Tailwind CSS** — components copied into `src/components/ui`
-- **Axios** — HTTP transport, configured via the generated client
+- **Axios** — HTTP transport, configured directly. The OpenAPI codegen
+  generates typed models into `src/lib/api/generated/`; the actual axios
+  calls live in hand-written wrappers in `src/lib/api/*.ts` (the
+  generated `request.ts` doesn't fit our auth/refresh / Idempotency-Key
+  / X-Verification-* header flow without a wrapper anyway).
 - **Vitest** — unit tests for hooks/utils
 - **Cypress** — e2e against the running stack
-- **OpenAPI codegen** — typed client generated from the backend's
-  `gen/openapi/banka.swagger.json` into `src/lib/api/`
 
 ## Layout
 
@@ -43,17 +45,17 @@ overview; this file is the frontend-specific working memory.
 │   │   ├── (client)/             # client-area routes
 │   │   └── (employee)/           # employee-area routes
 │   ├── lib/
-│   │   ├── api/                  # generated OpenAPI client (gitignored)
-│   │   ├── auth/                 # JWT helpers, refresh flow
+│   │   ├── api/                  # hand-written axios wrappers + helpers
+│   │   │   ├── error.ts          # apiError(): typed message extractor
+│   │   │   ├── verification.ts   # spec p.11 verifikacioni-kod client
+│   │   │   └── generated/        # OpenAPI types (gitignored; types-only)
+│   │   ├── auth/                 # JWT helpers, refresh flow, password Zod
 │   │   ├── permissions.ts        # permission constants + helpers
 │   │   └── query-keys.ts         # query key factory
 │   ├── components/
 │   │   ├── ui/                   # shadcn copies (button, dialog, …)
+│   │   ├── verification/         # VerificationDialog (spec p.11)
 │   │   └── <domain>/             # feature components
-│   ├── hooks/                    # cross-feature hooks
-│   ├── stores/                   # Zustand stores
-│   ├── styles/                   # globals.css with Tailwind directives
-│   └── i18n/                     # SR strings (UI is in Serbian)
 ├── cypress/
 │   ├── e2e/celina<n>/            # acceptance tests per celina
 │   └── support/                  # commands, intercepts
@@ -62,32 +64,43 @@ overview; this file is the frontend-specific working memory.
 
 ## Conventions
 
-- **TypeScript strict** is non-negotiable. No `any`. Use `unknown` and
-  narrow at the boundary.
-- **API calls** go through the generated client in `src/lib/api`. Never
-  write `axios` calls in components — wrap in a TanStack Query hook in
-  `hooks/use<Resource>.ts`.
+- **TypeScript strict** is non-negotiable. No `any` outside generated
+  files. Use `unknown` and narrow at the boundary; for axios errors
+  use `apiError(err, fallback)` from `src/lib/api/error.ts`.
+- **API calls** are hand-written axios wrappers in `src/lib/api/*.ts`
+  that take typed `v1*Request` models from `generated/`. Components
+  never call `axios` directly — they go through these wrappers,
+  usually inside a TanStack Query mutation/query.
 - **Query keys** are produced by the factory in `src/lib/query-keys.ts`,
   not hand-written strings. Cache invalidation uses key prefixes.
 - **Forms** use React Hook Form with a Zod resolver. Define the schema
-  next to the form. Don't reach into the DOM.
-- **Routing**: TanStack Router file-based. Auth + permission gates live
-  in `__root.tsx` (and per-folder `_layout.tsx` for sub-areas). A route
-  that needs `client.trading.read` declares it via `beforeLoad`.
+  next to the form. Don't reach into the DOM. The spec p.10 password
+  rule lives in `src/lib/auth/password.ts` so login / activate /
+  password-reset / set-password share one schema.
+- **Routing**: TanStack Router file-based. Auth gate is `_authed.tsx`
+  (checks accessToken). User-kind routing lives at the next layer:
+  `_authed/portal.tsx` redirects clients to `/banking`,
+  `_authed/banking.tsx` redirects employees to `/portal`. Permission-
+  gated UI inside each surface uses `Permissions.has()`.
 - **State boundaries**: TanStack Query owns *server* state (anything
   the API returns). Zustand owns *UI* state (modal open, draft input,
   theme). Never duplicate server state into Zustand.
-- **Strings** are in Serbian (the spec is in Serbian). Keep them in
-  `src/i18n/` keyed by feature. No string literals in JSX once a key
-  exists. Code identifiers stay English.
+- **Strings** are in Serbian (the spec is in Serbian) — written inline
+  at call sites; only the enum-label maps live in `src/lib/labels.ts`.
 - **shadcn components** are copied (not imported), so customizing means
   editing `src/components/ui/<component>.tsx` directly.
-- **Cypress specs** live under `cypress/e2e/celina<n>/` mirroring the
-  spec files in `/home/user/si/spec/TestoviCelina<n>.md`. One spec per
-  feature, scenarios match the markdown line for line where reasonable.
+- **Cypress specs** live under `cypress/e2e/celina<n>/` mirroring
+  scenarios in `spec/Banka2025-E2E.pdf`. One spec per feature.
 - **Idempotency**: any mutating call against `/api/v1/...` includes an
   `Idempotency-Key` header (UUID v4). Wrapping is in
   `src/lib/api/client.ts`.
+- **Verification (spec p.11)**: payments / transfers / FX / limit
+  changes / card-issue mutations are gated by `VerificationDialog`.
+  The dialog requests a 6-digit code via
+  `POST /api/v1/verification/request` (returned in the response in
+  dev mode), shows it to the user behind a fake QR, and on confirm
+  attaches `X-Verification-Id` + `X-Verification-Code` headers to the
+  downstream request. Backend gateway middleware consumes the headers.
 
 ## Auth flow
 
@@ -126,26 +139,36 @@ the backend first.
 ## C1 + C2 status
 
 c1 + c2 frontend is feature-complete on the `rewrite` branch as of
-2026-05-09. `tsc -b` clean, `vite build` clean (~595 kB JS gzipped to
-~173 kB), `npm run lint` clean, vitest 55/55 green, cypress 14/14
-green (4 c1 login canned, 3 c1 employee-management live, 5 c2 canned,
-2 c2 live including a full admin-opens-account → client-sees-balance
-chain).
+2026-05-10. `tsc -b` clean, `npm run lint` clean, vitest 66/66 green,
+cypress 15/15 green (3 c1 login canned, 3 c1 employee-management
+live, 1 c1 reset live, 6 c2 canned including verification-dialog
+flows, 1 c2 live admin-opens-account → client-sees-balance, 2 c2
+portal-loan canned).
 
 **Routes**:
-- `/login`, `/aktivacija`, `/reset-lozinke[/potvrda]` — c1 auth surface
-- `_authed/portal/*` — employee portal: employees, clients, companies,
-  accounts (list + new + detail with limits form), cards, loan-
-  requests (approve/reject), loans, exchange (rates editor)
-- `_authed/banking/*` — client banking: home, racuni (list + detail),
+- `/login`, `/activate`, `/password-reset[/confirm]` — c1 auth surface
+  (all RHF + Zod, password rule shared via `lib/auth/password.ts`)
+- `_authed/portal/*` — employee portal (clients redirected to
+  `/banking`): employees, clients, companies, accounts, cards,
+  loan-requests, loans, exchange (rates editor)
+- `_authed/banking/*` — client portal (employees redirected to
+  `/portal`): home, racuni (list filtered to active + sorted by
+  raspoloživo desc; detail page covers spec p.20 — Vlasnik, Rezervisana
+  sredstva, Promena naziva, Promena limita, transaction filters),
   kartice, placanja, transferi, menjacnica, primaoci, krediti
-  (list + new request + detail with installment schedule)
 
 **Conventions in place**:
 - Idempotency-Key on every mutation (axios request interceptor)
+- VerificationDialog wraps payment / transfer / fx / limit / card-create
+  submits with the spec p.11 6-digit-code round-trip
 - shared `CardCreateDialog` for client + portal card-creation flows
+  (client kartice page can issue cards; spec-mandated email/code
+  confirmation runs through the same VerificationDialog primitive)
 - generated OpenAPI types under `src/lib/api/generated/` (gitignored;
-  `npm run api:gen` after `task proto` in backend)
+  `npm run api:gen` after `task proto` in backend) — types only;
+  hand-written axios wrappers do the calls
+- typed axios error helper `apiError()` in `src/lib/api/error.ts` —
+  no `(err as any)` anywhere in app code
 - Serbian labels for every backend enum in `src/lib/labels.ts` —
   vitest test in `labels.test.ts` walks each enum and fails if a
   value is missing a Serbian string
@@ -161,8 +184,12 @@ The frontend is the only place users see Serbian copy. Watch for:
   spec shows `180,00.00` in places (data entry quirk; render as
   `180.000,00 RSD`).
 - **Currency display order**: amount first, then currency code.
-- **Verification flow** shows a fake QR + 6-digit code in dev (mobile
-  app deferred until c5). Spec calls for 5min code window + 3 retry
-  attempts.
+- **Verification flow** issues a real 6-digit code via the gateway
+  (not just decorative). The dialog displays the code inline (mobile
+  app is c5); the user types it back to confirm. 5-min TTL, 3 retry
+  attempts enforced server-side.
 - **Limit info popover** on payment forms must show "remaining" against
   daily/monthly limits — read from account detail, not recompute.
+- **Account list (client) sort**: spec p.19 mandates descending by
+  raspoloživo. Handled client-side in `routes/_authed/banking/racuni/
+  index.tsx`.
