@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
-import { createAccount } from '@/lib/api/accounts'
+import { createAccount, type Account } from '@/lib/api/accounts'
 import { apiError } from '@/lib/api/error'
 import { listClients } from '@/lib/api/clients'
 import { listCompanies } from '@/lib/api/companies'
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
+import { CardCreateDialog } from '@/components/cards/card-create-dialog'
 import {
   accountKindLabel,
   accountSubtypeLabel,
@@ -43,6 +44,20 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
+function isCheckingKind(k: v1AccountKind) {
+  return (
+    k === v1AccountKind.ACCOUNT_KIND_PERSONAL_CHECKING_RSD ||
+    k === v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD
+  )
+}
+
+function isFxKind(k: v1AccountKind) {
+  return (
+    k === v1AccountKind.ACCOUNT_KIND_PERSONAL_FX ||
+    k === v1AccountKind.ACCOUNT_KIND_BUSINESS_FX
+  )
+}
+
 function NewAccount() {
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -71,11 +86,18 @@ function NewAccount() {
     },
   })
 
+  const [clientSearch, setClientSearch] = useState('')
+  const [createdAccount, setCreatedAccount] = useState<Account | null>(null)
+
   const create = useMutation({
     mutationFn: createAccount,
-    onSuccess: () => {
+    onSuccess: (account) => {
       qc.invalidateQueries({ queryKey: keys.account.all })
-      navigate({ to: '/portal/accounts' })
+      if (form.getValues('createCard')) {
+        setCreatedAccount(account)
+      } else {
+        navigate({ to: '/portal/accounts' })
+      }
     },
   })
 
@@ -83,9 +105,22 @@ function NewAccount() {
 
   const kind = form.watch('kind')
   const isBusiness = kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD || kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_FX
-  const isFx = kind === v1AccountKind.ACCOUNT_KIND_PERSONAL_FX || kind === v1AccountKind.ACCOUNT_KIND_BUSINESS_FX
+  const isFx = isFxKind(kind)
+  const isChecking = isCheckingKind(kind)
   const allowedSubtypes = subtypesForKind(kind)
   const showSubtype = allowedSubtypes.length > 0
+
+  const ownerClientId = form.watch('ownerClientId')
+  const allClients = useMemo(() => clients.data?.clients ?? [], [clients.data])
+  const selectedClient = allClients.find((c) => c.id === ownerClientId)
+  const filteredClients = useMemo(() => {
+    const q = clientSearch.trim().toLowerCase()
+    if (!q) return allClients
+    return allClients.filter((c) => {
+      const hay = `${c.firstName ?? ''} ${c.lastName ?? ''} ${c.email ?? ''}`.toLowerCase()
+      return hay.includes(q)
+    })
+  }, [allClients, clientSearch])
 
   // Keep subtype in sync with kind: when the user flips kind, the
   // current subtype is almost certainly invalid for the new bucket
@@ -105,20 +140,62 @@ function NewAccount() {
     }
   }, [kind, allowedSubtypes, subtype, form])
 
+  // Keep currency in sync with kind. Checking accounts are RSD-only
+  // (the menu is hidden in that case); FX accounts must not be RSD.
+  const currency = form.watch('currency')
+  useEffect(() => {
+    if (isChecking && currency !== bankaBankV1Currency.CURRENCY_RSD) {
+      form.setValue('currency', bankaBankV1Currency.CURRENCY_RSD)
+    } else if (isFx && currency === bankaBankV1Currency.CURRENCY_RSD) {
+      form.setValue('currency', bankaBankV1Currency.CURRENCY_EUR)
+    }
+  }, [isChecking, isFx, currency, form])
+
   return (
     <main className="container max-w-2xl space-y-4 py-8">
       <h1 className="text-2xl font-semibold">Otvaranje računa</h1>
       <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
         <div>
           <Label>Vlasnik (klijent)</Label>
-          <Select {...form.register('ownerClientId')}>
-            <option value="">— izaberite —</option>
-            {clients.data?.clients?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName} · {c.email}
-              </option>
-            ))}
-          </Select>
+          <Input
+            value={clientSearch}
+            onChange={(e) => setClientSearch(e.target.value)}
+            placeholder="Pretraga po imenu ili email-u…"
+            autoComplete="off"
+          />
+          {selectedClient && (
+            <p className="mt-1 text-xs text-gray-600">
+              Izabrano: {selectedClient.firstName} {selectedClient.lastName} · {selectedClient.email}
+            </p>
+          )}
+          <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200">
+            {filteredClients.length === 0 && (
+              <p className="px-3 py-2 text-xs text-gray-500">Nema rezultata.</p>
+            )}
+            {filteredClients.map((c) => {
+              const selected = c.id === ownerClientId
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() =>
+                    form.setValue('ownerClientId', c.id!, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                    selected ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <span>
+                    {c.firstName} {c.lastName}
+                  </span>
+                  <span className="text-xs text-gray-600">{c.email}</span>
+                </button>
+              )
+            })}
+          </div>
           {form.formState.errors.ownerClientId && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.ownerClientId.message}</p>
           )}
@@ -152,19 +229,25 @@ function NewAccount() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Valuta</Label>
-            <Select {...form.register('currency')} disabled={!isFx && kind !== v1AccountKind.ACCOUNT_KIND_PERSONAL_CHECKING_RSD && kind !== v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD}>
-              {Object.values(bankaBankV1Currency)
-                .filter((c) => c !== bankaBankV1Currency.CURRENCY_UNSPECIFIED)
-                .map((c) => (
-                  <option key={c} value={c}>
-                    {currencyLabel(c)}
-                  </option>
-                ))}
-            </Select>
-          </div>
-          <div>
+          {isFx && (
+            <div>
+              <Label>Valuta</Label>
+              <Select {...form.register('currency')}>
+                {Object.values(bankaBankV1Currency)
+                  .filter(
+                    (c) =>
+                      c !== bankaBankV1Currency.CURRENCY_UNSPECIFIED &&
+                      c !== bankaBankV1Currency.CURRENCY_RSD,
+                  )
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {currencyLabel(c)}
+                    </option>
+                  ))}
+              </Select>
+            </div>
+          )}
+          <div className={isFx ? '' : 'col-span-2'}>
             <Label>Početno stanje</Label>
             <Input inputMode="decimal" {...form.register('openingBalance')} />
           </div>
@@ -201,6 +284,17 @@ function NewAccount() {
           </Button>
         </div>
       </form>
+      {createdAccount && (
+        <CardCreateDialog
+          open={true}
+          onClose={() => {
+            setCreatedAccount(null)
+            navigate({ to: '/portal/accounts' })
+          }}
+          accounts={[createdAccount]}
+          preselectAccountId={createdAccount.id}
+        />
+      )}
     </main>
   )
 }

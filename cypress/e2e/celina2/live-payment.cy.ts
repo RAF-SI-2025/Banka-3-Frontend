@@ -23,7 +23,7 @@ describe('Celina 2 (live) — kompletan tok plaćanja', () => {
     // The seed planted klijent@banka.local; pull its UUID from the
     // /portal/clients list page so we can target the new-account form.
     cy.visit('/portal/clients')
-    cy.contains('tr', 'klijent@banka.local').findByRole('link', { name: /Detalji/ }).click()
+    cy.contains('tr', 'klijent@banka.local').click()
     cy.url().should('match', /\/portal\/clients\/[0-9a-f-]+/)
     cy.findByRole('link', { name: /Otvori novi račun/ }).click()
     cy.url().should('include', '/portal/accounts/new')
@@ -33,7 +33,7 @@ describe('Celina 2 (live) — kompletan tok plaćanja', () => {
     // we'll fund it via a payment from a second account below.
     cy.get('select[name="kind"]').select('ACCOUNT_KIND_PERSONAL_CHECKING_RSD')
     cy.get('select[name="subtype"]').select('ACCOUNT_SUBTYPE_STANDARD')
-    cy.get('select[name="currency"]').select('CURRENCY_RSD')
+    // Currency menu is hidden for checking accounts (always RSD).
     cy.get('input[name="openingBalance"]').clear().type('5000')
     cy.findByRole('button', { name: /Otvori račun/ }).click()
     cy.url({ timeout: 5000 }).should('include', '/portal/accounts')

@@ -53,8 +53,8 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     cy.findByRole('button', { name: /Kreiraj zaposlenog/ }).click()
     cy.url().should('match', /\/portal\/employees\/?$/)
 
-    // Open edit page.
-    cy.contains('tr', 'Marko Marković').findByRole('link', { name: /Izmeni/ }).click()
+    // Open edit page (rows are clickable).
+    cy.contains('tr', 'Marko Marković').click()
     cy.url().should('include', '/portal/employees/')
 
     // Change phone + department, save, verify success.
@@ -95,7 +95,7 @@ describe('Celina 1 — upravljanje zaposlenima (live backend)', () => {
     // Re-login as admin (activation cleared store).
     cy.loginAsAdmin()
     cy.visit('/portal/employees')
-    cy.contains('tr', 'Marko Marković').findByRole('link', { name: /Izmeni/ }).click()
+    cy.contains('tr', 'Marko Marković').click()
     cy.findByRole('button', { name: /Deaktiviraj/ }).click()
     cy.contains(/Aktiviraj/).should('be.visible') // button label flips
     cy.contains('Deaktiviran').should('be.visible')
