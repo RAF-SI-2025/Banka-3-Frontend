@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
-import { employeePositions } from '@/lib/labels'
 
 export const Route = createFileRoute('/_authed/portal/employees/new')({
   component: NewEmployeePage,
@@ -27,7 +26,7 @@ const schema = z.object({
   gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE']),
   phone: z.string().regex(/^\+?[0-9]{6,20}$/, 'Telefon: 6–20 cifara, opciono +'),
   address: z.string().min(1, 'Adresa je obavezna'),
-  position: z.enum(employeePositions, { errorMap: () => ({ message: 'Izaberite poziciju' }) }),
+  position: z.string().min(1, 'Pozicija je obavezna'),
   department: z.string().min(1, 'Departman je obavezan'),
   active: z.boolean(),
   role: z.enum(['admin', 'supervisor', 'agent', 'basic']),
@@ -49,7 +48,7 @@ function NewEmployeePage() {
       gender: 'GENDER_MALE',
       phone: '',
       address: '',
-      position: employeePositions[0],
+      position: '',
       department: '',
       active: true,
       role: 'basic',
@@ -91,19 +90,7 @@ function NewEmployeePage() {
               </div>
               <TextField label="Telefon" name="phone" form={form} />
               <TextField label="Adresa" name="address" form={form} />
-              <div>
-                <Label htmlFor="position">Pozicija</Label>
-                <Select id="position" {...form.register('position')}>
-                  {employeePositions.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </Select>
-                {form.formState.errors.position?.message && (
-                  <p className="mt-1 text-xs text-danger">{form.formState.errors.position.message}</p>
-                )}
-              </div>
+              <TextField label="Pozicija" name="position" form={form} />
               <TextField label="Departman" name="department" form={form} />
               <div>
                 <Label htmlFor="role">Uloga</Label>
@@ -154,6 +141,7 @@ type TextFieldName =
   | 'dateOfBirth'
   | 'phone'
   | 'address'
+  | 'position'
   | 'department'
 
 function TextField({

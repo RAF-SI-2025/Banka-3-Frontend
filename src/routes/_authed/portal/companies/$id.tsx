@@ -29,7 +29,9 @@ export const Route = createFileRoute('/_authed/portal/companies/$id')({
 
 const updateSchema = z.object({
   name: z.string().min(1),
-  activityCode: z.string().min(1),
+  activityCode: z
+    .string()
+    .regex(/^\d{2}\.\d{1,2}$/, 'Format: NN.N ili NN.NN (npr. 62.01)'),
   address: z.string().min(1),
 })
 type UpdateValues = z.infer<typeof updateSchema>
@@ -119,7 +121,10 @@ function CompanyDetail() {
           </div>
           <div>
             <Label>Šifra delatnosti</Label>
-            <Input {...form.register('activityCode')} disabled={!canWrite} />
+            <Input {...form.register('activityCode')} disabled={!canWrite} placeholder="62.01" />
+            {form.formState.errors.activityCode?.message && (
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.activityCode.message}</p>
+            )}
           </div>
           <div className="col-span-2">
             <Label>Adresa</Label>

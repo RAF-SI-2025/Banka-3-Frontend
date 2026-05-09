@@ -23,7 +23,6 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
-import { employeePositions } from '@/lib/labels'
 
 export const Route = createFileRoute('/_authed/portal/employees/$id')({
   component: EditEmployeePage,
@@ -160,25 +159,7 @@ function EditEmployeePage() {
             <FormField label="Prezime" name="lastName" form={form} />
             <FormField label="Telefon" name="phone" form={form} />
             <FormField label="Adresa" name="address" form={form} />
-            <div>
-              <Label htmlFor="position">Pozicija</Label>
-              <Select id="position" {...form.register('position')}>
-                {/* Surface the saved value even if it's not in the
-                    canonical list so legacy data isn't silently
-                    rewritten on the next save. */}
-                {!employeePositions.includes(form.watch('position') as never) && form.watch('position') && (
-                  <option value={form.watch('position')}>{form.watch('position')}</option>
-                )}
-                {employeePositions.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </Select>
-              {form.formState.errors.position?.message && (
-                <p className="mt-1 text-xs text-danger">{form.formState.errors.position.message}</p>
-              )}
-            </div>
+            <FormField label="Pozicija" name="position" form={form} />
             <FormField label="Departman" name="department" form={form} />
             <div>
               <Label htmlFor="gender">Pol</Label>
@@ -271,7 +252,7 @@ function EditEmployeePage() {
   )
 }
 
-type FieldName = 'email' | 'firstName' | 'lastName' | 'phone' | 'address' | 'department'
+type FieldName = 'email' | 'firstName' | 'lastName' | 'phone' | 'address' | 'position' | 'department'
 
 function FormField({
   label,

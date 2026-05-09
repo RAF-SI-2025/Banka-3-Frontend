@@ -21,7 +21,9 @@ const schema = z.object({
   name: z.string().min(1, 'Naziv je obavezan'),
   registryId: z.string().min(8, 'Matični broj ima 8 cifara').max(8),
   taxId: z.string().min(9, 'PIB ima 9 cifara').max(9),
-  activityCode: z.string().min(1),
+  activityCode: z
+    .string()
+    .regex(/^\d{2}\.\d{1,2}$/, 'Format: NN.N ili NN.NN (npr. 62.01)'),
   address: z.string().min(1),
   ownerClientId: z.string().min(1, 'Izaberite vlasnika'),
 })
@@ -71,7 +73,10 @@ function NewCompany() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Šifra delatnosti</Label>
-            <Input {...form.register('activityCode')} />
+            <Input {...form.register('activityCode')} placeholder="62.01" />
+            {form.formState.errors.activityCode?.message && (
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.activityCode.message}</p>
+            )}
           </div>
           <div>
             <Label>Adresa</Label>
