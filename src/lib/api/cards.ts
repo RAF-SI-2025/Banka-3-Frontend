@@ -23,3 +23,11 @@ export async function setCardStatus(id: string, body: BankServiceSetCardStatusBo
   const { data } = await api.post<Card>(`/v1/cards/${id}/status`, body)
   return data
 }
+
+// updateCardLimit is verification-gated by the gateway middleware
+// (matches /api/v1/cards/{id}/limit PATCH). Caller must attach a
+// VerificationProof obtained via the verifikacioni-kod dialog.
+export async function updateCardLimit(id: string, cardLimit: string, proof: VerificationProof): Promise<Card> {
+  const { data } = await api.patch<Card>(`/v1/cards/${id}/limit`, { cardLimit }, { headers: proofHeaders(proof) })
+  return data
+}

@@ -211,4 +211,38 @@ describe('Celina 2 — plaćanje (klijent)', () => {
     cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
     cy.contains('Neispravan kontrolni broj računa').should('be.visible')
   })
+
+  it('nedovoljno sredstava — backend odbija, korisnik ostaje na formi sa porukom', () => {
+    // Spec p.16: paymet kreće tek nakon verifikacije, ali raspoloživo
+    // sredstva proverava bank servis. Odbijanje (raspoloživo < iznos +
+    // provizija) vraća 400 sa Serbian-copy porukom; FE prikazuje banner
+    // i ostavlja formu netaknutu da klijent ispravi iznos.
+    cy.intercept('POST', '/api/v1/verification/request', {
+      statusCode: 200,
+      body: { verificationId: 'v-noprice', code: '999999', expiresAt: TODAY },
+    }).as('verifReq')
+
+    cy.intercept('POST', '/api/v1/payments', {
+      statusCode: 400,
+      body: { code: 400, message: 'Nedovoljno sredstava na računu.' },
+    }).as('createPayment')
+
+    cy.visit('/banking/placanja')
+    cy.get('select[name="fromAccountId"]').select('acc-rsd')
+    cy.get('input[name="recipientName"]').type('EPS Snabdevanje')
+    cy.get('input[name="toAccountNumber"]').type('160005412345678905')
+    // Stub kaže da je raspoloživo 50.000; tražimo 1.000.000 — backend će
+    // odbiti pre svake transakcije.
+    cy.get('input[name="amount"]').type('1000000')
+    cy.get('input[name="purpose"]').type('Račun za struju')
+    cy.findByRole('button', { name: /Pošalji plaćanje/ }).click()
+    cy.wait('@verifReq')
+    cy.get('#verif-code').type('999999')
+    cy.findByRole('button', { name: /^Potvrdi$/ }).click()
+    cy.wait('@createPayment')
+    cy.contains('Nedovoljno sredstava na računu.').should('be.visible')
+    // Forma i URL se ne menjaju — klijent može ispraviti iznos i ponoviti.
+    cy.url().should('include', '/banking/placanja')
+    cy.get('input[name="amount"]').should('have.value', '1000000')
+  })
 })

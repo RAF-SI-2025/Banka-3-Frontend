@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
-import { createAccount, type Account } from '@/lib/api/accounts'
+import { createAccount } from '@/lib/api/accounts'
 import { apiError } from '@/lib/api/error'
 import { listClients } from '@/lib/api/clients'
 import { listCompanies } from '@/lib/api/companies'
@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
-import { CardCreateDialog } from '@/components/cards/card-create-dialog'
 import {
   accountKindLabel,
   accountSubtypeLabel,
@@ -87,17 +86,16 @@ function NewAccount() {
   })
 
   const [clientSearch, setClientSearch] = useState('')
-  const [createdAccount, setCreatedAccount] = useState<Account | null>(null)
 
   const create = useMutation({
     mutationFn: createAccount,
-    onSuccess: (account) => {
+    onSuccess: () => {
+      // Backend auto-creates the companion card when createCard=true
+      // (spec p.12 + flow.pdf P2). Card cache must be invalidated too
+      // so the new card shows up if we navigate to /portal/cards next.
       qc.invalidateQueries({ queryKey: keys.account.all })
-      if (form.getValues('createCard')) {
-        setCreatedAccount(account)
-      } else {
-        navigate({ to: '/portal/accounts' })
-      }
+      qc.invalidateQueries({ queryKey: keys.card.all })
+      navigate({ to: '/portal/accounts' })
     },
   })
 
@@ -278,17 +276,6 @@ function NewAccount() {
           </Button>
         </div>
       </form>
-      {createdAccount && (
-        <CardCreateDialog
-          open={true}
-          onClose={() => {
-            setCreatedAccount(null)
-            navigate({ to: '/portal/accounts' })
-          }}
-          accounts={[createdAccount]}
-          preselectAccountId={createdAccount.id}
-        />
-      )}
     </main>
   )
 }
