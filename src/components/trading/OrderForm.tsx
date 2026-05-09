@@ -14,6 +14,7 @@ import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { deriveActor, projectLimit } from '@/lib/trading/actor'
+import { FOREX_BOOK_OWNER_ID } from '@/lib/trading/sentinels'
 import { v1Direction } from '@/lib/api/generated/models/v1Direction'
 import { v1AccountStatus } from '@/lib/api/generated/models/v1AccountStatus'
 import { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
@@ -56,10 +57,17 @@ export function OrderForm({
   const actor = useMemo(() => deriveActor(perms), [perms])
   const { canMargin, isActuary, showLimitPanel } = actor
 
+  // Spec p.55-56: clients trade from their own accounts, actuaries
+  // (employees + admins via the role bundle) trade on behalf of the
+  // bank using its per-currency forex_book accounts. The forex_book
+  // owner_client_id is a sentinel; the bank service's trade_settle
+  // refuses non-bank accounts when IsActuary, so this branch is the
+  // only path that produces a working actuary order.
+  const ownerForList = isActuary ? FOREX_BOOK_OWNER_ID : (userId ?? undefined)
   const accounts = useQuery({
-    queryKey: keys.account.list({ ownerClientId: userId }),
-    queryFn: () => listAccounts({ ownerClientId: userId ?? undefined }),
-    enabled: Boolean(userId),
+    queryKey: keys.account.list({ ownerClientId: ownerForList ?? '' }),
+    queryFn: () => listAccounts({ ownerClientId: ownerForList }),
+    enabled: Boolean(ownerForList),
   })
 
   // For commission-cap conversion ($7/$12-eq → listing currency).

@@ -36,12 +36,12 @@ describe('Celina 3 (live) — klijent: market buy AAPL → portfolio', () => {
       cy.get('[data-cy="order-submit"]').click()
     })
 
-    // Order should show up under "Moji nalozi". The orders list
-    // currently renders security_id (uuid) rather than ticker — match
-    // the row by the order type the test placed (Tržišni = market).
+    // Order should show up under "Moji nalozi" — match by AAPL ticker
+    // (the orders list now batch-fetches securities for the displayed
+    // rows so the ticker renders instead of the security UUID).
     cy.visit('/banking/trgovina/nalozi')
-    cy.contains('tr', 'Tržišni', { timeout: 15000 }).should('be.visible')
-    cy.contains('tr', 'Tržišni').contains(/Izvršen|Odobren|Na čekanju/, {
+    cy.contains('tr', 'AAPL', { timeout: 15000 }).should('be.visible')
+    cy.contains('tr', 'AAPL').contains(/Izvršen|Odobren|Na čekanju/, {
       timeout: 30000,
     })
 

@@ -140,9 +140,9 @@ the backend first.
 
 c1 + c2 + c3 frontend is feature-complete on the `rewrite` branch as
 of 2026-05-10. `tsc -b` clean, `npm run lint` clean, vitest 121 green,
-cypress c3 canned suite green plus 3 c3 live specs (tax-run,
-exchange-halt, client-trading) — see "Open carryovers" below for the
-two live specs deferred on the actuary account-picker gap.
+cypress c3 canned suite green plus all 5 c3 live specs (tax-run,
+exchange-halt, client-trading, agent-pending-approval,
+supervisor-cancel — each green individually).
 
 **Routes**:
 - `/login`, `/activate`, `/password-reset[/confirm]` — c1 auth surface
@@ -175,33 +175,33 @@ two live specs deferred on the actuary account-picker gap.
   value is missing a Serbian string
 
 **Open carryovers**:
-- *Actuary account picker.* The `OrderForm` filters source accounts
-  by `ownerClientId === userId`, which returns nothing for actuary
-  employees (clients table has no row keyed by employee id). The
-  carryover memo in the top-level CLAUDE.md says actuary order forms
-  should default to the bank's per-currency `forex_book` accounts;
-  fixing it requires a list-bank-accounts surface or an explicit
-  user-kind branch in the form. The `agent-pending-approval` and
-  `supervisor-cancel` live cypress specs in the FE-15 plan are
-  blocked on this and are intentionally not landed yet.
-- *Order list shows security UUID instead of ticker.*
-  `routes/_authed/.../trgovina/nalozi/index.tsx` renders
-  `o.securityId` directly. Backend `Order` proto doesn't carry
-  the ticker; either denormalize the ticker on the order row
-  (backend) or have the FE batch-fetch securities for the rows
-  on screen (TanStack `useQueries`). The c3 client-trading live
-  spec works around this by matching by order type, not ticker.
 - *Live cypress flake on first spec of multi-spec run.* Vite-dev's
   lazy dep bundling means the cold-start first cy.visit can hang
   the SPA paint. `cy.resetBackend()` warms vite via a /login
-  pre-visit, which is enough to get the spec stable individually,
+  pre-visit, which is enough to get each spec stable individually,
   but back-to-back specs occasionally still trip on the first one.
   Workaround: run live specs with `--spec` per file or accept a
   retry on the first slot.
 
-Next steps: address the actuary account picker so the two deferred
-live specs can land; consider the order-list-ticker denormalization
-when c4 backend touches the orders proto.
+**Resolved 2026-05-10:**
+- *Actuary account picker* — `OrderForm` now branches the account
+  query on `isActuary`: clients pass `ownerClientId=userId` (their
+  own accounts), employees pass `ownerClientId=ForexBookOwnerID`
+  (sentinel `00000000-0000-0000-0000-000000000020`, the bank's
+  per-currency forex_book accounts). The bank's `trade_settle`
+  rejects non-bank accounts when `IsActuary`, so this is the only
+  path that produces a working actuary order. Constant lives in
+  `src/lib/trading/sentinels.ts`. Unblocks the
+  `agent-pending-approval` + `supervisor-cancel` live cypress
+  specs.
+- *Order list ticker denormalization* — added
+  `src/lib/trading/useSecurityTickers.ts`, a TanStack `useQueries`
+  hook that batch-fetches security tickers for displayed order
+  rows (5-min staleTime, deduped against the existing
+  `keys.security.detail(id)` cache so the /trgovina detail page's
+  fetch hydrates the list). Both order-list routes (portal,
+  banking) plus both order-detail routes render `ticker ?? id`
+  instead of the raw UUID.
 
 ## Spec edge cases that bite
 

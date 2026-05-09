@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { listOrders, approveOrder, declineOrder, cancelOrder } from '@/lib/api/orders'
 import { apiError } from '@/lib/api/error'
+import { useSecurityTickers } from '@/lib/trading/useSecurityTickers'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, hasAny } from '@/lib/permissions'
@@ -74,6 +75,7 @@ function PortalNaloziList() {
     if (!direction) return true
     return o.direction === direction
   })
+  const tickers = useSecurityTickers(items.map((o) => o.securityId))
 
   return (
     <main className="container space-y-6 py-8">
@@ -156,7 +158,12 @@ function PortalNaloziList() {
             <EmptyRow colSpan={9}>{orders.isFetching ? 'Učitavanje…' : 'Nema naloga'}</EmptyRow>
           ) : (
             items.map((o) => (
-              <RowActions key={o.id} order={o} canActOnOthers={canSeeAll} />
+              <RowActions
+                key={o.id}
+                order={o}
+                ticker={tickers.get(o.securityId)}
+                canActOnOthers={canSeeAll}
+              />
             ))
           )}
         </TBody>
@@ -167,8 +174,10 @@ function PortalNaloziList() {
 
 function RowActions({
   order,
+  ticker,
   canActOnOthers,
 }: {
+  ticker: string | null
   order: {
     id?: string
     securityId?: string
@@ -215,7 +224,7 @@ function RowActions({
     <>
       <TR>
         <TD>{formatDateTime(order.createdAt)}</TD>
-        <TD className="font-mono">{order.securityId}</TD>
+        <TD className="font-mono" data-cy="order-row-ticker">{ticker ?? '…'}</TD>
         <TD>{actorLabel(order.userKind)}</TD>
         <TD>{order.direction ? directionLabel[order.direction] : '—'}</TD>
         <TD>{order.orderType ? orderTypeLabel[order.orderType] : '—'}</TD>

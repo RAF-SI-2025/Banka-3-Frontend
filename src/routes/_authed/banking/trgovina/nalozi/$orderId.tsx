@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { cancelOrder, getOrder } from '@/lib/api/orders'
+import { getSecurity } from '@/lib/api/securities'
 import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -29,6 +30,12 @@ function OrderDetail() {
   const order = useQuery({
     queryKey: keys.order.detail(orderId),
     queryFn: () => getOrder(orderId),
+  })
+  const sec = useQuery({
+    queryKey: keys.security.detail(order.data?.securityId ?? ''),
+    queryFn: () => getSecurity(order.data!.securityId!),
+    enabled: Boolean(order.data?.securityId),
+    staleTime: 5 * 60_000,
   })
 
   const cancel = useMutation({
@@ -67,7 +74,7 @@ function OrderDetail() {
               )}
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Row label="Hartija">{o.securityId}</Row>
+              <Row label="Hartija">{sec.data?.security?.ticker ?? o.securityId}</Row>
               <Row label="Tip">{o.orderType ? orderTypeLabel[o.orderType] : '—'}</Row>
               <Row label="Smer">{o.direction ? directionLabel[o.direction] : '—'}</Row>
               <Row label="Količina">{o.quantity ?? '—'}</Row>

@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listOrders } from '@/lib/api/orders'
+import { useSecurityTickers } from '@/lib/trading/useSecurityTickers'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
@@ -40,6 +41,7 @@ function NaloziList() {
     if (!direction) return true
     return o.direction === direction
   })
+  const tickers = useSecurityTickers(items.map((o) => o.securityId))
 
   return (
     <main className="container space-y-6 py-8">
@@ -94,7 +96,9 @@ function NaloziList() {
             items.map((o) => (
               <TR key={o.id}>
                 <TD>{formatDateTime(o.createdAt)}</TD>
-                <TD className="font-mono">{o.securityId}</TD>
+                <TD className="font-mono" data-cy="order-row-ticker">
+                  {tickers.get(o.securityId) ?? '…'}
+                </TD>
                 <TD>{o.direction ? directionLabel[o.direction] : '—'}</TD>
                 <TD>{o.orderType ? orderTypeLabel[o.orderType] : '—'}</TD>
                 <TD className="text-right">{o.quantity ?? '—'}</TD>
