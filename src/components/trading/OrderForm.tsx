@@ -1,6 +1,6 @@
 // Spec p.53-56 order placement. Single component, branched off
-// userKind+permissions; FE-10 extends it for actuaries rather than
-// forking. No verification — orders aren't on the spec p.11 list.
+// userKind+permissions. No verification — orders aren't on the
+// spec p.11 list.
 
 import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -9,9 +9,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listAccounts } from '@/lib/api/accounts'
 import { quoteExchange } from '@/lib/api/payments'
 import { placeOrder } from '@/lib/api/orders'
+import { getActuaryInfo } from '@/lib/api/actuaries'
 import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
+import { deriveActor, projectLimit } from '@/lib/trading/actor'
 import { v1Direction } from '@/lib/api/generated/models/v1Direction'
 import { v1AccountStatus } from '@/lib/api/generated/models/v1AccountStatus'
 import { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
@@ -20,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { ErrorBanner } from '@/components/ui/error'
 import { currencyLabel, formatMoney } from '@/lib/format'
 import { deriveOrderType } from '@/lib/trading/order-type'
@@ -48,6 +51,10 @@ export function OrderForm({
 }: OrderFormProps) {
   const qc = useQueryClient()
   const userId = useAuthStore((s) => s.userId)
+  const perms = useAuthStore((s) => s.permissions)
+
+  const actor = useMemo(() => deriveActor(perms), [perms])
+  const { canMargin, isActuary, showLimitPanel } = actor
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -66,6 +73,28 @@ export function OrderForm({
         includeCommission: false,
       }),
     enabled: Boolean(currency),
+  })
+
+  // For agent limit panel: convert listing-ccy → RSD per spec p.38
+  // (no commission). Quote 1 unit then multiply locally so we don't
+  // refire on every keystroke.
+  const isRsd = currency === bankaBankV1Currency.CURRENCY_RSD
+  const ccyToRsd = useQuery({
+    queryKey: ['trading-quote-rsd-1', currency ?? ''],
+    queryFn: () =>
+      quoteExchange({
+        from: (currency ?? bankaBankV1Currency.CURRENCY_RSD) as bankaBankV1Currency,
+        to: bankaBankV1Currency.CURRENCY_RSD,
+        amount: '1',
+        includeCommission: false,
+      }),
+    enabled: showLimitPanel && Boolean(currency) && !isRsd,
+  })
+
+  const actuary = useQuery({
+    queryKey: keys.actuary.detail(userId ?? ''),
+    queryFn: () => getActuaryInfo(userId!),
+    enabled: showLimitPanel && Boolean(userId),
   })
 
   const form = useForm<OrderFormValues>({
@@ -92,6 +121,18 @@ export function OrderForm({
   const usdInCcy = usdToCcy.data ? Number(usdToCcy.data.toAmount ?? '0') : 0
   const commission = approx !== null && usdInCcy > 0 ? computeCommission(orderType, approx, usdInCcy) : null
   const totalDue = approx !== null && commission !== null ? approx + commission : null
+
+  // Limit projection: convert approx (listing ccy) → RSD without
+  // commission, add to current usedLimit, compare against dailyLimit.
+  const rsdPerCcy = isRsd ? 1 : ccyToRsd.data ? Number(ccyToRsd.data.toAmount ?? '0') : null
+  const projection = projectLimit({
+    dailyLimit: Number(actuary.data?.dailyLimit ?? '0'),
+    usedLimit: Number(actuary.data?.usedLimit ?? '0'),
+    needApproval: Boolean(actuary.data?.needApproval),
+    approxCcy: approx,
+    rsdPerCcy,
+  })
+  const willNeedApproval = showLimitPanel && projection.willNeedApproval
 
   // Filter the source-account list per spec p.55: SELL only allows
   // accounts in the listing currency; BUY allows any active account
@@ -131,6 +172,7 @@ export function OrderForm({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.order.all })
       qc.invalidateQueries({ queryKey: keys.portfolio.all })
+      qc.invalidateQueries({ queryKey: keys.actuary.detail(userId ?? '') })
       form.reset({ ...form.getValues(), quantity: '', limitPrice: '', stopPrice: '' })
     },
   })
@@ -203,11 +245,20 @@ export function OrderForm({
                 <input type="checkbox" {...form.register('allOrNone')} />
                 AON (sve ili ništa)
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" {...form.register('margin')} />
-                Margin
-              </label>
+              {canMargin && (
+                <label className="flex items-center gap-2" data-cy="margin-toggle">
+                  <input type="checkbox" {...form.register('margin')} />
+                  Margin
+                </label>
+              )}
             </div>
+            {canMargin && (
+              <p className="text-xs text-muted-foreground">
+                {isActuary
+                  ? 'Margin nalog: potrebno je raspoloživo na računu bar IMC.'
+                  : 'Margin nalog: potrebno je raspoloživo bar IMC ILI odobreni kredit s preostalim ≥ IMC.'}
+              </p>
+            )}
 
             <div>
               <Label htmlFor="of-acct">Račun</Label>
@@ -228,6 +279,21 @@ export function OrderForm({
                 </p>
               )}
             </div>
+
+            {showLimitPanel && (
+              <LimitUtilization
+                used={projection.used}
+                daily={projection.daily}
+                projected={projection.projectedUsed}
+                rsdEquivalent={projection.rsdEquivalent}
+                isLoading={actuary.isLoading || ccyToRsd.isLoading}
+              />
+            )}
+            {willNeedApproval && (
+              <div data-cy="needs-approval">
+                <Badge tone="yellow">⏳ Ovaj nalog ide na odobrenje supervizoru</Badge>
+              </div>
+            )}
 
             {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
 
@@ -253,6 +319,42 @@ export function OrderForm({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function LimitUtilization({
+  used,
+  daily,
+  projected,
+  rsdEquivalent,
+  isLoading,
+}: {
+  used: number
+  daily: number
+  projected: number
+  rsdEquivalent: number | null
+  isLoading: boolean
+}) {
+  const cap = daily > 0 ? Math.min(100, Math.round((projected / daily) * 100)) : 0
+  const usedPct = daily > 0 ? Math.min(100, Math.round((used / daily) * 100)) : 0
+  return (
+    <div className="rounded-md border border-border bg-surface-muted/40 p-3 text-sm" data-cy="limit-panel">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">Dnevni limit (agent)</span>
+        <span className="font-mono text-xs">
+          {isLoading ? '…' : `${used.toFixed(2)} / ${daily.toFixed(2)} RSD`}
+        </span>
+      </div>
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full bg-primary/30" style={{ width: `${usedPct}%` }} />
+        <div className="-mt-2 h-2 bg-warning-soft" style={{ width: `${Math.max(0, cap - usedPct)}%`, marginLeft: `${usedPct}%` }} />
+      </div>
+      {rsdEquivalent !== null && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Ovaj nalog: ~{rsdEquivalent.toFixed(2)} RSD · projektovano iskorišćeno: {projected.toFixed(2)} RSD
+        </p>
+      )}
+    </div>
   )
 }
 
