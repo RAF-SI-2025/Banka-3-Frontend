@@ -123,33 +123,34 @@ npm run api:gen          # regenerate src/lib/api from gen/openapi/banka.swagger
 `../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto` in
 the backend first.
 
-## C1 status
+## C1 + C2 status
 
-Verified locally on the rewrite branch (2026-05-08):
-- `npm install` clean (537 packages)
-- `tsc -b` clean
-- `vite build` produces a working bundle (~413 kB JS, ~12 kB CSS)
-- `vite` dev server boots in ~350ms
+c1 + c2 frontend is feature-complete on the `rewrite` branch as of
+2026-05-09. `tsc -b` clean, `vite build` clean (~595 kB JS gzipped to
+~173 kB), `npm run lint` clean, vitest 55/55 green, cypress 14/14
+green (4 c1 login canned, 3 c1 employee-management live, 5 c2 canned,
+2 c2 live including a full admin-opens-account → client-sees-balance
+chain).
 
-Implemented and ready for browser smoke-test against a running backend
-(`task up CELINA=c1` over in `Banka-3-Backend`):
-- `/login` with spec-exact error messages ("Korisnik ne postoji",
-  "Neispravni unos") rendered from gateway responses
-- `/aktivacija?token=...`
-- `/reset-lozinke` and `/reset-lozinke/potvrda?token=...`
-- `/_authed` route gate redirecting to `/login` when no token
-- `/portal` admin home: paginated employee list with filter inputs,
-  permission-gated "Novi zaposleni" button
-- `/portal/employees/new` create form
-- `/portal/employees/:id` edit + active toggle + permission management
+**Routes**:
+- `/login`, `/aktivacija`, `/reset-lozinke[/potvrda]` — c1 auth surface
+- `_authed/portal/*` — employee portal: employees, clients, companies,
+  accounts (list + new + detail with limits form), cards, loan-
+  requests (approve/reject), loans, exchange (rates editor)
+- `_authed/banking/*` — client banking: home, racuni (list + detail),
+  kartice, placanja, transferi, menjacnica, primaoci, krediti
+  (list + new request + detail with installment schedule)
 
-Cypress spec for c1 (`cypress/e2e/celina1/login.cy.ts`) covers
-TestoviCelina1 scenarios 1–3 against canned responses; exercising
-against a live backend requires a seeded admin (open issue in
-top-level CLAUDE.md).
+**Conventions in place**:
+- Idempotency-Key on every mutation (axios request interceptor)
+- shared `CardCreateDialog` for client + portal card-creation flows
+- generated OpenAPI types under `src/lib/api/generated/` (gitignored;
+  `npm run api:gen` after `task proto` in backend)
+- Serbian labels for every backend enum in `src/lib/labels.ts` —
+  vitest test in `labels.test.ts` walks each enum and fails if a
+  value is missing a Serbian string
 
-Next steps: c2 frontend pages (accounts, payments, cards, loans —
-client-side banking app).
+Next steps: c3 frontend (trading — listings/orders/portfolio).
 
 ## Spec edge cases that bite
 
