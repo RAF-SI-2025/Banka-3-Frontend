@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
-import { Permissions, has } from '@/lib/permissions'
+import { Permissions, has, hasAny } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
 
@@ -28,6 +28,11 @@ function PortalLayout() {
     { to: '/portal/loan-requests', label: 'Zahtevi za kredit', hidden: !has(perms, Permissions.LoanWrite) },
     { to: '/portal/loans', label: 'Krediti', hidden: !has(perms, Permissions.LoanRead) },
     { to: '/portal/exchange', label: 'Kursna lista', hidden: !has(perms, Permissions.ExchangeWrite) },
+    {
+      to: '/portal/trgovina',
+      label: 'Trgovina',
+      hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),
+    },
   ]
 
   return (

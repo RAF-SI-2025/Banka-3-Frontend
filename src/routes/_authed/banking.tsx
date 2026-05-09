@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
+import { Permissions, has } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
 
@@ -14,6 +15,7 @@ export const Route = createFileRoute('/_authed/banking')({
 })
 
 function BankingLayout() {
+  const perms = useAuthStore((s) => s.permissions)
   const items: NavItem[] = [
     { to: '/banking', label: 'Početna' },
     { to: '/banking/racuni', label: 'Računi' },
@@ -23,6 +25,7 @@ function BankingLayout() {
     { to: '/banking/menjacnica', label: 'Menjačnica' },
     { to: '/banking/primaoci', label: 'Primaoci' },
     { to: '/banking/krediti', label: 'Krediti' },
+    { to: '/banking/trgovina', label: 'Trgovina', hidden: !has(perms, Permissions.TradingClient) },
   ]
 
   return (
