@@ -39,8 +39,8 @@ function PortalLoanDetail() {
     enabled: !!l?.accountId,
   })
 
-  if (loan.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!l) return <p className="container py-8 text-red-600">Greška pri učitavanju.</p>
+  if (loan.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!l) return <p className="container py-8 text-danger">Greška pri učitavanju.</p>
 
   const installments = loan.data?.installments ?? []
   const cur = currencyLabel(l.currency!)
@@ -51,7 +51,7 @@ function PortalLoanDetail() {
   return (
     <main className="container space-y-6 py-8">
       <div>
-        <Link to="/portal/loans" className="text-sm text-gray-500 hover:underline">
+        <Link to="/portal/loans" className="text-sm text-muted-foreground hover:underline">
           ← Krediti
         </Link>
       </div>
@@ -60,7 +60,7 @@ function PortalLoanDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Kredit {l.loanNumber}</h1>
-            <p className="text-sm text-gray-500">{loanTypeLabel[l.loanType!]}</p>
+            <p className="text-sm text-muted-foreground">{loanTypeLabel[l.loanType!]}</p>
           </div>
           <Badge
             tone={
@@ -100,7 +100,7 @@ function PortalLoanDetail() {
               <Link
                 to="/portal/clients/$id"
                 params={{ id: client.data.id! }}
-                className="text-blue-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 {clientName || '—'}
               </Link>
@@ -115,7 +115,7 @@ function PortalLoanDetail() {
               <Link
                 to="/portal/accounts/$id"
                 params={{ id: account.data.id! }}
-                className="font-mono text-xs text-blue-600 hover:underline"
+                className="font-mono text-xs text-primary hover:underline"
               >
                 {formatAccountNumber(account.data.number)}
               </Link>
@@ -174,7 +174,7 @@ function PortalLoanDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

@@ -161,7 +161,7 @@ export function CardCreateDialog({
                 autoComplete="off"
               />
               {account && (
-                <p className="mt-1 text-xs text-gray-600">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Izabrano:{' '}
                   <span className="font-mono">{formatAccountNumber(account.number)}</span>
                   {' · '}
@@ -169,9 +169,9 @@ export function CardCreateDialog({
                   {account.name ? ` · ${account.name}` : ''}
                 </p>
               )}
-              <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200">
+              <div className="mt-2 max-h-40 overflow-auto rounded-md border border-border">
                 {filteredAccounts.length === 0 && (
-                  <p className="px-3 py-2 text-xs text-gray-500">Nema rezultata.</p>
+                  <p className="px-3 py-2 text-xs text-muted-foreground">Nema rezultata.</p>
                 )}
                 {filteredAccounts.map((a) => {
                   const selected = a.id === accountId
@@ -185,12 +185,12 @@ export function CardCreateDialog({
                           shouldDirty: true,
                         })
                       }}
-                      className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                        selected ? 'bg-blue-50' : ''
+                      className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-surface-muted ${
+                        selected ? 'bg-primary-soft' : ''
                       }`}
                     >
                       <span className="font-mono text-xs">{formatAccountNumber(a.number)}</span>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         {currencyLabel(a.currency!)}
                         {a.name ? ` · ${a.name}` : ''}
                       </span>
@@ -201,7 +201,7 @@ export function CardCreateDialog({
             </>
           )}
           {form.formState.errors.accountId && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.accountId.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.accountId.message}</p>
           )}
         </div>
 
@@ -222,7 +222,7 @@ export function CardCreateDialog({
             <Label>Limit</Label>
             <Input inputMode="decimal" {...form.register('cardLimit')} />
             {form.formState.errors.cardLimit && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.cardLimit.message}</p>
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.cardLimit.message}</p>
             )}
           </div>
         </div>

@@ -89,13 +89,13 @@ function ClientDetail() {
 
   const errMsg = update.error ? apiError(update.error, 'Greška pri ažuriranju.') : null
 
-  if (client.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!client.data) return <p className="container py-8 text-red-600">Greška.</p>
+  if (client.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!client.data) return <p className="container py-8 text-danger">Greška.</p>
 
   return (
     <main className="container space-y-6 py-8">
       <div>
-        <Link to="/portal/clients" className="text-sm text-gray-500 hover:underline">
+        <Link to="/portal/clients" className="text-sm text-muted-foreground hover:underline">
           ← Klijenti
         </Link>
       </div>
@@ -104,7 +104,7 @@ function ClientDetail() {
         <h1 className="text-2xl font-semibold">
           {client.data.firstName} {client.data.lastName}
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {client.data.email} · DOB {client.data.dateOfBirth}
         </p>
 

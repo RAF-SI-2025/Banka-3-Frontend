@@ -137,7 +137,7 @@ function EditEmployeePage() {
         <h1 className="text-2xl font-semibold">
           {emp.firstName} {emp.lastName}
         </h1>
-        <Link to="/portal/employees" className="text-blue-600 hover:underline">
+        <Link to="/portal/employees" className="text-primary hover:underline">
           ← Nazad na listu
         </Link>
       </div>
@@ -154,7 +154,7 @@ function EditEmployeePage() {
             <div>
               <Label htmlFor="username">Korisničko ime</Label>
               <Input id="username" value={emp.username} disabled readOnly />
-              <p className="mt-1 text-xs text-gray-500">Korisničko ime se ne menja nakon kreiranja.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Korisničko ime se ne menja nakon kreiranja.</p>
             </div>
             <FormField label="Ime" name="firstName" form={form} />
             <FormField label="Prezime" name="lastName" form={form} />
@@ -176,7 +176,7 @@ function EditEmployeePage() {
                 ))}
               </Select>
               {form.formState.errors.position?.message && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.position.message}</p>
+                <p className="mt-1 text-xs text-danger">{form.formState.errors.position.message}</p>
               )}
             </div>
             <FormField label="Departman" name="department" form={form} />
@@ -201,7 +201,7 @@ function EditEmployeePage() {
           <CardTitle>Status naloga</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <span className={emp.active ? 'text-green-700' : 'text-red-700'}>
+          <span className={emp.active ? 'text-success-soft-foreground' : 'text-danger'}>
             {emp.active ? 'Aktivan' : 'Deaktiviran'}
           </span>
           <Button
@@ -214,7 +214,7 @@ function EditEmployeePage() {
           </Button>
           {!emp.activated && (
             <>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Nalog još nije aktiviran (link iz mejla nije iskorišćen).
               </span>
               <Button
@@ -236,7 +236,7 @@ function EditEmployeePage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {isSelf ? (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Ne možete menjati sopstvene permisije. Zamolite drugog administratora ako je promena potrebna.
               </p>
             ) : (
@@ -252,7 +252,7 @@ function EditEmployeePage() {
                       />
                       <span>
                         <span className="block">{permissionLabels[p]}</span>
-                        <code className="text-xs text-gray-500">{p}</code>
+                        <code className="text-xs text-muted-foreground">{p}</code>
                       </span>
                     </label>
                   ))}
@@ -287,7 +287,7 @@ function FormField({
     <div>
       <Label htmlFor={name}>{label}</Label>
       <Input id={name} {...form.register(name)} />
-      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
+      {err && <p className="mt-1 text-xs text-danger">{err}</p>}
     </div>
   )
 }

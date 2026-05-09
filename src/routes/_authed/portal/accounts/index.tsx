@@ -36,7 +36,7 @@ function PortalAccounts() {
     enabled: canRead,
   })
 
-  if (!canRead) return <p className="container py-8 text-gray-700">Nemate dozvolu.</p>
+  if (!canRead) return <p className="container py-8 text-foreground">Nemate dozvolu.</p>
 
   return (
     <main className="container space-y-4 py-8">
@@ -112,7 +112,7 @@ function PortalAccounts() {
         <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Prethodna
         </Button>
-        <span className="text-sm text-gray-600">Strana {page}</span>
+        <span className="text-sm text-muted-foreground">Strana {page}</span>
         <Button
           variant="secondary"
           disabled={!accounts.data || page * 50 >= Number(accounts.data.total ?? 0)}

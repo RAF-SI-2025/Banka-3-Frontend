@@ -72,7 +72,7 @@ function NewTransfer() {
       <h1 className="text-2xl font-semibold">Transfer između mojih računa</h1>
       <form
         onSubmit={form.handleSubmit((v) => setPending(v))}
-        className="space-y-4 rounded-lg border border-gray-200 bg-white p-6"
+        className="space-y-4 rounded-lg border border-border bg-surface p-6"
       >
         <div>
           <Label>Sa računa</Label>
@@ -85,7 +85,7 @@ function NewTransfer() {
             ))}
           </Select>
           {form.formState.errors.fromAccountId && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.fromAccountId.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.fromAccountId.message}</p>
           )}
           {(() => {
             const id = form.watch('fromAccountId')
@@ -109,7 +109,7 @@ function NewTransfer() {
             ))}
           </Select>
           {form.formState.errors.toAccountId && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.toAccountId.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.toAccountId.message}</p>
           )}
         </div>
 
@@ -117,7 +117,7 @@ function NewTransfer() {
           <Label>Iznos</Label>
           <Input inputMode="decimal" {...form.register('amount')} />
           {form.formState.errors.amount && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.amount.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.amount.message}</p>
           )}
         </div>
 

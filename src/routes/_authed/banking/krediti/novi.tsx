@@ -124,7 +124,7 @@ function NewLoanRequest() {
   return (
     <main className="container max-w-2xl space-y-4 py-8">
       <h1 className="text-2xl font-semibold">Novi zahtev za kredit</h1>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-border bg-surface p-6">
         <div>
           <Label>Račun za uplatu kredita</Label>
           <Select {...form.register('accountId')}>
@@ -136,7 +136,7 @@ function NewLoanRequest() {
             ))}
           </Select>
           {form.formState.errors.accountId && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.accountId.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.accountId.message}</p>
           )}
         </div>
 
@@ -197,7 +197,7 @@ function NewLoanRequest() {
               <Label>Mesečna plata</Label>
               <Input inputMode="decimal" {...form.register('monthlySalary')} />
               {form.formState.errors.monthlySalary && (
-                <p className="mt-1 text-xs text-red-600">
+                <p className="mt-1 text-xs text-danger">
                   {form.formState.errors.monthlySalary.message}
                 </p>
               )}
@@ -220,7 +220,7 @@ function NewLoanRequest() {
           <Label>Svrha kredita</Label>
           <Input {...form.register('purpose')} />
           {form.formState.errors.purpose && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.purpose.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.purpose.message}</p>
           )}
         </div>
 

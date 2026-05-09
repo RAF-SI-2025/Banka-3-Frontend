@@ -106,7 +106,7 @@ function Menjacnica() {
 
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 rounded-lg border border-gray-200 bg-white p-6"
+        className="space-y-4 rounded-lg border border-border bg-surface p-6"
       >
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -120,7 +120,7 @@ function Menjacnica() {
               ))}
             </Select>
             {fromAcc && (
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-1 text-xs text-muted-foreground">
                 Raspoloživo: {formatMoney(fromAcc.availableBalance, currencyLabel(fromAcc.currency!))}
               </div>
             )}
@@ -150,7 +150,7 @@ function Menjacnica() {
         )}
 
         {quote.data && (
-          <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-900">
+          <div className="rounded-md bg-primary-soft p-4 text-sm text-primary-soft-foreground">
             <div className="grid grid-cols-2 gap-2">
               <div>Kurs:</div>
               <div className="text-right font-mono">{formatRate(quote.data.rate)}</div>
@@ -205,7 +205,7 @@ function Menjacnica() {
             </TBody>
           </Table>
         ) : (
-          <Card className="p-6 text-sm text-gray-500">Kursna lista nije dostupna.</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Kursna lista nije dostupna.</Card>
         )}
       </section>
       <VerificationDialog

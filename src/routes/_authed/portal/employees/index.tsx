@@ -33,7 +33,7 @@ function EmployeesPage() {
   if (!canRead) {
     return (
       <main className="container py-8">
-        <p className="text-gray-700">Nemate dozvolu za pristup ovoj stranici.</p>
+        <p className="text-foreground">Nemate dozvolu za pristup ovoj stranici.</p>
       </main>
     )
   }
@@ -55,8 +55,8 @@ function EmployeesPage() {
         <Input placeholder="Pozicija…" value={positionQuery} onChange={(e) => setPositionQuery(e.target.value)} />
       </div>
 
-      {employees.isLoading && <p className="text-gray-500">Učitavanje…</p>}
-      {employees.isError && <p className="text-red-600">Greška pri učitavanju.</p>}
+      {employees.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
+      {employees.isError && <p className="text-danger">Greška pri učitavanju.</p>}
       {employees.data && (
         <Table>
           <THead>
@@ -94,7 +94,7 @@ function EmployeesPage() {
         <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Prethodna
         </Button>
-        <span className="text-sm text-gray-600">Strana {page}</span>
+        <span className="text-sm text-muted-foreground">Strana {page}</span>
         <Button
           variant="secondary"
           disabled={!employees.data || page * 25 >= Number(employees.data.total ?? 0)}

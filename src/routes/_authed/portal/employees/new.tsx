@@ -101,7 +101,7 @@ function NewEmployeePage() {
                   ))}
                 </Select>
                 {form.formState.errors.position?.message && (
-                  <p className="mt-1 text-xs text-red-600">{form.formState.errors.position.message}</p>
+                  <p className="mt-1 text-xs text-danger">{form.formState.errors.position.message}</p>
                 )}
               </div>
               <TextField label="Departman" name="department" form={form} />
@@ -109,7 +109,7 @@ function NewEmployeePage() {
                 <Label htmlFor="role">Uloga</Label>
                 <select
                   id="role"
-                  className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm"
+                  className="block w-full rounded-md border border-input bg-surface px-3 py-2 text-sm shadow-sm"
                   {...form.register('role')}
                 >
                   <option value="basic">Zaposleni (osnovno)</option>
@@ -172,7 +172,7 @@ function TextField({
     <div>
       <Label htmlFor={name}>{label}</Label>
       <Input id={name} type={type} {...form.register(name)} />
-      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
+      {err && <p className="mt-1 text-xs text-danger">{err}</p>}
     </div>
   )
 }

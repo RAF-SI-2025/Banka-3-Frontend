@@ -49,10 +49,10 @@ function ResetRequestPage() {
         <CardContent>
           {sent ? (
             <div className="space-y-3 text-sm">
-              <p className="text-green-700">
+              <p className="text-success-soft-foreground">
                 Ako adresa postoji u sistemu, link za reset lozinke je upravo poslat. Link važi 15 minuta.
               </p>
-              <Link to="/login" className="text-blue-600 hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Nazad na prijavu
               </Link>
             </div>
@@ -63,14 +63,14 @@ function ResetRequestPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" {...form.register('email')} />
                 {form.formState.errors.email && (
-                  <p className="mt-1 text-xs text-red-600">{form.formState.errors.email.message}</p>
+                  <p className="mt-1 text-xs text-danger">{form.formState.errors.email.message}</p>
                 )}
               </div>
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Slanje…' : 'Pošalji link'}
               </Button>
               <div className="text-center text-sm">
-                <Link to="/login" className="text-blue-600 hover:underline">
+                <Link to="/login" className="text-primary hover:underline">
                   Nazad na prijavu
                 </Link>
               </div>

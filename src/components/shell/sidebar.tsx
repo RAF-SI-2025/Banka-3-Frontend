@@ -9,8 +9,8 @@ export interface NavItem {
 
 export function Sidebar({ items }: { items: NavItem[] }) {
   return (
-    <aside className="w-56 shrink-0 border-r border-gray-200 bg-white">
-      <nav className="flex flex-col gap-1 p-3 text-sm">
+    <aside className="hidden w-60 shrink-0 border-r border-border bg-surface/60 md:block">
+      <nav className="sticky top-14 flex flex-col gap-0.5 p-3 text-sm">
         {items
           .filter((it) => !it.hidden)
           .map((it) => (
@@ -18,9 +18,13 @@ export function Sidebar({ items }: { items: NavItem[] }) {
               key={it.to}
               to={it.to}
               className={cn(
-                'rounded-md px-3 py-2 text-gray-700 hover:bg-gray-100',
+                'rounded-md px-3 py-2 text-muted-foreground transition-colors',
+                'hover:bg-accent hover:text-accent-foreground',
               )}
-              activeProps={{ className: 'bg-blue-50 text-blue-700 font-medium' }}
+              activeProps={{
+                className:
+                  'bg-primary-soft text-primary-soft-foreground font-medium hover:bg-primary-soft hover:text-primary-soft-foreground',
+              }}
             >
               {it.label}
             </Link>

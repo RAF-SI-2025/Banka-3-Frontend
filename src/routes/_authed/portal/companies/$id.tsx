@@ -98,18 +98,18 @@ function CompanyDetail() {
     },
   })
 
-  if (company.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!company.data) return <p className="container py-8 text-red-600">Greška.</p>
+  if (company.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!company.data) return <p className="container py-8 text-danger">Greška.</p>
 
   return (
     <main className="container space-y-6 py-8">
-      <Link to="/portal/companies" className="text-sm text-gray-500 hover:underline">
+      <Link to="/portal/companies" className="text-sm text-muted-foreground hover:underline">
         ← Firme
       </Link>
 
       <Card className="p-6">
         <h1 className="text-2xl font-semibold">{company.data.name}</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           MB {company.data.registryId} · PIB {company.data.taxId}
         </p>
         <form onSubmit={form.handleSubmit((v) => update.mutate(v))} className="mt-4 grid grid-cols-2 gap-3">

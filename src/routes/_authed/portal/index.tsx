@@ -34,14 +34,17 @@ function PortalLanding() {
   const visible = tiles.filter((t) => has(perms, t.perm))
 
   return (
-    <main className="container space-y-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Dobrodošli{firstName ? `, ${firstName}` : ''}</h1>
-        <p className="text-sm text-gray-500">Izaberite sekciju portala.</p>
-      </div>
+    <main className="container space-y-8 py-10">
+      <header className="space-y-1">
+        <p className="text-sm text-muted-foreground">Portal</p>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Dobrodošli{firstName ? `, ${firstName}` : ''}
+        </h1>
+        <p className="text-sm text-muted-foreground">Izaberite sekciju portala.</p>
+      </header>
 
       {visible.length === 0 ? (
-        <p className="text-gray-700">
+        <p className="text-foreground">
           Vaš nalog trenutno nema pristup nijednoj sekciji portala. Kontaktirajte administratora.
         </p>
       ) : (
@@ -50,10 +53,10 @@ function PortalLanding() {
             <Link
               key={t.to}
               to={t.to}
-              className="rounded-lg border border-gray-200 bg-white p-4 transition hover:border-gray-400"
+              className="group rounded-lg border border-border bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-elevated"
             >
-              <div className="font-semibold">{t.label}</div>
-              <div className="mt-1 text-sm text-gray-500">{t.description}</div>
+              <div className="font-semibold tracking-tight group-hover:text-primary">{t.label}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{t.description}</div>
             </Link>
           ))}
         </div>

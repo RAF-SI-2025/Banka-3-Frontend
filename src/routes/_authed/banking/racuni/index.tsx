@@ -30,10 +30,15 @@ function AccountsList() {
     .sort((a, b) => Number(b.availableBalance ?? 0) - Number(a.availableBalance ?? 0))
 
   return (
-    <main className="container space-y-4 py-8">
-      <h1 className="text-2xl font-semibold">Računi</h1>
-      {accounts.isLoading && <p className="text-gray-500">Učitavanje…</p>}
-      {accounts.isError && <p className="text-red-600">Greška pri učitavanju.</p>}
+    <main className="container space-y-6 py-10">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Računi</h1>
+        <p className="text-sm text-muted-foreground">
+          Pregled svih vaših aktivnih računa, sortiranih po raspoloživim sredstvima.
+        </p>
+      </header>
+      {accounts.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
+      {accounts.isError && <p className="text-danger">Greška pri učitavanju.</p>}
       {accounts.data && (
         <Table>
           <THead>
@@ -52,12 +57,16 @@ function AccountsList() {
                 key={a.id}
                 onClick={() => navigate({ to: '/banking/racuni/$id', params: { id: a.id! } })}
               >
-                <TD>{a.name || '—'}</TD>
-                <TD className="font-mono text-xs">{formatAccountNumber(a.number)}</TD>
+                <TD className="font-medium">{a.name || '—'}</TD>
+                <TD className="font-mono text-xs text-muted-foreground">
+                  {formatAccountNumber(a.number)}
+                </TD>
                 <TD>{accountKindLabel[a.kind!]}</TD>
                 <TD>{currencyLabel(a.currency!)}</TD>
-                <TD className="text-right">{formatMoney(a.balance)}</TD>
-                <TD className="text-right">{formatMoney(a.availableBalance)}</TD>
+                <TD className="text-right tabular-nums">{formatMoney(a.balance)}</TD>
+                <TD className="text-right font-medium tabular-nums">
+                  {formatMoney(a.availableBalance)}
+                </TD>
               </TR>
             ))}
             {visible.length === 0 && <EmptyRow colSpan={6}>Nemate aktivnih računa.</EmptyRow>}

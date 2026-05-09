@@ -57,7 +57,7 @@ function ClientCards() {
         onClose={() => setOpenCreate(false)}
         accounts={accounts.data?.accounts ?? []}
       />
-      {cards.isLoading && <p className="text-gray-500">Učitavanje…</p>}
+      {cards.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
       {cards.data && (
         <Table>
           <THead>
@@ -83,7 +83,7 @@ function ClientCards() {
                   <TD className="font-mono text-xs">{formatCardNumber(c.number)}</TD>
                   <TD className="font-mono text-xs">{formatAccountNumber(a?.number)}</TD>
                   <TD className="text-right">{formatMoney(c.cardLimit, currency ? currency.replace('CURRENCY_', '') : '')}</TD>
-                  <TD className="text-xs text-gray-600">{c.expiresAt?.slice(0, 10) ?? '—'}</TD>
+                  <TD className="text-xs text-muted-foreground">{c.expiresAt?.slice(0, 10) ?? '—'}</TD>
                   <TD>
                     <Badge tone={c.status === v1CardStatus.CARD_STATUS_ACTIVE ? 'green' : 'red'}>
                       {cardStatusLabel[c.status!]}
@@ -119,7 +119,7 @@ function ClientCards() {
           </TBody>
         </Table>
       )}
-      {block.isError && <p className="text-sm text-red-600">Greška pri blokiranju kartice.</p>}
+      {block.isError && <p className="text-sm text-danger">Greška pri blokiranju kartice.</p>}
 
       <CardLimitDialog
         card={editLimitFor}
@@ -160,7 +160,7 @@ function CardLimitDialog({
   const [value, setValue] = useState('')
   return (
     <Dialog open={!!card} onClose={onClose} title="Promena limita kartice">
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted-foreground">
         Trenutni limit: <span className="font-medium">{card?.cardLimit ?? '—'}</span>
       </p>
       <div className="mt-3">

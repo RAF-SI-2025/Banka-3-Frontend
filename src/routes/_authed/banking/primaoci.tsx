@@ -101,7 +101,7 @@ function Recipients() {
         <h1 className="text-2xl font-semibold">Primaoci</h1>
         <Button onClick={startCreate}>Dodaj primaoca</Button>
       </div>
-      {recipients.isLoading && <p className="text-gray-500">Učitavanje…</p>}
+      {recipients.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
       {recipients.data && (
         <Table>
           <THead>
@@ -159,14 +159,14 @@ function Recipients() {
             <Label>Ime / naziv</Label>
             <Input {...form.register('name')} />
             {form.formState.errors.name && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.name.message}</p>
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.name.message}</p>
             )}
           </div>
           <div>
             <Label>Broj računa</Label>
             <Input className="font-mono" {...form.register('accountNumber')} />
             {form.formState.errors.accountNumber && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.accountNumber.message}</p>
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.accountNumber.message}</p>
             )}
           </div>
         </div>

@@ -100,8 +100,8 @@ function AccountDetail() {
     enabled: !!account.data?.ownerClientId,
   })
 
-  if (account.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!account.data) return <p className="container py-8 text-red-600">Greška pri učitavanju.</p>
+  if (account.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!account.data) return <p className="container py-8 text-danger">Greška pri učitavanju.</p>
 
   const a = account.data
   const cur = currencyLabel(a.currency!)
@@ -137,7 +137,7 @@ function AccountDetail() {
   return (
     <main className="container space-y-6 py-8">
       <div>
-        <Link to="/banking/racuni" className="text-sm text-gray-500 hover:underline">
+        <Link to="/banking/racuni" className="text-sm text-muted-foreground hover:underline">
           ← Računi
         </Link>
       </div>
@@ -146,7 +146,7 @@ function AccountDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">{a.name || formatAccountNumber(a.number)}</h1>
-            <div className="font-mono text-sm text-gray-500">{formatAccountNumber(a.number)}</div>
+            <div className="font-mono text-sm text-muted-foreground">{formatAccountNumber(a.number)}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
@@ -211,7 +211,7 @@ function AccountDetail() {
             </TBody>
           </Table>
         ) : (
-          <p className="text-sm text-gray-500">Nemate kartica za ovaj račun.</p>
+          <p className="text-sm text-muted-foreground">Nemate kartica za ovaj račun.</p>
         )}
       </section>
 
@@ -256,12 +256,12 @@ function AccountDetail() {
                 const amount = outflow ? t.fromAmount : t.toAmount
                 return (
                   <TR key={t.id}>
-                    <TD className="whitespace-nowrap text-xs text-gray-600">{formatDateTime(t.createdAt)}</TD>
+                    <TD className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTime(t.createdAt)}</TD>
                     <TD>{txKindLabel[t.kind!]}</TD>
                     <TD>{outflow ? 'Odliv' : 'Priliv'}</TD>
                     <TD className="font-mono text-xs">{counterparty || '—'}</TD>
-                    <TD className="text-xs text-gray-700">{t.purpose || t.recipientName || '—'}</TD>
-                    <TD className={`text-right ${outflow ? 'text-red-600' : 'text-green-700'}`}>
+                    <TD className="text-xs text-foreground">{t.purpose || t.recipientName || '—'}</TD>
+                    <TD className={`text-right ${outflow ? 'text-danger' : 'text-success-soft-foreground'}`}>
                       {outflow ? '-' : '+'}
                       {formatMoney(amount)}
                     </TD>
@@ -284,7 +284,7 @@ function AccountDetail() {
             </TBody>
           </Table>
         ) : (
-          <p className="text-sm text-gray-500">Nema transakcija za odabrani filter.</p>
+          <p className="text-sm text-muted-foreground">Nema transakcija za odabrani filter.</p>
         )}
       </section>
 
@@ -372,14 +372,14 @@ function RenameDialog({
     >
       <div className="space-y-3">
         <div>
-          <Label className="text-xs uppercase tracking-wide text-gray-500">Trenutno ime</Label>
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Trenutno ime</Label>
           <p className="text-sm">{currentName || '—'}</p>
         </div>
         <div>
           <Label>Novo ime računa</Label>
           <Input {...form.register('name')} autoFocus />
           {form.formState.errors.name && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.name.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.name.message}</p>
           )}
         </div>
         {submit.error && <ErrorBanner>{apiError(submit.error, 'Greška pri promeni naziva.')}</ErrorBanner>}
@@ -423,17 +423,17 @@ function LimitsDialog({
           <Label>Dnevni limit</Label>
           <Input inputMode="decimal" {...form.register('dailyLimit')} />
           {form.formState.errors.dailyLimit && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.dailyLimit.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.dailyLimit.message}</p>
           )}
         </div>
         <div>
           <Label>Mesečni limit</Label>
           <Input inputMode="decimal" {...form.register('monthlyLimit')} />
           {form.formState.errors.monthlyLimit && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.monthlyLimit.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.monthlyLimit.message}</p>
           )}
         </div>
-        <p className="text-xs text-gray-500">Sledeći korak: unos verifikacionog koda.</p>
+        <p className="text-xs text-muted-foreground">Sledeći korak: unos verifikacionog koda.</p>
       </div>
     </Dialog>
   )
@@ -442,7 +442,7 @@ function LimitsDialog({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

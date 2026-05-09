@@ -25,8 +25,8 @@ function LoanDetail() {
     queryFn: () => getLoan(id),
   })
 
-  if (loan.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!loan.data?.loan) return <p className="container py-8 text-red-600">Greška pri učitavanju.</p>
+  if (loan.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!loan.data?.loan) return <p className="container py-8 text-danger">Greška pri učitavanju.</p>
 
   const l = loan.data.loan
   const installments = loan.data.installments ?? []
@@ -34,7 +34,7 @@ function LoanDetail() {
   return (
     <main className="container space-y-6 py-8">
       <div>
-        <Link to="/banking/krediti" className="text-sm text-gray-500 hover:underline">
+        <Link to="/banking/krediti" className="text-sm text-muted-foreground hover:underline">
           ← Krediti
         </Link>
       </div>
@@ -43,7 +43,7 @@ function LoanDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Kredit {l.loanNumber}</h1>
-            <p className="text-sm text-gray-500">{loanTypeLabel[l.loanType!]}</p>
+            <p className="text-sm text-muted-foreground">{loanTypeLabel[l.loanType!]}</p>
           </div>
           <Badge tone={l.status === 'LOAN_STATUS_APPROVED' ? 'green' : l.status === 'LOAN_STATUS_PAID_OFF' ? 'blue' : 'red'}>
             {loanStatusLabel[l.status!]}
@@ -112,7 +112,7 @@ function LoanDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

@@ -98,8 +98,8 @@ function PortalAccountDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.account.detail(id) }),
   })
 
-  if (account.isLoading) return <p className="container py-8 text-gray-500">Učitavanje…</p>
-  if (!account.data) return <p className="container py-8 text-red-600">Greška.</p>
+  if (account.isLoading) return <p className="container py-8 text-muted-foreground">Učitavanje…</p>
+  if (!account.data) return <p className="container py-8 text-danger">Greška.</p>
 
   const a = account.data
   const cur = currencyLabel(a.currency!)
@@ -115,7 +115,7 @@ function PortalAccountDetail() {
   return (
     <main className="container space-y-6 py-8">
       <div>
-        <Link to="/portal/accounts" className="text-sm text-gray-500 hover:underline">
+        <Link to="/portal/accounts" className="text-sm text-muted-foreground hover:underline">
           ← Računi
         </Link>
       </div>
@@ -124,7 +124,7 @@ function PortalAccountDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">{a.name || formatAccountNumber(a.number)}</h1>
-            <div className="font-mono text-sm text-gray-500">{formatAccountNumber(a.number)}</div>
+            <div className="font-mono text-sm text-muted-foreground">{formatAccountNumber(a.number)}</div>
           </div>
           <div className="flex items-center gap-2">
             <Badge tone={a.status === v1AccountStatus.ACCOUNT_STATUS_ACTIVE ? 'green' : 'red'}>
@@ -153,20 +153,20 @@ function PortalAccountDetail() {
 
       <Card className="p-6">
         <h2 className="text-lg font-semibold">Limiti</h2>
-        <p className="mb-4 text-sm text-gray-500">Dnevni i mesečni limit transakcija.</p>
+        <p className="mb-4 text-sm text-muted-foreground">Dnevni i mesečni limit transakcija.</p>
         <form onSubmit={form.handleSubmit((v) => setPending(v))} className="grid grid-cols-2 gap-3">
           <div>
             <Label>Dnevni limit ({cur})</Label>
             <Input inputMode="decimal" {...form.register('dailyLimit')} disabled={!canWrite} />
             {form.formState.errors.dailyLimit && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.dailyLimit.message}</p>
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.dailyLimit.message}</p>
             )}
           </div>
           <div>
             <Label>Mesečni limit ({cur})</Label>
             <Input inputMode="decimal" {...form.register('monthlyLimit')} disabled={!canWrite} />
             {form.formState.errors.monthlyLimit && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.monthlyLimit.message}</p>
+              <p className="mt-1 text-xs text-danger">{form.formState.errors.monthlyLimit.message}</p>
             )}
           </div>
           {errMsg && (
@@ -202,7 +202,7 @@ function PortalAccountDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

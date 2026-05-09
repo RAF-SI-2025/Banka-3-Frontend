@@ -37,21 +37,21 @@ function LimitRow({ label, limit, spent, currency }: LimitRowProps) {
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between text-xs">
-        <span className="font-medium text-gray-700">{label}</span>
-        <span className="text-gray-500">
+        <span className="font-medium text-foreground">{label}</span>
+        <span className="text-muted-foreground">
           {unlimited ? '— limit nije postavljen —' : formatMoney(String(remaining), currency) + ' preostalo'}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={
             'h-full rounded-full ' +
-            (percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500')
+            (percent >= 90 ? 'bg-danger' : percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500')
           }
           style={{ width: `${percent}%` }}
         />
       </div>
-      <div className="flex justify-between text-[11px] text-gray-500">
+      <div className="flex justify-between text-[11px] text-muted-foreground">
         <span>Iskorišćeno: {formatMoney(spent ?? '0', currency)}</span>
         <span>Limit: {unlimited ? '∞' : formatMoney(limit, currency)}</span>
       </div>
@@ -65,7 +65,7 @@ export function AccountLimitSummary({ account }: { account: v1Account }) {
     <section
       aria-label="Limit po računu"
       data-testid="account-limit-summary"
-      className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-3"
+      className="space-y-3 rounded-md border border-border bg-surface-muted p-3"
     >
       <LimitRow label="Dnevni limit" limit={account.dailyLimit} spent={account.dailySpent} currency={currency} />
       <LimitRow label="Mesečni limit" limit={account.monthlyLimit} spent={account.monthlySpent} currency={currency} />

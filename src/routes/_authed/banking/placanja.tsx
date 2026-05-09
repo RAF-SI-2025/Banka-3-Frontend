@@ -157,7 +157,7 @@ function NewPayment() {
   return (
     <main className="container max-w-3xl space-y-6 py-8">
       <h1 className="text-2xl font-semibold">Novo plaćanje</h1>
-      <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+      <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-border bg-surface p-6">
         <div>
           <Label>Račun pošiljaoca</Label>
           <Select {...form.register('fromAccountId')}>
@@ -222,7 +222,7 @@ function NewPayment() {
           <FieldErr msg={form.formState.errors.purpose?.message} />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input type="checkbox" {...form.register('saveRecipient')} />
           Sačuvaj primaoca
         </label>
@@ -238,7 +238,7 @@ function NewPayment() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Istorija plaćanja</h2>
         {history.length === 0 ? (
-          <p className="text-sm text-gray-500">Nema plaćanja.</p>
+          <p className="text-sm text-muted-foreground">Nema plaćanja.</p>
         ) : (
           <Table>
             <THead>
@@ -258,13 +258,13 @@ function NewPayment() {
                 const amount = outflow ? t.fromAmount : t.toAmount
                 return (
                   <TR key={t.id}>
-                    <TD className="whitespace-nowrap text-xs text-gray-600">{formatDateTime(t.createdAt)}</TD>
+                    <TD className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTime(t.createdAt)}</TD>
                     <TD>{outflow ? 'Odliv' : 'Priliv'}</TD>
                     <TD className="font-mono text-xs">{counterparty || '—'}</TD>
-                    <TD className="text-xs text-gray-700">
+                    <TD className="text-xs text-foreground">
                       {[t.recipientName, t.purpose].filter(Boolean).join(' · ') || '—'}
                     </TD>
-                    <TD className={`text-right ${outflow ? 'text-red-600' : 'text-green-700'}`}>
+                    <TD className={`text-right ${outflow ? 'text-danger' : 'text-success-soft-foreground'}`}>
                       {outflow ? '-' : '+'}
                       {formatMoney(amount)}
                     </TD>
@@ -307,7 +307,7 @@ function NewPayment() {
 
 function FieldErr({ msg }: { msg?: string }) {
   if (!msg) return null
-  return <p className="mt-1 text-xs text-red-600">{msg}</p>
+  return <p className="mt-1 text-xs text-danger">{msg}</p>
 }
 
 // SelectedAccountLimits renders the limit summary panel only once a

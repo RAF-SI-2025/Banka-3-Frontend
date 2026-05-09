@@ -30,7 +30,7 @@ function ClientsList() {
     enabled: canRead,
   })
 
-  if (!canRead) return <p className="container py-8 text-gray-700">Nemate dozvolu za pristup.</p>
+  if (!canRead) return <p className="container py-8 text-foreground">Nemate dozvolu za pristup.</p>
 
   return (
     <main className="container space-y-4 py-8">
@@ -83,7 +83,7 @@ function ClientsList() {
         <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Prethodna
         </Button>
-        <span className="text-sm text-gray-600">Strana {page}</span>
+        <span className="text-sm text-muted-foreground">Strana {page}</span>
         <Button
           variant="secondary"
           disabled={!clients.data || page * 25 >= Number(clients.data.total ?? 0)}

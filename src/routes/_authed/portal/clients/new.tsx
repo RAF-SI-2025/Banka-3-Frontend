@@ -58,7 +58,7 @@ function NewClient() {
   return (
     <main className="container max-w-2xl space-y-4 py-8">
       <h1 className="text-2xl font-semibold">Novi klijent</h1>
-      <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+      <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="space-y-4 rounded-lg border border-border bg-surface p-6">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Ime</Label>

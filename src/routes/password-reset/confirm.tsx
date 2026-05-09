@@ -66,28 +66,28 @@ function ResetConfirmPage() {
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             {rootError && <ErrorBanner>{rootError}</ErrorBanner>}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Lozinka mora imati 8–32 znaka, ≥2 cifre, 1 veliko i 1 malo slovo.
             </p>
             <div>
               <Label htmlFor="password">Nova lozinka</Label>
               <Input id="password" type="password" {...form.register('password')} />
               {form.formState.errors.password && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.password.message}</p>
+                <p className="mt-1 text-xs text-danger">{form.formState.errors.password.message}</p>
               )}
             </div>
             <div>
               <Label htmlFor="confirm">Potvrdi lozinku</Label>
               <Input id="confirm" type="password" {...form.register('confirm')} />
               {form.formState.errors.confirm && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.confirm.message}</p>
+                <p className="mt-1 text-xs text-danger">{form.formState.errors.confirm.message}</p>
               )}
             </div>
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Postavljanje…' : 'Postavi lozinku'}
             </Button>
             <div className="text-center text-sm">
-              <Link to="/login" className="text-blue-600 hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Nazad na prijavu
               </Link>
             </div>

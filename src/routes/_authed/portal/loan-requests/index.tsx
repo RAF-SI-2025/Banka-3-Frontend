@@ -228,7 +228,7 @@ function RequestDetailDialog({
     >
       <div className="space-y-5">
         <section>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Zahtev</h4>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Zahtev</h4>
           <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
             <Field label="Datum">{formatDate(request.createdAt)}</Field>
             <Field label="Status">
@@ -264,16 +264,16 @@ function RequestDetailDialog({
         </section>
 
         <section>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Klijent</h4>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Klijent</h4>
           {client.isLoading ? (
-            <p className="text-sm text-gray-500">Učitavanje…</p>
+            <p className="text-sm text-muted-foreground">Učitavanje…</p>
           ) : client.data ? (
             <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
               <Field label="Ime i prezime">
                 <Link
                   to="/portal/clients/$id"
                   params={{ id: client.data.id! }}
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline"
                   onClick={onClose}
                 >
                   {[client.data.firstName, client.data.lastName].filter(Boolean).join(' ').trim() || '—'}
@@ -287,21 +287,21 @@ function RequestDetailDialog({
               </Field>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">Klijent nije dostupan.</p>
+            <p className="text-sm text-muted-foreground">Klijent nije dostupan.</p>
           )}
         </section>
 
         <section>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Račun</h4>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Račun</h4>
           {account.isLoading ? (
-            <p className="text-sm text-gray-500">Učitavanje…</p>
+            <p className="text-sm text-muted-foreground">Učitavanje…</p>
           ) : account.data ? (
             <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
               <Field label="Broj">
                 <Link
                   to="/portal/accounts/$id"
                   params={{ id: account.data.id! }}
-                  className="font-mono text-xs text-blue-600 hover:underline"
+                  className="font-mono text-xs text-primary hover:underline"
                   onClick={onClose}
                 >
                   {formatAccountNumber(account.data.number)}
@@ -315,7 +315,7 @@ function RequestDetailDialog({
               </Field>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">Račun nije dostupan.</p>
+            <p className="text-sm text-muted-foreground">Račun nije dostupan.</p>
           )}
         </section>
       </div>
@@ -326,7 +326,7 @@ function RequestDetailDialog({
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className={wide ? 'col-span-2 md:col-span-3' : ''}>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

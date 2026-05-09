@@ -64,7 +64,7 @@ function PortalExchange() {
       <h1 className="text-2xl font-semibold">Kursna lista</h1>
 
       {canWrite && (
-        <form onSubmit={form.handleSubmit((v) => upsert.mutate(v))} className="grid grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-white p-6 md:grid-cols-5">
+        <form onSubmit={form.handleSubmit((v) => upsert.mutate(v))} className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-surface p-6 md:grid-cols-5">
           <div>
             <Label>Iz</Label>
             <Select {...form.register('from')}>

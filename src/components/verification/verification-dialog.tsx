@@ -98,9 +98,9 @@ export function VerificationDialog({
         </>
       }
     >
-      {description && <p className="mb-3 text-sm text-gray-700">{description}</p>}
+      {description && <p className="mb-3 text-sm text-foreground">{description}</p>}
 
-      {issue.isPending && <p className="text-sm text-gray-500">Generisanje koda…</p>}
+      {issue.isPending && <p className="text-sm text-muted-foreground">Generisanje koda…</p>}
       {issue.isError && (
         <ErrorBanner>
           {extractMsg(issue.error) ?? 'Greška prilikom generisanja koda.'}
@@ -110,7 +110,7 @@ export function VerificationDialog({
       {issue.data && (
         <>
           {issue.data.delivery === 'email' ? (
-            <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-900">
+            <div className="mb-4 rounded-md bg-primary-soft p-3 text-sm text-primary-soft-foreground">
               Verifikacioni kod je poslat na vašu email adresu. Proverite
               poštu i unesite šestocifreni kod ispod.
             </div>
@@ -118,7 +118,7 @@ export function VerificationDialog({
             <div className="mb-4 flex items-center gap-4">
               <FakeQR />
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Kod sa mobilne aplikacije
                 </p>
                 <p
@@ -127,7 +127,7 @@ export function VerificationDialog({
                 >
                   {issue.data.code}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Mobilna aplikacija stiže u celini 5; do tada kod prikazujemo ovde.
                 </p>
               </div>
@@ -153,7 +153,7 @@ export function VerificationDialog({
             }}
           />
           {submitError && <ErrorBanner className="mt-2">{submitError}</ErrorBanner>}
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             Kod važi 5 minuta. Posle 3 pogrešna pokušaja, zatražite novi kod.
           </p>
         </>
@@ -186,7 +186,7 @@ function FakeQR() {
       viewBox="0 0 8 8"
       role="img"
       aria-label="QR placeholder"
-      className="rounded border border-gray-200"
+      className="rounded border border-border"
     >
       <rect width="8" height="8" fill="#fff" />
       {Array.from({ length: 64 }).map((_, i) => {

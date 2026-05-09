@@ -49,7 +49,7 @@ function ClientLoans() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Aktivni krediti</h2>
-        {loans.isLoading && <p className="text-gray-500">Učitavanje…</p>}
+        {loans.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
         {loans.data && (
           <Table>
             <THead>
@@ -210,7 +210,7 @@ function LoanRequestDetailDialog({
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className={wide ? 'col-span-2 md:col-span-3' : ''}>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   )

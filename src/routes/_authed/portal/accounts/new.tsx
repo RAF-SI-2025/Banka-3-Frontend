@@ -151,7 +151,7 @@ function NewAccount() {
   return (
     <main className="container max-w-2xl space-y-4 py-8">
       <h1 className="text-2xl font-semibold">Otvaranje računa</h1>
-      <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+      <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="space-y-4 rounded-lg border border-border bg-surface p-6">
         <div>
           <Label>Vlasnik (klijent)</Label>
           <Input
@@ -160,9 +160,9 @@ function NewAccount() {
             placeholder="Pretraga po imenu ili email-u…"
             autoComplete="off"
           />
-          <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200">
+          <div className="mt-2 max-h-40 overflow-auto rounded-md border border-border">
             {filteredClients.length === 0 && (
-              <p className="px-3 py-2 text-xs text-gray-500">Nema rezultata.</p>
+              <p className="px-3 py-2 text-xs text-muted-foreground">Nema rezultata.</p>
             )}
             {filteredClients.map((c) => {
               const selected = c.id === ownerClientId
@@ -176,20 +176,20 @@ function NewAccount() {
                       shouldDirty: true,
                     })
                   }
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                    selected ? 'bg-blue-50' : ''
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-surface-muted ${
+                    selected ? 'bg-primary-soft' : ''
                   }`}
                 >
                   <span>
                     {c.firstName} {c.lastName}
                   </span>
-                  <span className="text-xs text-gray-600">{c.email}</span>
+                  <span className="text-xs text-muted-foreground">{c.email}</span>
                 </button>
               )
             })}
           </div>
           {form.formState.errors.ownerClientId && (
-            <p className="mt-1 text-xs text-red-600">{form.formState.errors.ownerClientId.message}</p>
+            <p className="mt-1 text-xs text-danger">{form.formState.errors.ownerClientId.message}</p>
           )}
         </div>
 
@@ -264,7 +264,7 @@ function NewAccount() {
           <Input {...form.register('name')} />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input type="checkbox" {...form.register('createCard')} />
           Kreiraj i karticu
         </label>

@@ -14,13 +14,13 @@ function RootLayout() {
   const ready = useBootstrapAuth()
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-500">
+      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
         Učitavanje…
       </div>
     )
   }
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       <Outlet />
     </div>
   )
