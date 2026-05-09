@@ -78,9 +78,6 @@ function resetBackend(opts: { c2?: boolean } | null): { ok: true } {
       ...process.env,
       PATH: augmentedPath,
       DATABASE_URL: `postgres://${PG_USER}:banka@localhost:5432/${PG_DB}?sslmode=disable`,
-      // Always seed the c2 fixture client too — idempotent; c1 specs
-      // ignore it. Saves us from a separate "seed c2" task.
-      SEED_CLIENT: 'true',
     },
   })
   return { ok: true }

@@ -17,7 +17,7 @@ declare global {
       resetBackend(opts?: { c2?: boolean }): Chainable<void>
       /** Programmatic login via /api/v1/auth/login; populates the auth store and returns the token. */
       loginAsAdmin(): Chainable<string> // resolves to admin email; navigates browser to /portal
-      /** Login as the seeded c2 test client (planted by `task seed SEED_CLIENT=true`). */
+      /** Login as the seeded c2 test client (planted by `task seed`). */
       loginAsClient(): Chainable<string>
       /** Reads the user service container's stdout, returns the most recent email body for `to` matching `marker`. */
       captureLink(to: string, marker: string): Chainable<string>
