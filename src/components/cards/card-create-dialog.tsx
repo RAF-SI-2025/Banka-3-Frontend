@@ -31,7 +31,10 @@ const schema = z.object({
   accountId: z.string().min(1, 'Izaberite račun'),
   brand: z.nativeEnum(v1CardBrand),
   name: z.string().optional(),
-  cardLimit: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Limit mora biti broj'),
+  cardLimit: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Limit mora biti broj')
+    .refine((v) => Number(v) > 0, 'Limit mora biti veći od 0'),
   authorizedPersonId: z.string().optional(),
 })
 
@@ -125,7 +128,7 @@ export function CardCreateDialog({
               setPending({
                 accountId: v.accountId,
                 brand: v.brand,
-                name: v.name,
+                name: v.name?.trim() ? v.name.trim() : undefined,
                 cardLimit: v.cardLimit,
                 authorizedPersonId: v.authorizedPersonId || undefined,
               }),

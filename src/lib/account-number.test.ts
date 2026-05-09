@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   validateAccountNumber,
   isValidAccountNumber,
+  normalizeAccountNumber,
   ACCOUNT_NUMBER_LENGTH,
 } from './account-number'
 
@@ -43,8 +44,16 @@ describe('validateAccountNumber', () => {
     const ok = withChecksum('33300010000000011')
     const withLetter = ok.slice(0, 5) + 'X' + ok.slice(6)
     expect(validateAccountNumber(withLetter)).toBe('non-digit')
-    // Also catches whitespace.
-    expect(validateAccountNumber(' '.repeat(18))).toBe('non-digit')
+    // Whitespace is stripped by normalize, so a string of 18 spaces is
+    // empty after normalization → wrong-length.
+    expect(validateAccountNumber(' '.repeat(18))).toBe('wrong-length')
+  })
+
+  it('accepts the formatted XXX-FFFF-NNNNNNNNN-TT layout', () => {
+    const ok = withChecksum('33300010000000011')
+    const formatted = `${ok.slice(0, 3)}-${ok.slice(3, 7)}-${ok.slice(7, 16)}-${ok.slice(16, 18)}`
+    expect(validateAccountNumber(formatted)).toBeNull()
+    expect(normalizeAccountNumber(formatted)).toBe(ok)
   })
 
   it('rejects a one-digit typo (checksum mismatch)', () => {

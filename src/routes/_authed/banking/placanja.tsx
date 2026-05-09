@@ -1,27 +1,32 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { listAccounts } from '@/lib/api/accounts'
 import { listRecipients } from '@/lib/api/recipients'
-import { createPayment } from '@/lib/api/payments'
+import { createPayment, listTransactions } from '@/lib/api/payments'
 import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
-import { formatMoney, formatAccountNumber, currencyLabel } from '@/lib/format'
+import { formatMoney, formatAccountNumber, currencyLabel, formatDateTime } from '@/lib/format'
+import { txStatusLabel } from '@/lib/labels'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
+import { Badge } from '@/components/ui/badge'
+import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { AccountLimitSummary } from '@/components/accounts/account-limit-summary'
 import { VerificationDialog } from '@/components/verification/verification-dialog'
-import { validateAccountNumber } from '@/lib/account-number'
+import { validateAccountNumber, normalizeAccountNumber } from '@/lib/account-number'
 import type { v1Account } from '@/lib/api/generated/models/v1Account'
 import type { v1CreatePaymentRequest } from '@/lib/api/generated/models/v1CreatePaymentRequest'
+import { v1TransactionStatus } from '@/lib/api/generated/models/v1TransactionStatus'
+import { v1TransactionKind } from '@/lib/api/generated/models/v1TransactionKind'
 
 export const Route = createFileRoute('/_authed/banking/placanja')({
   component: NewPayment,
@@ -101,7 +106,7 @@ function NewPayment() {
   const onSubmit = form.handleSubmit((values) => {
     const { recipientTemplateId, ...rest } = values
     void recipientTemplateId
-    setPending(rest)
+    setPending({ ...rest, toAccountNumber: normalizeAccountNumber(rest.toAccountNumber) })
   })
 
   function applyTemplate(id: string) {
@@ -116,8 +121,41 @@ function NewPayment() {
 
   const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju plaćanja.') : null
 
+  // Pull payment-kind history for every account the client owns and
+  // merge into one list, newest first. Per-account fetch is the only
+  // thing the API offers; the volume is fine — clients have a handful
+  // of accounts and pageSize caps each leg.
+  const accountIds = useMemo(
+    () => (accounts.data?.accounts ?? []).map((a) => a.id!).filter(Boolean),
+    [accounts.data],
+  )
+  const txQueries = useQueries({
+    queries: accountIds.map((accountId) => ({
+      queryKey: keys.transaction.list({ accountId, opKind: 'payment' as const, pageSize: 50 }),
+      queryFn: () => listTransactions({ accountId, opKind: 'payment' as const, pageSize: 50 }),
+    })),
+  })
+  // Merge legs from every account, dedup by id (the gateway returns one
+  // row per leg — for a payment, only one of those legs touches a
+  // user-owned account, so a single id is the canonical entry).
+  const history = useMemo(() => {
+    const seen = new Set<string>()
+    const out: NonNullable<(typeof txQueries)[number]['data']>['transactions'] = []
+    for (const q of txQueries) {
+      for (const t of q.data?.transactions ?? []) {
+        if (!t.id || seen.has(t.id)) continue
+        if (t.kind !== v1TransactionKind.TRANSACTION_KIND_PAYMENT) continue
+        seen.add(t.id)
+        out!.push(t)
+      }
+    }
+    out!.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+    return out!
+  }, [txQueries])
+  const ownAccountIds = useMemo(() => new Set(accountIds), [accountIds])
+
   return (
-    <main className="container max-w-2xl space-y-4 py-8">
+    <main className="container max-w-3xl space-y-6 py-8">
       <h1 className="text-2xl font-semibold">Novo plaćanje</h1>
       <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
         <div>
@@ -197,6 +235,60 @@ function NewPayment() {
           </Button>
         </div>
       </form>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Istorija plaćanja</h2>
+        {history.length === 0 ? (
+          <p className="text-sm text-gray-500">Nema plaćanja.</p>
+        ) : (
+          <Table>
+            <THead>
+              <TR>
+                <TH>Datum</TH>
+                <TH>Smer</TH>
+                <TH>Drugi račun</TH>
+                <TH>Primalac / svrha</TH>
+                <TH className="text-right">Iznos</TH>
+                <TH>Status</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {history.map((t) => {
+                const outflow = !!t.fromAccountId && ownAccountIds.has(t.fromAccountId)
+                const counterparty = outflow ? t.toAccountId : t.fromAccountId
+                const amount = outflow ? t.fromAmount : t.toAmount
+                return (
+                  <TR key={t.id}>
+                    <TD className="whitespace-nowrap text-xs text-gray-600">{formatDateTime(t.createdAt)}</TD>
+                    <TD>{outflow ? 'Odliv' : 'Priliv'}</TD>
+                    <TD className="font-mono text-xs">{counterparty || '—'}</TD>
+                    <TD className="text-xs text-gray-700">
+                      {[t.recipientName, t.purpose].filter(Boolean).join(' · ') || '—'}
+                    </TD>
+                    <TD className={`text-right ${outflow ? 'text-red-600' : 'text-green-700'}`}>
+                      {outflow ? '-' : '+'}
+                      {formatMoney(amount)}
+                    </TD>
+                    <TD>
+                      <Badge
+                        tone={
+                          t.status === v1TransactionStatus.TRANSACTION_STATUS_REALIZED
+                            ? 'green'
+                            : t.status === v1TransactionStatus.TRANSACTION_STATUS_REJECTED
+                              ? 'red'
+                              : 'yellow'
+                        }
+                      >
+                        {txStatusLabel[t.status!]}
+                      </Badge>
+                    </TD>
+                  </TR>
+                )
+              })}
+              {history.length === 0 && <EmptyRow colSpan={6}>Nema plaćanja.</EmptyRow>}
+            </TBody>
+          </Table>
+        )}
+      </section>
       <VerificationDialog
         open={!!pending}
         kind="payment"

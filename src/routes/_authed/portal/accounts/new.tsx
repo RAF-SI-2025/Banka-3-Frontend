@@ -112,7 +112,6 @@ function NewAccount() {
 
   const ownerClientId = form.watch('ownerClientId')
   const allClients = useMemo(() => clients.data?.clients ?? [], [clients.data])
-  const selectedClient = allClients.find((c) => c.id === ownerClientId)
   const filteredClients = useMemo(() => {
     const q = clientSearch.trim().toLowerCase()
     if (!q) return allClients
@@ -163,11 +162,6 @@ function NewAccount() {
             placeholder="Pretraga po imenu ili email-u…"
             autoComplete="off"
           />
-          {selectedClient && (
-            <p className="mt-1 text-xs text-gray-600">
-              Izabrano: {selectedClient.firstName} {selectedClient.lastName} · {selectedClient.email}
-            </p>
-          )}
           <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200">
             {filteredClients.length === 0 && (
               <p className="px-3 py-2 text-xs text-gray-500">Nema rezultata.</p>

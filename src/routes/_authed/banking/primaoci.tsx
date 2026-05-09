@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { listRecipients, createRecipient, deleteRecipient, updateRecipient } from '@/lib/api/recipients'
 import { keys } from '@/lib/query-keys'
 import { formatAccountNumber } from '@/lib/format'
-import { validateAccountNumber } from '@/lib/account-number'
+import { validateAccountNumber, normalizeAccountNumber } from '@/lib/account-number'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,8 +90,9 @@ function Recipients() {
   }
 
   function onSubmit(v: FormValues) {
-    if (editId) update.mutate({ id: editId, body: v })
-    else create.mutate(v)
+    const body = { ...v, accountNumber: normalizeAccountNumber(v.accountNumber) }
+    if (editId) update.mutate({ id: editId, body })
+    else create.mutate(body)
   }
 
   return (

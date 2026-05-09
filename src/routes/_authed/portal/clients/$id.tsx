@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
@@ -39,6 +39,7 @@ type FormValues = z.infer<typeof schema>
 
 function ClientDetail() {
   const { id } = Route.useParams()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const canWrite = has(perms, Permissions.ClientWrite)
@@ -181,7 +182,10 @@ function ClientDetail() {
             </THead>
             <TBody>
               {accounts.data.accounts?.map((a) => (
-                <TR key={a.id}>
+                <TR
+                  key={a.id}
+                  onClick={() => navigate({ to: '/portal/accounts/$id', params: { id: a.id! } })}
+                >
                   <TD className="font-mono text-xs">{formatAccountNumber(a.number)}</TD>
                   <TD>{accountKindLabel[a.kind!]}</TD>
                   <TD>{currencyLabel(a.currency!)}</TD>
@@ -217,7 +221,10 @@ function ClientDetail() {
             </THead>
             <TBody>
               {loans.data.loans?.map((l) => (
-                <TR key={l.id}>
+                <TR
+                  key={l.id}
+                  onClick={() => navigate({ to: '/portal/loans/$id', params: { id: l.id! } })}
+                >
                   <TD className="font-mono text-xs">{l.loanNumber}</TD>
                   <TD>{loanTypeLabel[l.loanType!]}</TD>
                   <TD className="text-right">{formatMoney(l.principal, currencyLabel(l.currency!))}</TD>

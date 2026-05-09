@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listAccounts } from '@/lib/api/accounts'
 import { useAuthStore } from '@/lib/auth/store'
@@ -13,6 +13,7 @@ export const Route = createFileRoute('/_authed/banking/racuni/')({
 })
 
 function AccountsList() {
+  const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -43,26 +44,23 @@ function AccountsList() {
               <TH>Valuta</TH>
               <TH className="text-right">Stanje</TH>
               <TH className="text-right">Raspoloživo</TH>
-              <TH></TH>
             </TR>
           </THead>
           <TBody>
             {visible.map((a) => (
-              <TR key={a.id}>
+              <TR
+                key={a.id}
+                onClick={() => navigate({ to: '/banking/racuni/$id', params: { id: a.id! } })}
+              >
                 <TD>{a.name || '—'}</TD>
                 <TD className="font-mono text-xs">{formatAccountNumber(a.number)}</TD>
                 <TD>{accountKindLabel[a.kind!]}</TD>
                 <TD>{currencyLabel(a.currency!)}</TD>
                 <TD className="text-right">{formatMoney(a.balance)}</TD>
                 <TD className="text-right">{formatMoney(a.availableBalance)}</TD>
-                <TD>
-                  <Link to="/banking/racuni/$id" params={{ id: a.id! }} className="text-blue-600 hover:underline">
-                    Detalji
-                  </Link>
-                </TD>
               </TR>
             ))}
-            {visible.length === 0 && <EmptyRow colSpan={7}>Nemate aktivnih računa.</EmptyRow>}
+            {visible.length === 0 && <EmptyRow colSpan={6}>Nemate aktivnih računa.</EmptyRow>}
           </TBody>
         </Table>
       )}
