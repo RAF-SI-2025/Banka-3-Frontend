@@ -276,9 +276,9 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
               const id = sec.id!
               const goDetail = () => {
                 if (basePath === '/portal/trgovina') {
-                  navigate({ to: '/portal/trgovina/$listingId', params: { listingId: id } })
+                  navigate({ to: '/portal/trgovina/$securityId', params: { securityId: id } })
                 } else {
-                  navigate({ to: '/banking/trgovina/$listingId', params: { listingId: id } })
+                  navigate({ to: '/banking/trgovina/$securityId', params: { securityId: id } })
                 }
               }
               return (

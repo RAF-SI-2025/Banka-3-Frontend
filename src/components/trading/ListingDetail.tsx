@@ -137,6 +137,7 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
           contractSize={Number.isFinite(contractSize) && contractSize > 0 ? contractSize : 1}
           currency={sec!.currency as bankaBankV1Currency | undefined}
           listing={lst}
+          settlementDate={sec!.settlementDate}
           initialDirection={initialDirection}
           initialQuantity={initialQuantity}
         />
@@ -456,7 +457,7 @@ function OptionLink({ basePath, sec }: { basePath: ListingDetailProps['basePath'
   const id = sec.id ?? ''
   const text = formatMoney(sec.premium)
   if (basePath === '/portal/trgovina') {
-    return <Link to="/portal/trgovina/$listingId" params={{ listingId: id }} className="text-primary hover:underline">{text}</Link>
+    return <Link to="/portal/trgovina/$securityId" params={{ securityId: id }} className="text-primary hover:underline">{text}</Link>
   }
-  return <Link to="/banking/trgovina/$listingId" params={{ listingId: id }} className="text-primary hover:underline">{text}</Link>
+  return <Link to="/banking/trgovina/$securityId" params={{ securityId: id }} className="text-primary hover:underline">{text}</Link>
 }

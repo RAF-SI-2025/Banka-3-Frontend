@@ -51,15 +51,19 @@ describe('pricePerUnitForType', () => {
 
   it('limit + stop-limit use limitPrice', () => {
     expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_LIMIT, 'buy', lst, '105')).toBe(105)
-    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP_LIMIT, 'buy', lst, '105', '95')).toBe(105)
+    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP_LIMIT, 'buy', lst, '105')).toBe(105)
   })
 
-  it('stop uses stopPrice', () => {
-    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP, 'buy', lst, undefined, '95')).toBe(95)
+  it('stop uses market ask/bid (spec p.52: STOP→MARKET on trigger)', () => {
+    // BUY converts to MARKET → ask
+    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP, 'buy', lst)).toBe(101)
+    // SELL converts to MARKET → bid
+    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP, 'sell', lst)).toBe(99)
   })
 
   it('returns null when required price is missing', () => {
     expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_LIMIT, 'buy', lst)).toBeNull()
-    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP, 'buy', lst)).toBeNull()
+    // STOP needs ask/bid/price on the listing.
+    expect(pricePerUnitForType(v1OrderType.ORDER_TYPE_STOP, 'buy', {})).toBeNull()
   })
 })

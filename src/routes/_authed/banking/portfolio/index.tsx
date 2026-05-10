@@ -7,7 +7,7 @@ import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { v1SecurityType } from '@/lib/api/generated/models/v1SecurityType'
 import { securityTypeLabel } from '@/lib/labels'
-import { formatMoney } from '@/lib/format'
+import { formatDate, formatMoney } from '@/lib/format'
 import { unrealizedPnL } from '@/lib/trading/pnl'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -67,12 +67,13 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
               <TH className="text-right">Trenutna cena</TH>
               <TH className="text-right">Tržišna vrednost</TH>
               <TH className="text-right">Nerealizovan P&L</TH>
+              <TH>Poslednja izmena</TH>
               <TH>{/* arrow */}</TH>
             </TR>
           </THead>
           <TBody>
             {rows.length === 0 ? (
-              <EmptyRow colSpan={7}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
+              <EmptyRow colSpan={8}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
             ) : (
               rows.map((h) => {
                 const pnl = unrealizedPnL({
@@ -94,6 +95,7 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
                       {sign}{pnl.abs.toFixed(2)}
                       {pnl.pct !== null && <span className="text-xs"> ({sign}{pnl.pct.toFixed(2)}%)</span>}
                     </TD>
+                    <TD className="text-muted-foreground">{formatDate(h.updatedAt)}</TD>
                     <TD>
                       {h.security?.id && (
                         <Link

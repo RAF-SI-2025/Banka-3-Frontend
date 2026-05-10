@@ -2,6 +2,7 @@ import { api } from './client'
 import type { v1Order } from './generated/models/v1Order'
 import type { v1ListOrdersResponse } from './generated/models/v1ListOrdersResponse'
 import type { v1CreateOrderRequest } from './generated/models/v1CreateOrderRequest'
+import type { v1CreateOrderResponse } from './generated/models/v1CreateOrderResponse'
 import type { bankaTradingV1UserKind } from './generated/models/bankaTradingV1UserKind'
 
 export type Order = v1Order
@@ -33,9 +34,10 @@ export async function getOrder(id: string): Promise<v1Order> {
 // stop+limit ⇒ market, only limit ⇒ limit, only stop ⇒ stop, both
 // ⇒ stop_limit. The form upstream is responsible for the derivation;
 // the server validates that limit_price/stop_price are present per
-// the chosen type.
-export async function placeOrder(input: v1CreateOrderRequest): Promise<v1Order> {
-  const { data } = await api.post<v1Order>('/v1/orders', input)
+// the chosen type. The response wraps the order plus the spec p.57
+// `exchange_closed` advisory flag the form surfaces as a notice.
+export async function placeOrder(input: v1CreateOrderRequest): Promise<v1CreateOrderResponse> {
+  const { data } = await api.post<v1CreateOrderResponse>('/v1/orders', input)
   return data
 }
 

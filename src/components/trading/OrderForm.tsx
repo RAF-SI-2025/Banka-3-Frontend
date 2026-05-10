@@ -38,6 +38,10 @@ interface OrderFormProps {
   contractSize: number
   currency: bankaBankV1Currency | string | undefined
   listing: { price?: string; ask?: string; bid?: string } | undefined
+  // Spec p.50: futures/options past their settlement date are
+  // server-rejected at create *and* approve. Surfacing locally so the
+  // submit button disables before the round-trip.
+  settlementDate?: string
   // Used when navigating from portfolio sell deep-link.
   initialDirection?: Side
   initialQuantity?: number
@@ -48,6 +52,7 @@ export function OrderForm({
   contractSize,
   currency,
   listing,
+  settlementDate,
   initialDirection,
   initialQuantity,
 }: OrderFormProps) {
@@ -72,6 +77,9 @@ export function OrderForm({
   })
 
   // For commission-cap conversion ($7/$12-eq → listing currency).
+  // Skip the round-trip when the listing already trades in USD; the
+  // server returns a tautological 1.0 either way.
+  const isUsd = currency === bankaBankV1Currency.CURRENCY_USD
   const usdToCcy = useQuery({
     queryKey: ['trading-quote-usd', currency ?? ''],
     queryFn: () =>
@@ -81,7 +89,7 @@ export function OrderForm({
         amount: '1',
         includeCommission: false,
       }),
-    enabled: Boolean(currency),
+    enabled: Boolean(currency) && !isUsd,
   })
 
   // For agent limit panel: convert listing-ccy → RSD per spec p.38
@@ -124,10 +132,10 @@ export function OrderForm({
   const side: 'buy' | 'sell' = direction === v1Direction.DIRECTION_SELL ? 'sell' : 'buy'
   const orderType = deriveOrderType(watched.limitPrice, watched.stopPrice)
   const qty = Number(watched.quantity || 0)
-  const ppu = pricePerUnitForType(orderType, side, listing ?? {}, watched.limitPrice, watched.stopPrice)
+  const ppu = pricePerUnitForType(orderType, side, listing ?? {}, watched.limitPrice)
   const approx = ppu !== null && qty > 0 ? ppu * contractSize * qty : null
 
-  const usdInCcy = usdToCcy.data ? Number(usdToCcy.data.toAmount ?? '0') : 0
+  const usdInCcy = isUsd ? 1 : usdToCcy.data ? Number(usdToCcy.data.toAmount ?? '0') : 0
   const commission = approx !== null && usdInCcy > 0 ? computeCommission(orderType, approx, usdInCcy) : null
   const totalDue = approx !== null && commission !== null ? approx + commission : null
 
@@ -165,10 +173,29 @@ export function OrderForm({
     }
   }, [eligibleAccounts, form])
 
+  // Spec p.50: futures/options past their settlement date are
+  // server-rejected. Snap to a date-only comparison so a security
+  // settling later today still passes — the backend uses the same
+  // "on/before today" semantics.
+  const settlementPast = useMemo(() => {
+    if (!settlementDate) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const sd = new Date(settlementDate)
+    if (Number.isNaN(sd.getTime())) return false
+    sd.setHours(0, 0, 0, 0)
+    return sd.getTime() <= today.getTime()
+  }, [settlementDate])
+
   // Spec p.56 "Uvek tražiti još jednu konfirmaciju od korisnika":
   // submit opens a Pregled kupovine modal; the mutation only fires
   // after the user clicks Potvrdi inside the dialog.
   const [pending, setPending] = useState<OrderFormValues | null>(null)
+  // Spec p.57 "Obavestiti korisnika ako je berza zatvorena": the
+  // server still places the order but flags exchange_closed. We hold
+  // it here so the dialog can show one notice across the success
+  // moment and the next render.
+  const [exchangeClosedNotice, setExchangeClosedNotice] = useState(false)
 
   const place = useMutation({
     mutationFn: (v: OrderFormValues) =>
@@ -183,12 +210,13 @@ export function OrderForm({
         margin: v.margin,
         accountId: v.accountId,
       }),
-    onSuccess: () => {
+    onSuccess: (resp) => {
       qc.invalidateQueries({ queryKey: keys.order.all })
       qc.invalidateQueries({ queryKey: keys.portfolio.all })
       qc.invalidateQueries({ queryKey: keys.actuary.detail(userId ?? '') })
       form.reset({ ...form.getValues(), quantity: '', limitPrice: '', stopPrice: '' })
       setPending(null)
+      setExchangeClosedNotice(Boolean(resp.exchangeClosed))
     },
   })
 
@@ -211,7 +239,18 @@ export function OrderForm({
             id="order-form"
             className="space-y-3"
             onSubmit={form.handleSubmit((v) => {
+              // Belt-and-braces: re-validate against the eligible
+              // accounts set at submit time. The select clears stale
+              // ids on render, but a paste / programmatic value or a
+              // race between BUY↔SELL flip and submit could otherwise
+              // sneak past.
+              if (!eligibleAccounts.find((a) => a.id === v.accountId)) {
+                form.setError('accountId', { message: 'Račun nije među dozvoljenim za ovaj nalog.' })
+                return
+              }
+              if (settlementPast) return
               place.reset()
+              setExchangeClosedNotice(false)
               setPending(v)
             })}
           >
@@ -319,9 +358,28 @@ export function OrderForm({
               </div>
             )}
 
+            {settlementPast && (
+              <div
+                className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+                data-cy="settlement-past"
+              >
+                Datum izvršenja hartije je prošao — nalog se ne može plasirati.
+              </div>
+            )}
+
+            {exchangeClosedNotice && (
+              <div
+                className="rounded-md border border-warning/40 bg-warning-soft p-2 text-xs"
+                data-cy="exchange-closed-notice"
+              >
+                Berza je trenutno zatvorena. Nalog je primljen i biće izvršen kada se trgovina nastavi.
+              </div>
+            )}
+
             <Button
               type="submit"
               data-cy="order-submit"
+              disabled={settlementPast}
             >
               Pošalji nalog
             </Button>

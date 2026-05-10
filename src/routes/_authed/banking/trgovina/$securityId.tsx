@@ -10,18 +10,18 @@ const searchSchema = z.object({
   qty: z.coerce.number().int().positive().optional(),
 })
 
-export const Route = createFileRoute('/_authed/banking/trgovina/$listingId')({
+export const Route = createFileRoute('/_authed/banking/trgovina/$securityId')({
   validateSearch: (s) => searchSchema.parse(s),
   component: BankingListingDetail,
 })
 
 function BankingListingDetail() {
-  const { listingId } = Route.useParams()
+  const { securityId } = Route.useParams()
   const search = Route.useSearch()
   const initialDirection = search.direction === 'sell' ? v1Direction.DIRECTION_SELL : search.direction === 'buy' ? v1Direction.DIRECTION_BUY : undefined
   return (
     <ListingDetail
-      listingId={listingId}
+      listingId={securityId}
       basePath="/banking/trgovina"
       initialDirection={initialDirection}
       initialQuantity={search.qty}

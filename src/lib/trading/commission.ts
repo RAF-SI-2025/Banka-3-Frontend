@@ -40,25 +40,27 @@ export function computeCommission(
   return Math.min(pctFee, capInListingCcy)
 }
 
-// pricePerUnitForType implements spec p.56: market uses ask (buy) /
-// bid (sell), limit uses limit price, stop uses stop price, stop-limit
-// uses limit price. Returns null when required fields are missing.
+// pricePerUnitForType powers the order-form approx-cost preview. Spec
+// p.52: STOP converts to MARKET on trigger, so the *expected* fill
+// price is the market price (ask for buy, bid for sell) — the stop is
+// only the trigger threshold and using it would mislead users when ask
+// diverges from stop. STOP_LIMIT keeps the limit price since it
+// converts to LIMIT on trigger.
 export function pricePerUnitForType(
   type: v1OrderType,
   side: 'buy' | 'sell',
   listing: { price?: string; ask?: string; bid?: string },
   limitPrice?: string,
-  stopPrice?: string,
 ): number | null {
   const num = (s?: string) => (s && s.trim() !== '' ? Number(s) : null)
+  const marketPpu = side === 'buy' ? num(listing.ask) ?? num(listing.price) : num(listing.bid) ?? num(listing.price)
   switch (type) {
     case v1OrderType.ORDER_TYPE_MARKET:
-      return side === 'buy' ? num(listing.ask) ?? num(listing.price) : num(listing.bid) ?? num(listing.price)
+    case v1OrderType.ORDER_TYPE_STOP:
+      return marketPpu
     case v1OrderType.ORDER_TYPE_LIMIT:
     case v1OrderType.ORDER_TYPE_STOP_LIMIT:
       return num(limitPrice)
-    case v1OrderType.ORDER_TYPE_STOP:
-      return num(stopPrice)
     default:
       return null
   }

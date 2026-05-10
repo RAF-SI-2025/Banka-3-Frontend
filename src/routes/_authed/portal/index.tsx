@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
-import { Permissions, has, type Permission } from '@/lib/permissions'
+import { Permissions, hasAny, type Permission } from '@/lib/permissions'
 
 // /portal lands on a small dashboard. We deliberately don't auto-redirect
 // to /portal/employees: a non-admin employee (e.g. RoleEmployeeAgent has
@@ -14,24 +14,41 @@ interface Tile {
   to: string
   label: string
   description: string
-  perm: Permission
+  // A tile is shown when the principal carries any of these
+  // permissions. Trading tiles are accessible to the role bundle
+  // (Actuary / ActuarySupervisor / ActuaryAgent / Admin); single-perm
+  // tiles list one entry.
+  perms: readonly Permission[]
 }
 
+const TRADING_PERMS = [
+  Permissions.Actuary,
+  Permissions.ActuarySupervisor,
+  Permissions.ActuaryAgent,
+  Permissions.Admin,
+] as const
+
 const tiles: Tile[] = [
-  { to: '/portal/employees', label: 'Zaposleni', description: 'Lista zaposlenih i upravljanje nalozima.', perm: Permissions.EmployeeRead },
-  { to: '/portal/clients', label: 'Klijenti', description: 'Pretraga klijenata i izmena podataka.', perm: Permissions.ClientRead },
-  { to: '/portal/companies', label: 'Firme', description: 'Pravna lica i ovlašćena lica.', perm: Permissions.CompanyRead },
-  { to: '/portal/accounts', label: 'Računi', description: 'Otvaranje i pregled računa klijenata.', perm: Permissions.AccountRead },
-  { to: '/portal/cards', label: 'Kartice', description: 'Pregled i upravljanje karticama.', perm: Permissions.CardRead },
-  { to: '/portal/loan-requests', label: 'Zahtevi za kredit', description: 'Odobravanje ili odbijanje zahteva.', perm: Permissions.LoanWrite },
-  { to: '/portal/loans', label: 'Krediti', description: 'Pregled odobrenih kredita.', perm: Permissions.LoanRead },
-  { to: '/portal/exchange', label: 'Kursna lista', description: 'Uređivanje kursne liste banke.', perm: Permissions.ExchangeWrite },
+  { to: '/portal/employees', label: 'Zaposleni', description: 'Lista zaposlenih i upravljanje nalozima.', perms: [Permissions.EmployeeRead] },
+  { to: '/portal/clients', label: 'Klijenti', description: 'Pretraga klijenata i izmena podataka.', perms: [Permissions.ClientRead] },
+  { to: '/portal/companies', label: 'Firme', description: 'Pravna lica i ovlašćena lica.', perms: [Permissions.CompanyRead] },
+  { to: '/portal/accounts', label: 'Računi', description: 'Otvaranje i pregled računa klijenata.', perms: [Permissions.AccountRead] },
+  { to: '/portal/cards', label: 'Kartice', description: 'Pregled i upravljanje karticama.', perms: [Permissions.CardRead] },
+  { to: '/portal/loan-requests', label: 'Zahtevi za kredit', description: 'Odobravanje ili odbijanje zahteva.', perms: [Permissions.LoanWrite] },
+  { to: '/portal/loans', label: 'Krediti', description: 'Pregled odobrenih kredita.', perms: [Permissions.LoanRead] },
+  { to: '/portal/exchange', label: 'Kursna lista', description: 'Uređivanje kursne liste banke.', perms: [Permissions.ExchangeWrite] },
+  { to: '/portal/trgovina', label: 'Trgovina', description: 'Katalog hartija i plasiranje naloga.', perms: TRADING_PERMS },
+  { to: '/portal/trgovina/nalozi', label: 'Pregled naloga', description: 'Lista naloga i status izvršenja.', perms: TRADING_PERMS },
+  { to: '/portal/portfolio', label: 'Portfolio', description: 'Pozicije, P&L i izvršavanje opcija.', perms: TRADING_PERMS },
+  { to: '/portal/aktuari', label: 'Aktuari', description: 'Upravljanje aktuarima i dnevnim limitima.', perms: [Permissions.Admin, Permissions.ActuarySupervisor] },
+  { to: '/portal/porez', label: 'Porez', description: 'Kapitalni dobici i pokretanje obračuna poreza.', perms: [Permissions.Admin, Permissions.ActuarySupervisor] },
+  { to: '/portal/berze', label: 'Berze', description: 'Katalog berzi i radno vreme.', perms: [Permissions.Admin] },
 ]
 
 function PortalLanding() {
   const perms = useAuthStore((s) => s.permissions)
   const firstName = useAuthStore((s) => s.firstName)
-  const visible = tiles.filter((t) => has(perms, t.perm))
+  const visible = tiles.filter((t) => hasAny(perms, [...t.perms]))
 
   return (
     <main className="container space-y-8 py-10">

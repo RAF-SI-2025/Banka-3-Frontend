@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 // Portfolio page + position detail. Sell deep-link from position
-// detail → /banking/trgovina/$listingId?direction=sell&qty=N which
+// detail → /banking/trgovina/$securityId?direction=sell&qty=N which
 // pre-fills the OrderForm (covered separately by order-place.cy.ts).
 
 const PERMS = ['client.read', 'account.read', 'trading.client']

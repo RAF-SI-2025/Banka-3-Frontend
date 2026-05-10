@@ -75,8 +75,8 @@ function PositionDetail() {
             </div>
             {tradable && sellTargetId && holding.quantity && holding.quantity > 0 && (
               <Link
-                to="/banking/trgovina/$listingId"
-                params={{ listingId: sellTargetId }}
+                to="/banking/trgovina/$securityId"
+                params={{ securityId: sellTargetId }}
                 search={{ direction: 'sell', qty: holding.quantity }}
                 data-cy="sell-deeplink"
                 className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-soft hover:bg-primary/90"
