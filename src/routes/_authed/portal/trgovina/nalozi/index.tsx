@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { listOrders, approveOrder, declineOrder, cancelOrder } from '@/lib/api/orders'
 import { apiError } from '@/lib/api/error'
 import { useSecurityTickers } from '@/lib/trading/useSecurityTickers'
+import { useUserDisplayNames } from '@/lib/trading/useUserDisplayNames'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, hasAny } from '@/lib/permissions'
@@ -76,6 +77,18 @@ function PortalNaloziList() {
     return o.direction === direction
   })
   const tickers = useSecurityTickers(items.map((o) => o.securityId))
+  // Spec p.57 column "agent" needs the trader's display name. Lookup
+  // requires employee.read / client.read so it's gated on canSeeAll —
+  // the agent / client side of the UI never sees this screen anyway
+  // (FE-11 narrows the route guard to supervisor + admin separately).
+  const names = useUserDisplayNames(
+    items
+      .filter((o): o is typeof o & { userId: string; userKind: bankaTradingV1UserKind } =>
+        Boolean(o.userId) && o.userKind !== undefined && o.userKind !== bankaTradingV1UserKind.USER_KIND_UNSPECIFIED,
+      )
+      .map((o) => ({ userId: o.userId, kind: o.userKind })),
+    canSeeAll,
+  )
 
   return (
     <main className="container space-y-6 py-8">
@@ -143,11 +156,13 @@ function PortalNaloziList() {
         <THead>
           <TR>
             <TH>Kreirano</TH>
-            <TH>Hartija</TH>
-            <TH>Aktor</TH>
-            <TH>Smer</TH>
+            <TH>Agent</TH>
             <TH>Tip</TH>
+            <TH>Hartija</TH>
             <TH className="text-right">Količina</TH>
+            <TH className="text-right">Veličina ugovora</TH>
+            <TH className="text-right">Cena/jed.</TH>
+            <TH>Smer</TH>
             <TH className="text-right">Preostalo</TH>
             <TH>Status</TH>
             <TH>{/* actions */}</TH>
@@ -155,13 +170,14 @@ function PortalNaloziList() {
         </THead>
         <TBody>
           {items.length === 0 ? (
-            <EmptyRow colSpan={9}>{orders.isFetching ? 'Učitavanje…' : 'Nema naloga'}</EmptyRow>
+            <EmptyRow colSpan={11}>{orders.isFetching ? 'Učitavanje…' : 'Nema naloga'}</EmptyRow>
           ) : (
             items.map((o) => (
               <RowActions
                 key={o.id}
                 order={o}
                 ticker={tickers.get(o.securityId)}
+                agentName={names.get(o.userId)}
                 canActOnOthers={canSeeAll}
               />
             ))
@@ -175,17 +191,22 @@ function PortalNaloziList() {
 function RowActions({
   order,
   ticker,
+  agentName,
   canActOnOthers,
 }: {
   ticker: string | null
+  agentName: string | null
   order: {
     id?: string
     securityId?: string
+    userId?: string
     userKind?: bankaTradingV1UserKind
     direction?: v1Direction
     orderType?: import('@/lib/api/generated/models/v1OrderType').v1OrderType
     quantity?: number
     remainingQuantity?: number
+    contractSize?: string
+    pricePerUnit?: string
     status?: v1OrderStatus
     isDone?: boolean
     cancelled?: boolean
@@ -224,11 +245,15 @@ function RowActions({
     <>
       <TR>
         <TD>{formatDateTime(order.createdAt)}</TD>
-        <TD className="font-mono" data-cy="order-row-ticker">{ticker ?? '…'}</TD>
-        <TD>{actorLabel(order.userKind)}</TD>
-        <TD>{order.direction ? directionLabel[order.direction] : '—'}</TD>
+        <TD data-cy="order-row-agent">
+          {agentName ?? actorLabel(order.userKind)}
+        </TD>
         <TD>{order.orderType ? orderTypeLabel[order.orderType] : '—'}</TD>
+        <TD className="font-mono" data-cy="order-row-ticker">{ticker ?? '…'}</TD>
         <TD className="text-right">{order.quantity ?? '—'}</TD>
+        <TD className="text-right" data-cy="order-row-contract-size">{order.contractSize ?? '—'}</TD>
+        <TD className="text-right" data-cy="order-row-ppu">{order.pricePerUnit ?? '—'}</TD>
+        <TD>{order.direction ? directionLabel[order.direction] : '—'}</TD>
         <TD className="text-right">{order.remainingQuantity ?? order.quantity ?? '—'}</TD>
         <TD><StatusBadge order={order} /></TD>
         <TD className="space-x-2 whitespace-nowrap">
@@ -279,7 +304,7 @@ function RowActions({
       </TR>
       {errMsg && (
         <TR>
-          <TD colSpan={9}><ErrorBanner>{errMsg}</ErrorBanner></TD>
+          <TD colSpan={11}><ErrorBanner>{errMsg}</ErrorBanner></TD>
         </TR>
       )}
     </>
