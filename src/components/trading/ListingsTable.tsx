@@ -304,13 +304,13 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
 function columnsForKind(k: v1SecurityType): string[] {
   switch (k) {
     case v1SecurityType.SECURITY_TYPE_STOCK:
-      return ['Ticker', 'Naziv', 'Cena', 'Volumen', 'Tržišna kap.', 'Maint. margin']
+      return ['Ticker', 'Naziv', 'Cena', 'Volumen', 'Tržišna kap.', 'Margina održavanja']
     case v1SecurityType.SECURITY_TYPE_FUTURE:
       return ['Ticker', 'Naziv', 'Cena', 'Volumen', 'Veličina ugovora', 'Datum izvršenja']
     case v1SecurityType.SECURITY_TYPE_FOREX:
       return ['Par', 'Cena', 'Ask', 'Bid', 'Likvidnost']
     case v1SecurityType.SECURITY_TYPE_OPTION:
-      return ['Ticker', 'Tip', 'Strike', 'Premium', 'IV', 'Datum izvršenja']
+      return ['Ticker', 'Tip', 'Strike', 'Premija', 'IV', 'Datum izvršenja']
     default:
       return ['—']
   }

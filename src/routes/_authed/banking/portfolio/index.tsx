@@ -24,10 +24,14 @@ export const Route = createFileRoute('/_authed/banking/portfolio/')({
 
 function PortfolioPage() {
   const userId = useAuthStore((s) => s.userId) ?? ''
+  // Fills land async via the trading worker — without a poll the page
+  // would render the pre-fill snapshot and silently rot.
   const holdings = useQuery({
     queryKey: keys.portfolio.list(userId),
     queryFn: () => listHoldings(),
     enabled: Boolean(userId),
+    refetchInterval: 5_000,
+    staleTime: 0,
   })
 
   const items = holdings.data?.holdings ?? []

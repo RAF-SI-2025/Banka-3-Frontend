@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useSearch } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -70,6 +70,8 @@ function PortalNaloziList() {
   const orders = useQuery({
     queryKey: keys.order.list({ ...args, direction }),
     queryFn: () => listOrders(args),
+    refetchInterval: 5_000,
+    staleTime: 0,
   })
 
   const items = (orders.data?.orders ?? []).filter((o) => {
@@ -211,6 +213,7 @@ function RowActions({
   canActOnOthers: boolean
 }) {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const id = order.id ?? ''
 
   const approve = useMutation({
@@ -239,7 +242,7 @@ function RowActions({
 
   return (
     <>
-      <TR>
+      <TR onClick={id ? () => navigate({ to: '/portal/trgovina/nalozi/$orderId', params: { orderId: id } }) : undefined}>
         <TD>{formatDateTime(order.createdAt)}</TD>
         <TD data-cy="order-row-agent">
           {agentName ?? actorLabel(order.userKind)}
@@ -253,13 +256,6 @@ function RowActions({
         <TD className="text-right">{order.remainingQuantity ?? order.quantity ?? '—'}</TD>
         <TD><StatusBadge order={order} /></TD>
         <TD className="space-x-2 whitespace-nowrap">
-          <Link
-            to="/portal/trgovina/nalozi/$orderId"
-            params={{ orderId: id }}
-            className="text-primary hover:underline"
-          >
-            Detalji
-          </Link>
           {canActOnOthers && isPending && (
             <>
               <Button

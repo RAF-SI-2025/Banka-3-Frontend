@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listOrders } from '@/lib/api/orders'
@@ -26,6 +26,7 @@ export const Route = createFileRoute('/_authed/banking/trgovina/nalozi/')({
 })
 
 function NaloziList() {
+  const navigate = useNavigate()
   const [status, setStatus] = useState<string>('')
   const [direction, setDirection] = useState<string>('')
 
@@ -35,6 +36,8 @@ function NaloziList() {
   const orders = useQuery({
     queryKey: keys.order.mine({ status, direction }),
     queryFn: () => listOrders(status ? { status } : {}),
+    refetchInterval: 5_000,
+    staleTime: 0,
   })
 
   const items = (orders.data?.orders ?? []).filter((o) => {
@@ -86,15 +89,17 @@ function NaloziList() {
             <TH className="text-right">Količina</TH>
             <TH className="text-right">Preostalo</TH>
             <TH>Status</TH>
-            <TH>{/* arrow */}</TH>
           </TR>
         </THead>
         <TBody>
           {items.length === 0 ? (
-            <EmptyRow colSpan={8}>{orders.isFetching ? 'Učitavanje…' : 'Nemate naloga'}</EmptyRow>
+            <EmptyRow colSpan={7}>{orders.isFetching ? 'Učitavanje…' : 'Nemate naloga'}</EmptyRow>
           ) : (
             items.map((o) => (
-              <TR key={o.id}>
+              <TR
+                key={o.id}
+                onClick={o.id ? () => navigate({ to: '/banking/trgovina/nalozi/$orderId', params: { orderId: o.id! } }) : undefined}
+              >
                 <TD>{formatDateTime(o.createdAt)}</TD>
                 <TD className="font-mono" data-cy="order-row-ticker">
                   {tickers.get(o.securityId) ?? '…'}
@@ -104,15 +109,6 @@ function NaloziList() {
                 <TD className="text-right">{o.quantity ?? '—'}</TD>
                 <TD className="text-right">{o.remainingQuantity ?? o.quantity ?? '—'}</TD>
                 <TD><StatusBadge order={o} /></TD>
-                <TD>
-                  <Link
-                    to="/banking/trgovina/nalozi/$orderId"
-                    params={{ orderId: o.id! }}
-                    className="text-primary hover:underline"
-                  >
-                    Detalji →
-                  </Link>
-                </TD>
               </TR>
             ))
           )}

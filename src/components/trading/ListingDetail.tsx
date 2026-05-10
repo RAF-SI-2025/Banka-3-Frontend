@@ -202,14 +202,14 @@ function InstrumentCard({
         <Row label="Ask">{formatMoney(listing?.ask, ccy)}</Row>
         <Row label="Bid">{formatMoney(listing?.bid, ccy)}</Row>
         <Row label="Volumen">{listing?.volume ?? '—'}</Row>
-        <Row label="Maintenance margin">{formatMoney(maintenanceMargin, ccy)}</Row>
-        <Row label="Initial margin cost">{formatMoney(initialMarginCost, ccy)}</Row>
+        <Row label="Margina održavanja">{formatMoney(maintenanceMargin, ccy)}</Row>
+        <Row label="Početna marža">{formatMoney(initialMarginCost, ccy)}</Row>
 
         {security.type === v1SecurityType.SECURITY_TYPE_STOCK && (
           <>
             <Row label="Tržišna kapitalizacija">{formatMoney(security.marketCap, ccy)}</Row>
             <Row label="Broj akcija">{security.outstandingShares ?? '—'}</Row>
-            <Row label="Dividend yield">{security.dividendYield ?? '—'}</Row>
+            <Row label="Dividendni prinos">{security.dividendYield ?? '—'}</Row>
           </>
         )}
         {security.type === v1SecurityType.SECURITY_TYPE_FUTURE && (
@@ -231,9 +231,9 @@ function InstrumentCard({
               {security.optionType ? optionTypeLabel[security.optionType] : '—'}
             </Row>
             <Row label="Strike">{formatMoney(security.strikePrice, ccy)}</Row>
-            <Row label="Premium">{formatMoney(security.premium, ccy)}</Row>
-            <Row label="Implied volatility">{security.impliedVolatility ?? '—'}</Row>
-            <Row label="Open interest">{security.openInterest ?? '—'}</Row>
+            <Row label="Premija">{formatMoney(security.premium, ccy)}</Row>
+            <Row label="Implicitna volatilnost">{security.impliedVolatility ?? '—'}</Row>
+            <Row label="Otvoreni interes">{security.openInterest ?? '—'}</Row>
             <Row label="Datum izvršenja">{formatDate(security.settlementDate)}</Row>
             {security.underlyingSecurityId && (
               <Row label="Bazna hartija">

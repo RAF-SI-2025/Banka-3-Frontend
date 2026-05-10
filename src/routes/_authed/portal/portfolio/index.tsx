@@ -35,10 +35,15 @@ export const Route = createFileRoute('/_authed/portal/portfolio/')({
 function PortalPortfolioPage() {
   const userId = useAuthStore((s) => s.userId) ?? ''
   // Server forces own-portfolio for non-supervisor callers anyway.
+  // Fills land async via the trading worker — without a poll the page
+  // would render the pre-fill snapshot and silently rot. 5s strikes a
+  // balance with the worker's per-second cadence on liquid listings.
   const holdings = useQuery({
     queryKey: keys.portfolio.list(userId),
     queryFn: () => listHoldings(),
     enabled: Boolean(userId),
+    refetchInterval: 5_000,
+    staleTime: 0,
   })
 
   const items = holdings.data?.holdings ?? []
