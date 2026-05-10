@@ -87,9 +87,9 @@ describe('Celina 3 — listing detail', () => {
             settlementDate: '2026-09-19',
             sharedPrice: '180.00',
             rows: [
-              { strikePrice: '170.00', call: { id: 'c-170', premium: '12.00', optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-170', premium: '2.00', optionType: 'OPTION_TYPE_PUT' } },
-              { strikePrice: '175.00', call: { id: 'c-175', premium: '8.00', optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-175', premium: '3.00', optionType: 'OPTION_TYPE_PUT' } },
-              { strikePrice: '180.00', call: { id: 'c-180', premium: '5.00', optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-180', premium: '5.00', optionType: 'OPTION_TYPE_PUT' } },
+              { strikePrice: '170.00', call: { id: 'c-170', premium: '12.00', impliedVolatility: '0.25', openInterest: 4321, optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-170', premium: '2.00', impliedVolatility: '0.25', openInterest: 1100, optionType: 'OPTION_TYPE_PUT' } },
+              { strikePrice: '175.00', call: { id: 'c-175', premium: '8.00', impliedVolatility: '0.25', openInterest: 2000, optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-175', premium: '3.00', impliedVolatility: '0.25', openInterest: 800, optionType: 'OPTION_TYPE_PUT' } },
+              { strikePrice: '180.00', call: { id: 'c-180', premium: '5.00', impliedVolatility: '0.25', openInterest: 1500, optionType: 'OPTION_TYPE_CALL' }, put: { id: 'p-180', premium: '5.00', impliedVolatility: '0.25', openInterest: 1500, optionType: 'OPTION_TYPE_PUT' } },
             ],
           },
           {
@@ -114,6 +114,15 @@ describe('Celina 3 — listing detail', () => {
     cy.contains('Opcioni lanac').should('be.visible')
     cy.contains('th', 'Strike').should('be.visible')
     cy.contains('td', '170,00').should('be.visible')
+    // Spec p.59 chain layout: CALLS|Strike|PUTS headers + per-side
+    // columns (Last/Theta/Bid/Ask/Vol/OI), and OI is the only one
+    // backed by real proto data so it should render verbatim.
+    cy.get('[data-cy="option-chain-table"]').within(() => {
+      cy.contains('th', 'CALLS').should('be.visible')
+      cy.contains('th', 'PUTS').should('be.visible')
+      cy.contains('th', 'Theta').should('be.visible')
+      cy.contains('td', '4321').should('be.visible')
+    })
   })
 
   it('future detail renders without option chain', () => {

@@ -18,9 +18,16 @@ import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has, hasAny } from '@/lib/permissions'
 import { v1Direction } from '@/lib/api/generated/models/v1Direction'
 import type { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
+import { blackScholesTheta, daysUntil } from '@/lib/trading/option-greeks'
 import { PriceHistoryChart } from './PriceHistoryChart'
 import { PriceOverrideDialog } from './PriceOverrideDialog'
 import { OrderForm } from './OrderForm'
+
+// Half-spread used to derive a placeholder Bid/Ask around the option
+// premium for the spec p.59 chain. The system has no options order
+// book, so this is purely for visual completeness; the comment here
+// is the only "why" a future reader needs.
+const OPTION_BIDASK_HALF_SPREAD = 0.01
 
 export interface ListingDetailProps {
   listingId: string
@@ -282,6 +289,9 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
     )
   }
 
+  const sharedPrice = activeGroup?.sharedPrice ? Number(activeGroup.sharedPrice) : null
+  const dte = daysUntil(activeGroup?.settlementDate)
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-2">
@@ -301,28 +311,144 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
             <p className="text-xs text-muted-foreground">
               Cena bazne hartije: {formatMoney(activeGroup.sharedPrice, currency)}
             </p>
-            <table className="w-full text-sm">
-              <thead className="text-xs uppercase text-muted-foreground">
-                <tr>
-                  <th className="py-2 text-left">CALL premium</th>
-                  <th className="py-2 text-center">Strike</th>
-                  <th className="py-2 text-right">PUT premium</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {(activeGroup.rows ?? []).map((row, i) => (
-                  <tr key={i}>
-                    <td className="py-2 text-left">{row.call ? <OptionLink basePath={basePath} sec={row.call} /> : '—'}</td>
-                    <td className="py-2 text-center font-mono">{formatMoney(row.strikePrice, currency)}</td>
-                    <td className="py-2 text-right">{row.put ? <OptionLink basePath={basePath} sec={row.put} /> : '—'}</td>
+            <div className="overflow-x-auto" data-cy="option-chain-table">
+              <table className="w-full text-xs">
+                <thead className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th colSpan={6} className="border-b border-border py-1 text-center font-semibold">CALLS</th>
+                    <th className="border-b border-border" />
+                    <th colSpan={6} className="border-b border-border py-1 text-center font-semibold">PUTS</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                  <tr>
+                    <th className="px-2 py-1 text-right">Last</th>
+                    <th className="px-2 py-1 text-right">Theta</th>
+                    <th className="px-2 py-1 text-right">Bid</th>
+                    <th className="px-2 py-1 text-right">Ask</th>
+                    <th className="px-2 py-1 text-right">Vol</th>
+                    <th className="px-2 py-1 text-right">OI</th>
+                    <th className="px-3 py-1 text-center">Strike</th>
+                    <th className="px-2 py-1 text-right">Last</th>
+                    <th className="px-2 py-1 text-right">Theta</th>
+                    <th className="px-2 py-1 text-right">Bid</th>
+                    <th className="px-2 py-1 text-right">Ask</th>
+                    <th className="px-2 py-1 text-right">Vol</th>
+                    <th className="px-2 py-1 text-right">OI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(activeGroup.rows ?? []).map((row, i) => {
+                    const strike = row.strikePrice ? Number(row.strikePrice) : null
+                    // Spec p.59 ITM/OTM colouring: a CALL is ITM when the
+                    // underlying is *above* the strike (you'd exercise to
+                    // buy below market); a PUT is ITM when the underlying
+                    // is *below* the strike. ATM (strike ≈ spot) is left
+                    // neutral.
+                    const callItm = strike !== null && sharedPrice !== null && sharedPrice > strike
+                    const putItm = strike !== null && sharedPrice !== null && sharedPrice < strike
+                    return (
+                      <tr key={i} className="border-t border-border/50">
+                        <OptionSideCells
+                          basePath={basePath}
+                          sec={row.call}
+                          side="call"
+                          strike={strike}
+                          underlying={sharedPrice}
+                          dte={dte}
+                          itm={callItm}
+                          currency={currency}
+                        />
+                        <td className="bg-surface-muted/40 px-3 py-1 text-center font-mono font-semibold">
+                          {formatMoney(row.strikePrice, currency)}
+                        </td>
+                        <OptionSideCells
+                          basePath={basePath}
+                          sec={row.put}
+                          side="put"
+                          strike={strike}
+                          underlying={sharedPrice}
+                          dte={dte}
+                          itm={putItm}
+                          currency={currency}
+                        />
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function OptionSideCells({
+  basePath,
+  sec,
+  side,
+  strike,
+  underlying,
+  dte,
+  itm,
+  currency,
+}: {
+  basePath: ListingDetailProps['basePath']
+  sec?: { id?: string; premium?: string; impliedVolatility?: string; openInterest?: number | string; optionType?: v1OptionType }
+  side: 'call' | 'put'
+  strike: number | null
+  underlying: number | null
+  dte: number
+  itm: boolean
+  currency?: string
+}) {
+  if (!sec) {
+    return (
+      <>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1 text-right text-muted-foreground">—</td>
+      </>
+    )
+  }
+
+  const premium = sec.premium ? Number(sec.premium) : null
+  const iv = sec.impliedVolatility ? Number(sec.impliedVolatility) : null
+  const theta =
+    premium !== null && iv !== null && strike !== null && underlying !== null
+      ? blackScholesTheta({
+          underlying,
+          strike,
+          daysToExpiry: dte,
+          iv,
+          optionType: side,
+        })
+      : null
+  const bid = premium !== null ? premium * (1 - OPTION_BIDASK_HALF_SPREAD) : null
+  const ask = premium !== null ? premium * (1 + OPTION_BIDASK_HALF_SPREAD) : null
+
+  // Spec p.59: ITM cells get green tint, OTM get red. The strike
+  // column itself stays neutral.
+  const tone = itm
+    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+
+  return (
+    <>
+      <td className={`${tone} px-2 py-1 text-right`}>
+        <OptionLink basePath={basePath} sec={sec} />
+      </td>
+      <td className={`${tone} px-2 py-1 text-right font-mono`}>
+        {theta !== null ? theta.toFixed(4) : '—'}
+      </td>
+      <td className={`${tone} px-2 py-1 text-right font-mono`}>{bid !== null ? formatMoney(String(bid), currency) : '—'}</td>
+      <td className={`${tone} px-2 py-1 text-right font-mono`}>{ask !== null ? formatMoney(String(ask), currency) : '—'}</td>
+      <td className={`${tone} px-2 py-1 text-right font-mono text-muted-foreground`}>—</td>
+      <td className={`${tone} px-2 py-1 text-right font-mono`}>{sec.openInterest ?? '—'}</td>
+    </>
   )
 }
 
