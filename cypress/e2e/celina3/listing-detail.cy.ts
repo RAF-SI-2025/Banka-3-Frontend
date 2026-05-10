@@ -186,4 +186,38 @@ describe('Celina 3 — listing detail', () => {
     cy.contains('Premium').parent().should('contain', '5,00')
     cy.contains('Bazna hartija').parent().should('contain', 'AAPL')
   })
+
+  // Regression for the spec p.42 forex gate: ListingDetail's
+  // tradable check used to exclude forex, so the OrderForm never
+  // rendered. Just asserts the form exists; the end-to-end
+  // submission lives in the live spec forex-buy.cy.ts.
+  it('forex detail renders the order form (regression for the tradable gate)', () => {
+    cy.intercept('GET', '/api/v1/securities/eurusd', {
+      statusCode: 200,
+      body: {
+        security: {
+          id: 'eurusd',
+          ticker: 'EURUSD',
+          name: 'Euro / US Dollar',
+          type: 'SECURITY_TYPE_FOREX',
+          exchangeMic: 'XFOREX',
+          currency: 'CURRENCY_USD',
+          baseCurrency: 'CURRENCY_EUR',
+          quoteCurrency: 'CURRENCY_USD',
+          contractSize: '1000',
+          liquidity: 'high',
+        },
+        listing: { id: 'lst-eurusd', securityId: 'eurusd', exchangeMic: 'XFOREX', price: '1.10', ask: '1.11', bid: '1.09', volume: '5000' },
+      },
+    })
+    cy.intercept('GET', /\/api\/v1\/listings\/lst-eurusd\/history.*/, { statusCode: 200, body: { rows: [] } })
+    cy.intercept('GET', /\/api\/v1\/accounts\?.*/, { statusCode: 200, body: { accounts: [] } })
+
+    cy.visit('/portal/trgovina/eurusd')
+
+    cy.contains('EURUSD').should('be.visible')
+    cy.contains('Bazna valuta').parent().should('contain', 'EUR')
+    cy.contains('Kvotna valuta').parent().should('contain', 'USD')
+    cy.get('#order-form').should('be.visible')
+  })
 })

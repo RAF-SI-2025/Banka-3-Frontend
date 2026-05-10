@@ -76,7 +76,14 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
   const isStock = sec?.type === v1SecurityType.SECURITY_TYPE_STOCK
   const perms = useAuthStore((s) => s.permissions)
   const canTrade = hasAny(perms, [Permissions.TradingClient, Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin])
-  const tradable = sec?.type === v1SecurityType.SECURITY_TYPE_STOCK || sec?.type === v1SecurityType.SECURITY_TYPE_FUTURE
+  // Spec p.58: clients can't see forex (catalog hides the tab) but
+  // actuaries place forex orders here too — backend routes them
+  // through bank.SettleForexFill paired settlement. Options aren't
+  // tradable via Order; they're exercised from the portfolio.
+  const tradable =
+    sec?.type === v1SecurityType.SECURITY_TYPE_STOCK ||
+    sec?.type === v1SecurityType.SECURITY_TYPE_FUTURE ||
+    sec?.type === v1SecurityType.SECURITY_TYPE_FOREX
   const showOrderForm = canTrade && tradable && Boolean(sec?.id)
   const contractSize = sec?.contractSize ? Number(sec.contractSize) : (lst?.contractSize ? Number(lst.contractSize) : 1)
 
