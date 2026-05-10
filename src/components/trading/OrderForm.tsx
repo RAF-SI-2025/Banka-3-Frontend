@@ -2,7 +2,7 @@
 // userKind+permissions. No verification — orders aren't on the
 // spec p.11 list.
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Dialog } from '@/components/ui/dialog'
 import { ErrorBanner } from '@/components/ui/error'
 import { currencyLabel, formatMoney } from '@/lib/format'
 import { deriveOrderType } from '@/lib/trading/order-type'
@@ -164,6 +165,11 @@ export function OrderForm({
     }
   }, [eligibleAccounts, form])
 
+  // Spec p.56 "Uvek tražiti još jednu konfirmaciju od korisnika":
+  // submit opens a Pregled kupovine modal; the mutation only fires
+  // after the user clicks Potvrdi inside the dialog.
+  const [pending, setPending] = useState<OrderFormValues | null>(null)
+
   const place = useMutation({
     mutationFn: (v: OrderFormValues) =>
       placeOrder({
@@ -182,8 +188,15 @@ export function OrderForm({
       qc.invalidateQueries({ queryKey: keys.portfolio.all })
       qc.invalidateQueries({ queryKey: keys.actuary.detail(userId ?? '') })
       form.reset({ ...form.getValues(), quantity: '', limitPrice: '', stopPrice: '' })
+      setPending(null)
     },
   })
+
+  function closeConfirm() {
+    if (place.isPending) return
+    setPending(null)
+    place.reset()
+  }
 
   const errMsg = place.error ? apiError(place.error, 'Greška pri slanju naloga.') : null
 
@@ -197,7 +210,10 @@ export function OrderForm({
           <form
             id="order-form"
             className="space-y-3"
-            onSubmit={form.handleSubmit((v) => place.mutate(v))}
+            onSubmit={form.handleSubmit((v) => {
+              place.reset()
+              setPending(v)
+            })}
           >
             <div>
               <Label>Smer</Label>
@@ -303,14 +319,11 @@ export function OrderForm({
               </div>
             )}
 
-            {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
-
             <Button
               type="submit"
-              disabled={place.isPending}
               data-cy="order-submit"
             >
-              {place.isPending ? 'Šaljem…' : 'Pošalji nalog'}
+              Pošalji nalog
             </Button>
           </form>
 
@@ -326,6 +339,57 @@ export function OrderForm({
           />
         </div>
       </CardContent>
+
+      <Dialog
+        open={pending !== null}
+        onClose={closeConfirm}
+        title="Pregled kupovine"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={closeConfirm}
+              disabled={place.isPending}
+              data-cy="order-confirm-cancel"
+            >
+              Otkaži
+            </Button>
+            <Button
+              type="button"
+              onClick={() => pending && place.mutate(pending)}
+              disabled={place.isPending}
+              data-cy="order-confirm-submit"
+            >
+              {place.isPending ? 'Šaljem…' : 'Potvrdi'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm" data-cy="order-confirm-dialog">
+          <PreviewPanel
+            ppu={ppu}
+            qty={qty}
+            contractSize={contractSize}
+            approx={approx}
+            commission={commission}
+            totalDue={totalDue}
+            currency={currency}
+            orderType={orderType}
+          />
+          {pending && (
+            <p className="text-xs text-muted-foreground">
+              Smer: {pending.direction === v1Direction.DIRECTION_BUY ? 'Kupovina' : 'Prodaja'}
+              {pending.allOrNone ? ' · AON' : ''}
+              {pending.margin ? ' · Margin' : ''}
+            </p>
+          )}
+          {willNeedApproval && (
+            <Badge tone="yellow">⏳ Ovaj nalog ide na odobrenje supervizoru</Badge>
+          )}
+          {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
+        </div>
+      </Dialog>
     </Card>
   )
 }

@@ -36,6 +36,9 @@ describe('Celina 3 (live) — klijent: market buy AAPL → portfolio', () => {
       cy.get('[data-cy="order-submit"]').click()
     })
 
+    // Spec p.56 confirmation gate.
+    cy.get('[data-cy="order-confirm-submit"]').click()
+
     // Order should show up under "Moji nalozi" — match by AAPL ticker
     // (the orders list now batch-fetches securities for the displayed
     // rows so the ticker renders instead of the security UUID).

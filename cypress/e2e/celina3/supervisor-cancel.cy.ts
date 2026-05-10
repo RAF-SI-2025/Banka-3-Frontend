@@ -38,6 +38,9 @@ describe('Celina 3 (live) — supervizor otkazuje agent-ov nalog', () => {
       cy.get('[data-cy="order-submit"]').click()
     })
 
+    // Spec p.56 confirmation gate.
+    cy.get('[data-cy="order-confirm-submit"]').click()
+
     // 2. Switch to supervisor and cancel.
     cy.clearCookies()
     cy.window().then((w) => w.sessionStorage.clear())

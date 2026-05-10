@@ -45,6 +45,9 @@ describe('Celina 3 (live) — agent over-limit order routes to supervisor', () =
       cy.get('[data-cy="order-submit"]').click()
     })
 
+    // Spec p.56 confirmation gate.
+    cy.get('[data-cy="order-confirm-submit"]').click()
+
     // Confirm the placed order shows up under "Pregled naloga" pending.
     cy.visit('/portal/trgovina/nalozi')
     cy.contains('h1', 'Pregled naloga', { timeout: 15000 }).should('be.visible')

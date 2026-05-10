@@ -117,6 +117,10 @@ describe('Celina 3 — order placement', () => {
     cy.get('#of-acct').select('usd')
     cy.get('[data-cy="order-submit"]').click()
 
+    // Spec p.56: confirmation dialog gates the actual submit.
+    cy.get('[data-cy="order-confirm-dialog"]').should('be.visible')
+    cy.get('[data-cy="order-confirm-submit"]').click()
+
     cy.wait('@place')
   })
 
@@ -136,7 +140,27 @@ describe('Celina 3 — order placement', () => {
     cy.get('#of-limit').type('175.00')
     cy.get('#of-acct').select('usd')
     cy.get('[data-cy="order-submit"]').click()
+    cy.get('[data-cy="order-confirm-submit"]').click()
     cy.wait('@placeLimit')
+  })
+
+  it('cancel in confirm dialog does not POST', () => {
+    let placed = false
+    cy.intercept('POST', '/api/v1/orders', () => {
+      placed = true
+    }).as('placeNever')
+
+    visitWithAuth('/banking/trgovina/aapl')
+    cy.get('#of-qty').type('2')
+    cy.get('#of-acct').select('usd')
+    cy.get('[data-cy="order-submit"]').click()
+
+    cy.get('[data-cy="order-confirm-dialog"]').should('be.visible')
+    cy.get('[data-cy="order-confirm-cancel"]').click()
+    cy.get('[data-cy="order-confirm-dialog"]').should('not.exist')
+
+    // Give Cypress a tick to be sure no request was sent.
+    cy.wait(150).then(() => expect(placed).to.equal(false))
   })
 
   it('sell deep-link pre-fills quantity + filters accounts to listing currency', () => {
