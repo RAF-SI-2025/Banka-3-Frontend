@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff } from 'lucide-react'
 import { z } from 'zod'
 import { login } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/error'
@@ -26,6 +28,7 @@ type Values = z.infer<typeof schema>
 function LoginPage() {
   const navigate = useNavigate()
   const setLogin = useAuthStore((s) => s.setLogin)
+  const [showPassword, setShowPassword] = useState(false)
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
@@ -87,12 +90,25 @@ function LoginPage() {
               </div>
               <div>
                 <Label htmlFor="password">Lozinka</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  {...form.register('password')}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    className="pr-10"
+                    {...form.register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Sakrij lozinku' : 'Prikaži lozinku'}
+                    aria-pressed={showPassword}
+                    data-cy="toggle-password-visibility"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-md"
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
                 {form.formState.errors.password && (
                   <p className="mt-1.5 text-xs text-danger">
                     {form.formState.errors.password.message}
