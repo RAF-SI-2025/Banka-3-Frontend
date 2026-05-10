@@ -6,8 +6,6 @@ dist-ssr
 .env.local
 .env.*.local
 
-# generated api client
-src/lib/api/generated
 
 # TanStack Router generates this on dev start
 src/routeTree.gen.ts
