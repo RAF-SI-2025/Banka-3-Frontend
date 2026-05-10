@@ -65,8 +65,10 @@ export class BankServiceService {
          * - ACCOUNT_KIND_BUSINESS_CHECKING_RSD: poslovni tekući   (TT=12)
          * - ACCOUNT_KIND_BUSINESS_FX: poslovni devizni  (TT=22)
          * - ACCOUNT_KIND_SYSTEM: bank-owned house  (TT=99, internal)
+         * - ACCOUNT_KIND_FOREX_BOOK: bank's per-currency FX inventory book (internal, addressable for actuary trading)
+         * - ACCOUNT_KIND_STATE_TAX: RSD destination for capital-gains tax remittance (internal)
          */
-        kind?: 'ACCOUNT_KIND_UNSPECIFIED' | 'ACCOUNT_KIND_PERSONAL_CHECKING_RSD' | 'ACCOUNT_KIND_PERSONAL_FX' | 'ACCOUNT_KIND_BUSINESS_CHECKING_RSD' | 'ACCOUNT_KIND_BUSINESS_FX' | 'ACCOUNT_KIND_SYSTEM',
+        kind?: 'ACCOUNT_KIND_UNSPECIFIED' | 'ACCOUNT_KIND_PERSONAL_CHECKING_RSD' | 'ACCOUNT_KIND_PERSONAL_FX' | 'ACCOUNT_KIND_BUSINESS_CHECKING_RSD' | 'ACCOUNT_KIND_BUSINESS_FX' | 'ACCOUNT_KIND_SYSTEM' | 'ACCOUNT_KIND_FOREX_BOOK' | 'ACCOUNT_KIND_STATE_TAX',
         currency?: 'CURRENCY_UNSPECIFIED' | 'CURRENCY_RSD' | 'CURRENCY_EUR' | 'CURRENCY_CHF' | 'CURRENCY_USD' | 'CURRENCY_GBP' | 'CURRENCY_JPY' | 'CURRENCY_CAD' | 'CURRENCY_AUD',
         status?: 'ACCOUNT_STATUS_UNSPECIFIED' | 'ACCOUNT_STATUS_ACTIVE' | 'ACCOUNT_STATUS_INACTIVE',
         page?: number,

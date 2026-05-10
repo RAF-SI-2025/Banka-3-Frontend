@@ -23,10 +23,9 @@ describe('Celina 3 — portfolio', () => {
   it('sell deep-link routes to listing detail with direction=sell + qty pre-filled', () => {
     cy.visit('/banking/portfolio')
     cy.contains('h1', 'Portfolio', { timeout: 15000 }).should('be.visible')
-    // Click into the AAPL position detail.
-    cy.contains('tr', 'AAPL').within(() => {
-      cy.contains('Detalji').click()
-    })
+    // Banking portfolio rows are clickable (the whole TR carries the
+    // onClick → position detail).
+    cy.contains('tr', 'AAPL').click()
     cy.url({ timeout: 10000 }).should('match', /\/banking\/portfolio\/[0-9a-f-]+/)
 
     cy.get('[data-cy="sell-deeplink"]').click()

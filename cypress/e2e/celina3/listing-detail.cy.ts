@@ -32,7 +32,7 @@ describe('Celina 3 — listing detail', () => {
 
     cy.contains('AAPL').should('be.visible')
     cy.contains('Apple Inc.').should('be.visible')
-    cy.contains('Maintenance margin').should('be.visible')
+    cy.contains('Margina održavanja').should('be.visible')
 
     cy.contains('Istorija cene').should('be.visible')
 
@@ -61,7 +61,7 @@ describe('Celina 3 — listing detail', () => {
 
     cy.contains('AAPL-C-190').should('be.visible')
     cy.contains('Strike').parent().should('contain', '190,00')
-    cy.contains('Premium').parent().should('contain', '8,50')
+    cy.contains('Premija').parent().should('contain', '8,50')
     cy.contains('Bazna hartija').parent().should('contain', 'AAPL')
   })
 

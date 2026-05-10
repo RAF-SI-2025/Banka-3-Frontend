@@ -54,7 +54,9 @@ describe('Celina 3 (live) — agent over-limit order routes to supervisor', () =
     cy.get('[data-cy="filter-status"]').select('pending')
     cy.contains('tr', AAPL_TICKER, { timeout: 15000 }).should('contain', 'Na čekanju')
 
-    // 2. Supervisor approves via the cekajuci shortcut.
+    // 2. Supervisor approves via the cekajuci shortcut. The order
+    // row exposes inline approve/decline buttons for supervisors;
+    // navigating into the per-order detail page is unnecessary.
     cy.clearCookies()
     cy.window().then((w) => w.sessionStorage.clear())
     cy.loginAsSupervisor()
@@ -62,9 +64,13 @@ describe('Celina 3 (live) — agent over-limit order routes to supervisor', () =
 
     cy.contains('h1', 'Pregled naloga', { timeout: 15000 }).should('be.visible')
     cy.contains('tr', AAPL_TICKER, { timeout: 15000 })
-      .within(() => cy.contains('Detalji').click())
+      .within(() => cy.get('[data-cy="approve-order"]').click())
 
-    cy.get('[data-cy="approve-order"]', { timeout: 8000 }).click()
-    cy.contains(/Odobren/, { timeout: 10000 }).should('be.visible')
+    // After Approve, the row drops off the pending list. Flip the
+    // status filter to "approved" and verify the order resurfaces
+    // there with the supervisor stamped as approver — the listing
+    // shows their full name rather than the UUID.
+    cy.get('[data-cy="filter-status"]').select('approved')
+    cy.contains('tr', AAPL_TICKER, { timeout: 10000 }).should('contain', 'Odobren')
   })
 })

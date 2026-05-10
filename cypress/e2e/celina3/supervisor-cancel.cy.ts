@@ -41,7 +41,8 @@ describe('Celina 3 (live) — supervizor otkazuje agent-ov nalog', () => {
     // Spec p.56 confirmation gate.
     cy.get('[data-cy="order-confirm-submit"]').click()
 
-    // 2. Switch to supervisor and cancel.
+    // 2. Switch to supervisor and cancel. Approved orders carry an
+    // inline "Otkaži" affordance for supervisors right in the row.
     cy.clearCookies()
     cy.window().then((w) => w.sessionStorage.clear())
     cy.loginAsSupervisor()
@@ -50,9 +51,11 @@ describe('Celina 3 (live) — supervizor otkazuje agent-ov nalog', () => {
     cy.contains('h1', 'Pregled naloga', { timeout: 15000 }).should('be.visible')
     cy.get('[data-cy="filter-status"]').select('approved')
     cy.contains('tr', AAPL_TICKER, { timeout: 15000 })
-      .within(() => cy.contains('Detalji').click())
+      .within(() => cy.get('[data-cy="cancel-order"]').click())
 
-    cy.get('[data-cy="cancel-order"]', { timeout: 8000 }).click()
-    cy.contains(/otkazan/, { timeout: 10000 }).should('be.visible')
+    // After cancel the order moves out of "approved". Re-clear the
+    // filter and verify the row carries the cancelled badge.
+    cy.get('[data-cy="filter-status"]').select('')
+    cy.contains('tr', AAPL_TICKER, { timeout: 10000 }).should('contain', 'Otkazan')
   })
 })

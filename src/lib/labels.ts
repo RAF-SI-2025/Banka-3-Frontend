@@ -28,6 +28,8 @@ export const accountKindLabel: Record<v1AccountKind, string> = {
   [v1AccountKind.ACCOUNT_KIND_BUSINESS_CHECKING_RSD]: 'Poslovni tekući',
   [v1AccountKind.ACCOUNT_KIND_BUSINESS_FX]: 'Poslovni devizni',
   [v1AccountKind.ACCOUNT_KIND_SYSTEM]: 'Sistemski (banka)',
+  [v1AccountKind.ACCOUNT_KIND_FOREX_BOOK]: 'Forex inventory (banka)',
+  [v1AccountKind.ACCOUNT_KIND_STATE_TAX]: 'Državni račun za porez',
 }
 
 export const accountSubtypeLabel: Record<v1AccountSubtype, string> = {

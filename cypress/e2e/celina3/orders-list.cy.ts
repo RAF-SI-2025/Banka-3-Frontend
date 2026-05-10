@@ -46,7 +46,8 @@ describe('Celina 3 — Moji nalozi', () => {
     placeLimitOrder()
     cy.visit('/banking/trgovina/nalozi')
     cy.contains('h1', 'Moji nalozi', { timeout: 15000 }).should('be.visible')
-    cy.contains('tr', 'AAPL', { timeout: 15000 }).within(() => cy.contains('Detalji').click())
+    // Row onClick navigates to /banking/trgovina/nalozi/$orderId.
+    cy.contains('tr', 'AAPL', { timeout: 15000 }).click()
 
     cy.url({ timeout: 10000 }).should('match', /\/banking\/trgovina\/nalozi\/[0-9a-f-]+/)
     cy.get('[data-cy="cancel-order"]', { timeout: 10000 }).should('be.visible').click()
