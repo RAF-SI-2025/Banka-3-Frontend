@@ -1,75 +1,25 @@
 /// <reference types="cypress" />
 
-// Spec p.37: admin manually corrects listing price/ask/bid. Canned —
-// fires the upsertListing PUT and re-fetches the security on success.
-
-const PERMS = ['admin']
-
-function fakeToken(): string {
-  const payload = btoa(
-    JSON.stringify({
-      sub: 'a',
-      kind: 'employee',
-      perms: PERMS,
-      sv: 1,
-      exp: Math.floor(Date.now() / 1000) + 900,
-    }),
-  )
-  return `eyJhbGciOiJIUzI1NiJ9.${payload}.dummy`
-}
+// Spec p.37: admin manually corrects listing price/ask/bid. Live —
+// admin opens the seeded AAPL listing detail, submits new prices,
+// and the dialog closes after the PUT lands.
 
 describe('Celina 3 — admin price override', () => {
   beforeEach(() => {
-    cy.intercept('POST', '/api/v1/auth/refresh', {
-      statusCode: 200,
-      body: { accessToken: fakeToken(), accessExpiresIn: 900 },
-    })
-    cy.intercept('GET', '/api/v1/auth/me', {
-      statusCode: 200,
-      body: { employee: { id: 'a', email: 'a@e.com', permissions: PERMS } },
-    })
-    cy.window().then((win) => {
-      win.sessionStorage.setItem(
-        'banka-auth',
-        JSON.stringify({
-          state: {
-            accessToken: fakeToken(),
-            userId: 'a',
-            userKind: 'employee',
-            permissions: PERMS,
-          },
-          version: 0,
-        }),
-      )
-    })
-
-    cy.intercept('GET', '/api/v1/securities/aapl', {
-      statusCode: 200,
-      body: {
-        security: { id: 'aapl', ticker: 'AAPL', name: 'Apple Inc.', type: 'SECURITY_TYPE_STOCK', exchangeMic: 'XNAS', currency: 'CURRENCY_USD' },
-        listing: { id: 'lst-aapl', securityId: 'aapl', exchangeMic: 'XNAS', price: '180.00', ask: '180.10', bid: '179.90' },
-      },
-    })
-    cy.intercept('GET', /\/api\/v1\/listings\/lst-aapl\/history.*/, { statusCode: 200, body: { rows: [] } })
-    cy.intercept('GET', '/api/v1/securities/aapl/option-chain*', { statusCode: 200, body: { groups: [] } })
+    cy.resetBackend()
   })
 
-  it('admin opens the dialog, submits new prices and closes', () => {
-    cy.intercept('PUT', '/api/v1/listings', (req) => {
-      expect(req.body).to.deep.include({
-        securityId: 'aapl',
-        exchangeMic: 'XNAS',
-        price: '185.00',
-        ask: '185.20',
-        bid: '184.80',
-      })
-      req.reply({
-        statusCode: 200,
-        body: { id: 'lst-aapl', securityId: 'aapl', exchangeMic: 'XNAS', price: '185.00', ask: '185.20', bid: '184.80' },
-      })
-    }).as('upsert')
+  function openAaplDetail() {
+    cy.loginAsAdmin()
+    cy.visit('/portal/trgovina')
+    cy.contains('h1', 'Trgovina', { timeout: 15000 }).should('be.visible')
+    cy.get('[data-cy="filter-search"]').clear().type('AAPL')
+    cy.contains('tr', 'AAPL', { timeout: 10000 }).click()
+    cy.url({ timeout: 10000 }).should('match', /\/portal\/trgovina\/[0-9a-f-]+/)
+  }
 
-    cy.visit('/portal/trgovina/aapl')
+  it('admin opens the dialog, submits new prices and closes', () => {
+    openAaplDetail()
     cy.get('[data-cy="open-price-override"]').click()
 
     cy.get('#po-price').clear().type('185.00')
@@ -77,12 +27,15 @@ describe('Celina 3 — admin price override', () => {
     cy.get('#po-bid').clear().type('184.80')
     cy.contains('button', 'Sačuvaj').click()
 
-    cy.wait('@upsert')
-    cy.get('#po-price').should('not.exist')
+    // Dialog closes on success.
+    cy.get('#po-price', { timeout: 10000 }).should('not.exist')
+
+    // New price visible on the detail card after invalidation.
+    cy.contains('185,00', { timeout: 10000 }).should('be.visible')
   })
 
   it('rejects non-numeric input client-side', () => {
-    cy.visit('/portal/trgovina/aapl')
+    openAaplDetail()
     cy.get('[data-cy="open-price-override"]').click()
 
     cy.get('#po-price').clear().type('abc')
