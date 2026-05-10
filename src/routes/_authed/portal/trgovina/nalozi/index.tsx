@@ -16,11 +16,11 @@ import { directionLabel, orderStatusLabel, orderTypeLabel } from '@/lib/labels'
 import { formatDateTime } from '@/lib/format'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Select } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
+import { ActuaryPicker } from '@/components/trading/ActuaryPicker'
 
 const ALL_PERMS = [
   Permissions.Admin,
@@ -130,16 +130,12 @@ function PortalNaloziList() {
         </div>
         {canSeeAll && (
           <>
-            <div>
-              <Label htmlFor="filter-user">Korisnik (ID)</Label>
-              <Input
-                id="filter-user"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="UUID"
-                data-cy="filter-user"
-              />
-            </div>
+            <ActuaryPicker
+              label="Aktuar"
+              value={userId}
+              onChange={setUserId}
+              dataCy="filter-user"
+            />
             <div>
               <Label>Aktor</Label>
               <Select value={actor} onChange={(e) => setActor(e.target.value)} data-cy="filter-actor">

@@ -10,6 +10,10 @@ export interface CatalogFilters {
   exchangeMic: string
   minPrice: string
   maxPrice: string
+  minAsk: string
+  maxAsk: string
+  minBid: string
+  maxBid: string
   minVolume: string
   maxVolume: string
   minSettlement: string
@@ -25,6 +29,10 @@ export const DEFAULT_FILTERS: Omit<CatalogFilters, 'type'> = {
   exchangeMic: '',
   minPrice: '',
   maxPrice: '',
+  minAsk: '',
+  maxAsk: '',
+  minBid: '',
+  maxBid: '',
   minVolume: '',
   maxVolume: '',
   minSettlement: '',
@@ -49,6 +57,10 @@ export function filtersToQuery(f: CatalogFilters): Record<string, unknown> {
   if (f.exchangeMic) out.exchangeMic = f.exchangeMic
   if (f.minPrice) out.minPrice = f.minPrice
   if (f.maxPrice) out.maxPrice = f.maxPrice
+  if (f.minAsk) out.minAsk = f.minAsk
+  if (f.maxAsk) out.maxAsk = f.maxAsk
+  if (f.minBid) out.minBid = f.minBid
+  if (f.maxBid) out.maxBid = f.maxBid
   if (f.minVolume) out.minVolume = f.minVolume
   if (f.maxVolume) out.maxVolume = f.maxVolume
   if (f.minSettlement) out.minSettlement = f.minSettlement

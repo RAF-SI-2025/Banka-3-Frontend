@@ -8,6 +8,10 @@ const base: CatalogFilters = {
   exchangeMic: '',
   minPrice: '',
   maxPrice: '',
+  minAsk: '',
+  maxAsk: '',
+  minBid: '',
+  maxBid: '',
   minVolume: '',
   maxVolume: '',
   minSettlement: '',
@@ -64,5 +68,23 @@ describe('filtersToQuery', () => {
 
   it('flips sort direction without dropping the field', () => {
     expect(filtersToQuery({ ...base, sortDesc: false }).sortDesc).toBe(false)
+  })
+
+  it('forwards ask/bid ranges only when set', () => {
+    const out = filtersToQuery({
+      ...base,
+      minAsk: '10',
+      maxAsk: '20',
+      minBid: '8',
+      maxBid: '18',
+    })
+    expect(out).toMatchObject({
+      minAsk: '10',
+      maxAsk: '20',
+      minBid: '8',
+      maxBid: '18',
+    })
+    expect(filtersToQuery(base)).not.toHaveProperty('minAsk')
+    expect(filtersToQuery(base)).not.toHaveProperty('maxBid')
   })
 })

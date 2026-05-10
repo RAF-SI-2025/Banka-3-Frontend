@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listHoldings } from '@/lib/api/portfolio'
@@ -11,6 +12,8 @@ import { formatMoney } from '@/lib/format'
 import { unrealizedPnL } from '@/lib/trading/pnl'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ExerciseOptionDialog } from '@/components/trading/ExerciseOptionDialog'
 
 const TRADING_PERMS = [
   Permissions.Actuary,
@@ -63,9 +66,76 @@ function PortalPortfolioPage() {
         <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FOREX]} rows={forex} loading={holdings.isFetching} />
       )}
       {options.length > 0 && (
-        <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_OPTION]} rows={options} loading={holdings.isFetching} />
+        <OptionsSection rows={options} loading={holdings.isFetching} />
       )}
     </main>
+  )
+}
+
+// OptionsSection adds the spec p.61.d "Iskoristi" action plus the
+// option-specific columns the regular HoldingsSection doesn't show
+// (Tip, Strike, Datum izvršenja).
+function OptionsSection({ rows, loading }: { rows: v1Holding[]; loading: boolean }) {
+  const [exercising, setExercising] = useState<v1Holding | null>(null)
+  return (
+    <Card>
+      <CardHeader><CardTitle>{securityTypeLabel[v1SecurityType.SECURITY_TYPE_OPTION]}</CardTitle></CardHeader>
+      <CardContent>
+        <Table>
+          <THead>
+            <TR>
+              <TH>Ticker</TH>
+              <TH>Tip</TH>
+              <TH className="text-right">Strike</TH>
+              <TH className="text-right">Količina</TH>
+              <TH className="text-right">Premium plaćen</TH>
+              <TH>Datum izvršenja</TH>
+              <TH>{/* actions */}</TH>
+            </TR>
+          </THead>
+          <TBody>
+            {rows.length === 0 ? (
+              <EmptyRow colSpan={7}>{loading ? 'Učitavanje…' : 'Nemate opcije'}</EmptyRow>
+            ) : (
+              rows.map((h) => {
+                const sec = h.security
+                const optionTypeLabel = sec?.optionType === 'OPTION_TYPE_CALL' ? 'CALL'
+                  : sec?.optionType === 'OPTION_TYPE_PUT' ? 'PUT' : '—'
+                return (
+                  <TR key={h.id}>
+                    <TD className="font-mono">{sec?.ticker ?? '—'}</TD>
+                    <TD>{optionTypeLabel}</TD>
+                    <TD className="text-right">{formatMoney(sec?.strikePrice, sec?.currency)}</TD>
+                    <TD className="text-right">{h.quantity ?? 0}</TD>
+                    <TD className="text-right">{formatMoney(h.weightedAvgPrice, sec?.currency)}</TD>
+                    <TD>{sec?.settlementDate ? new Date(sec.settlementDate).toLocaleDateString('sr-RS') : '—'}</TD>
+                    <TD>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        data-cy={`exercise-${h.id}`}
+                        disabled={(h.quantity ?? 0) === 0}
+                        onClick={() => setExercising(h)}
+                      >
+                        Iskoristi
+                      </Button>
+                    </TD>
+                  </TR>
+                )
+              })
+            )}
+          </TBody>
+        </Table>
+      </CardContent>
+      {exercising && (
+        <ExerciseOptionDialog
+          open={Boolean(exercising)}
+          onClose={() => setExercising(null)}
+          holding={exercising}
+        />
+      )}
+    </Card>
   )
 }
 

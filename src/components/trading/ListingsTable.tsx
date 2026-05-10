@@ -73,6 +73,11 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
   const showSettlement =
     filters.type === v1SecurityType.SECURITY_TYPE_FUTURE ||
     filters.type === v1SecurityType.SECURITY_TYPE_OPTION
+  // Ask/Bid columns only exist on the listing rows the catalog joins
+  // in (stocks/futures/forex have a listing). Options carry only
+  // premium on the security row, so the spec p.58 ask/bid range
+  // filters are inert for them — hide rather than mislead.
+  const showAskBid = filters.type !== v1SecurityType.SECURITY_TYPE_OPTION
 
   const items = securities.data?.items ?? []
 
@@ -184,6 +189,46 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
             onChange={(e) => update('maxVolume', e.target.value)}
           />
         </div>
+        {showAskBid && (
+          <>
+            <div>
+              <Label>Min. ask</Label>
+              <Input
+                type="number"
+                data-cy="filter-min-ask"
+                value={filters.minAsk}
+                onChange={(e) => update('minAsk', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Max. ask</Label>
+              <Input
+                type="number"
+                data-cy="filter-max-ask"
+                value={filters.maxAsk}
+                onChange={(e) => update('maxAsk', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Min. bid</Label>
+              <Input
+                type="number"
+                data-cy="filter-min-bid"
+                value={filters.minBid}
+                onChange={(e) => update('minBid', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Max. bid</Label>
+              <Input
+                type="number"
+                data-cy="filter-max-bid"
+                value={filters.maxBid}
+                onChange={(e) => update('maxBid', e.target.value)}
+              />
+            </div>
+          </>
+        )}
         {showSettlement && (
           <>
             <div>
