@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listHoldings } from '@/lib/api/portfolio'
 import type { v1Holding } from '@/lib/api/generated/models/v1Holding'
@@ -145,6 +145,7 @@ function OptionsSection({ rows, loading }: { rows: v1Holding[]; loading: boolean
 }
 
 function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Holding[]; loading: boolean }) {
+  const navigate = useNavigate()
   return (
     <Card>
       <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
@@ -159,12 +160,11 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
               <TH className="text-right">Tržišna vrednost</TH>
               <TH className="text-right">Nerealizovan P&L</TH>
               <TH>Poslednja izmena</TH>
-              <TH>{/* arrow */}</TH>
             </TR>
           </THead>
           <TBody>
             {rows.length === 0 ? (
-              <EmptyRow colSpan={8}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
+              <EmptyRow colSpan={7}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
             ) : (
               rows.map((h) => {
                 const pnl = unrealizedPnL({
@@ -175,8 +175,12 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
                 })
                 const sign = pnl.abs >= 0 ? '+' : ''
                 const className = pnl.abs >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                const securityId = h.security?.id
                 return (
-                  <TR key={h.id}>
+                  <TR
+                    key={h.id}
+                    onClick={securityId ? () => navigate({ to: '/portal/trgovina/$securityId', params: { securityId } }) : undefined}
+                  >
                     <TD className="font-mono">{h.security?.ticker ?? '—'}</TD>
                     <TD className="text-right">{h.quantity ?? 0}</TD>
                     <TD className="text-right">{formatMoney(h.weightedAvgPrice)}</TD>
@@ -187,17 +191,6 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
                       {pnl.pct !== null && <span className="text-xs"> ({sign}{pnl.pct.toFixed(2)}%)</span>}
                     </TD>
                     <TD className="text-muted-foreground">{formatDate(h.updatedAt)}</TD>
-                    <TD>
-                      {h.security?.id && (
-                        <Link
-                          to="/portal/trgovina/$securityId"
-                          params={{ securityId: h.security.id }}
-                          className="text-primary hover:underline"
-                        >
-                          Trguj →
-                        </Link>
-                      )}
-                    </TD>
                   </TR>
                 )
               })
