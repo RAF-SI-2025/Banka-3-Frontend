@@ -48,7 +48,7 @@ overview; this file is the frontend-specific working memory.
 │   │   ├── api/                  # hand-written axios wrappers + helpers
 │   │   │   ├── error.ts          # apiError(): typed message extractor
 │   │   │   ├── verification.ts   # spec p.11 verifikacioni-kod client
-│   │   │   └── generated/        # OpenAPI types (gitignored; types-only)
+│   │   │   └── generated/        # OpenAPI types (checked in; types-only)
 │   │   ├── auth/                 # JWT helpers, refresh flow, password Zod
 │   │   ├── permissions.ts        # permission constants + helpers
 │   │   └── query-keys.ts         # query key factory
@@ -165,9 +165,10 @@ supervisor-cancel — each green individually).
 - shared `CardCreateDialog` for client + portal card-creation flows
   (client kartice page can issue cards; spec-mandated email/code
   confirmation runs through the same VerificationDialog primitive)
-- generated OpenAPI types under `src/lib/api/generated/` (gitignored;
-  `npm run api:gen` after `task proto` in backend) — types only;
-  hand-written axios wrappers do the calls
+- generated OpenAPI types under `src/lib/api/generated/` (checked in;
+  regenerate with `npm run api:gen` after `task proto` in backend
+  when the swagger doc changes) — types only; hand-written axios
+  wrappers do the calls
 - typed axios error helper `apiError()` in `src/lib/api/error.ts` —
   no `(err as any)` anywhere in app code
 - Serbian labels for every backend enum in `src/lib/labels.ts` —
