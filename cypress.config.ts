@@ -140,6 +140,12 @@ export default defineConfig({
         latestLink,
       })
     },
+    // One auto-retry in headless mode absorbs the vite cold-start
+    // flake on the first cy.visit of multi-spec runs (vite-dev
+    // lazy-bundles deps + the resetBackend container bounce can push
+    // first paint past timeouts). Interactive (`cypress open`) keeps
+    // zero retries so failures are visible while iterating.
+    retries: { runMode: 1, openMode: 0 },
   },
   video: false,
 })

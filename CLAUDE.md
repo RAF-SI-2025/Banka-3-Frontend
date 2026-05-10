@@ -178,10 +178,11 @@ supervisor-cancel — each green individually).
 - *Live cypress flake on first spec of multi-spec run.* Vite-dev's
   lazy dep bundling means the cold-start first cy.visit can hang
   the SPA paint. `cy.resetBackend()` warms vite via a /login
-  pre-visit, which is enough to get each spec stable individually,
-  but back-to-back specs occasionally still trip on the first one.
-  Workaround: run live specs with `--spec` per file or accept a
-  retry on the first slot.
+  pre-visit, which is enough to get each spec stable individually.
+  `cypress.config.ts` enables `retries: { runMode: 1 }` so a
+  back-to-back run absorbs the cold-start hit on the first slot
+  rather than failing the whole batch. Interactive (`cypress open`)
+  keeps zero retries so failures stay visible while iterating.
 
 **Resolved 2026-05-10:**
 - *Actuary account picker* — `OrderForm` now branches the account
