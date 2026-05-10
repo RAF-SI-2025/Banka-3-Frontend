@@ -90,4 +90,36 @@ describe('projectLimit', () => {
     expect(p.willExceed).toBe(false)
     expect(p.willNeedApproval).toBe(false)
   })
+
+  // Spec p.38: agent limit math runs in RSD via the bank's ASK rate
+  // *without commission*. OrderForm fetches `ccyToRsd` with
+  // `includeCommission: false`, so projectLimit's rsdPerCcy input is
+  // already the bare quote — projectLimit just multiplies and must
+  // not apply any commission of its own. This test pins that
+  // contract: a 100-unit USD trade at a 100 RSD/USD quote yields
+  // exactly 10000 RSD on top of usedLimit, no more, no less.
+  it('rsdEquivalent is a straight multiply (input rate is no-commission)', () => {
+    const p = projectLimit({
+      dailyLimit: 1_000_000,
+      usedLimit: 0,
+      needApproval: false,
+      approxCcy: 100, // 100 USD
+      rsdPerCcy: 100, // ASK / no-commission rate
+    })
+    expect(p.rsdEquivalent).toBe(10_000)
+    expect(p.projectedUsed).toBe(10_000)
+  })
+
+  it('does not pad rsdEquivalent for any per-currency commission', () => {
+    // Even at extreme inputs, the multiply must remain pure — there
+    // is no implicit FX commission in projectLimit.
+    const p = projectLimit({
+      dailyLimit: 0,
+      usedLimit: 0,
+      needApproval: false,
+      approxCcy: 7,
+      rsdPerCcy: 11,
+    })
+    expect(p.rsdEquivalent).toBe(77)
+  })
 })

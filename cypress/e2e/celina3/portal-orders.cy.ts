@@ -138,6 +138,25 @@ describe('Celina 3 — portal trading (supervisor)', () => {
     cy.wait('@approve')
   })
 
+  // FE-T7: spec p.57 column set on the supervisor "Pregled naloga"
+  // table. Names are load-bearing — supervisors review every order
+  // through this view, so column drift is a spec-conformance bug.
+  it('renders the spec p.57 column set', () => {
+    cy.intercept('GET', '/api/v1/orders*', { statusCode: 200, body: { orders: [PENDING_ORDER], total: '1' } })
+
+    visitWithAuth('/portal/trgovina/nalozi', SUPERVISOR_PERMS, 's')
+    cy.contains('th', 'Kreirano').should('be.visible')
+    cy.contains('th', 'Agent').should('be.visible')
+    cy.contains('th', 'Tip').should('be.visible')
+    cy.contains('th', 'Hartija').should('be.visible')
+    cy.contains('th', 'Količina').should('be.visible')
+    cy.contains('th', 'Veličina ugovora').should('be.visible')
+    cy.contains('th', 'Cena/jed.').should('be.visible')
+    cy.contains('th', 'Smer').should('be.visible')
+    cy.contains('th', 'Preostalo').should('be.visible')
+    cy.contains('th', 'Status').should('be.visible')
+  })
+
   it('cekajuci preset redirects to status=pending', () => {
     cy.intercept('GET', '/api/v1/orders*', { statusCode: 200, body: { orders: [], total: '0' } }).as('list')
     visitWithAuth('/portal/trgovina/nalozi/cekajuci', SUPERVISOR_PERMS, 's')
