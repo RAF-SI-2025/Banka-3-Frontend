@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { listExchanges, setExchangeOverride } from '@/lib/api/exchanges'
+import { listExchanges, setExchangeOverride, type ExchangeOverrideState } from '@/lib/api/exchanges'
 import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -31,8 +31,8 @@ function ExchangeCatalog() {
   })
 
   const override = useMutation({
-    mutationFn: (args: { mic: string; open: boolean | null }) =>
-      setExchangeOverride(args.mic, args.open),
+    mutationFn: (args: { mic: string; state: ExchangeOverrideState | null }) =>
+      setExchangeOverride(args.mic, args.state),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.exchange.all })
     },
@@ -78,7 +78,7 @@ function ExchangeCatalog() {
                 key={e.mic}
                 exchange={e}
                 pending={override.isPending && override.variables?.mic === e.mic}
-                onOverride={(open) => override.mutate({ mic: e.mic ?? '', open })}
+                onOverride={(state) => override.mutate({ mic: e.mic ?? '', state })}
               />
             ))
           )}
@@ -95,12 +95,10 @@ function ExchangeRow({
 }: {
   exchange: v1Exchange
   pending: boolean
-  onOverride: (open: boolean | null) => void
+  onOverride: (state: ExchangeOverrideState | null) => void
 }) {
   const mic = exchange.mic ?? ''
-  const hasOverride = exchange.overrideOpen !== undefined
-  const forcedOpen = hasOverride && exchange.overrideOpen === true
-  const forcedClosed = hasOverride && exchange.overrideOpen === false
+  const current = (exchange.overrideState as ExchangeOverrideState | '' | undefined) ?? ''
 
   return (
     <TR>
@@ -126,8 +124,8 @@ function ExchangeRow({
             size="sm"
             variant="secondary"
             data-cy={`force-open-${mic}`}
-            disabled={pending || forcedOpen}
-            onClick={() => onOverride(true)}
+            disabled={pending || current === 'open'}
+            onClick={() => onOverride('open')}
           >
             Forsiraj otvoreno
           </Button>
@@ -135,16 +133,25 @@ function ExchangeRow({
             size="sm"
             variant="secondary"
             data-cy={`force-closed-${mic}`}
-            disabled={pending || forcedClosed}
-            onClick={() => onOverride(false)}
+            disabled={pending || current === 'closed'}
+            onClick={() => onOverride('closed')}
           >
             Forsiraj zatvoreno
           </Button>
           <Button
             size="sm"
+            variant="secondary"
+            data-cy={`force-after-hours-${mic}`}
+            disabled={pending || current === 'after_hours'}
+            onClick={() => onOverride('after_hours')}
+          >
+            Forsiraj after-hours
+          </Button>
+          <Button
+            size="sm"
             variant="ghost"
             data-cy={`clear-override-${mic}`}
-            disabled={pending || !hasOverride}
+            disabled={pending || current === ''}
             onClick={() => onOverride(null)}
           >
             Vrati na raspored
@@ -156,18 +163,19 @@ function ExchangeRow({
 }
 
 function ExchangeStatusBadge({ exchange }: { exchange: v1Exchange }) {
-  if (exchange.overrideOpen === true) {
-    return <Badge tone="yellow">Forsiran otvoren</Badge>
-  }
-  if (exchange.overrideOpen === false) {
-    return <Badge tone="yellow">Forsiran zatvoren</Badge>
+  switch (exchange.overrideState) {
+    case 'open':
+      return <Badge tone="yellow">Forsiran otvoren</Badge>
+    case 'closed':
+      return <Badge tone="yellow">Forsiran zatvoren</Badge>
+    case 'after_hours':
+      return <Badge tone="yellow">Forsiran after-hours</Badge>
   }
   if (exchange.isOpen) {
-    return (
-      <Badge tone="green">
-        {exchange.isAfterHours ? 'Otvorena (after-hours)' : 'Otvorena'}
-      </Badge>
-    )
+    return <Badge tone="green">Otvorena</Badge>
+  }
+  if (exchange.isAfterHours) {
+    return <Badge tone="blue">After-hours</Badge>
   }
   return <Badge tone="neutral">Zatvorena</Badge>
 }

@@ -23,7 +23,7 @@ describe('exchanges wrappers', () => {
     expect(res.exchanges?.[0]?.mic).toBe('XNAS')
   })
 
-  it('setExchangeOverride PATCHes with {open} when forcing a state', async () => {
+  it('setExchangeOverride PATCHes with {state:"open"} when forcing open', async () => {
     let url: string | undefined
     let body: unknown
     let key: string | undefined
@@ -31,22 +31,42 @@ describe('exchanges wrappers', () => {
       url = cfg.url
       body = cfg.data ? JSON.parse(cfg.data) : undefined
       key = cfg.headers?.['Idempotency-Key'] as string | undefined
-      return [200, { mic: 'XNAS', overrideOpen: true }]
+      return [200, { mic: 'XNAS', overrideState: 'open' }]
     })
-    await setExchangeOverride('XNAS', true)
+    await setExchangeOverride('XNAS', 'open')
     expect(url).toBe('/v1/exchanges/XNAS/override')
-    expect(body).toEqual({ open: true })
+    expect(body).toEqual({ state: 'open' })
     expect(key).toMatch(/^[0-9a-f-]{36}$/)
   })
 
-  it('setExchangeOverride PATCHes with {clear:true} when clearing', async () => {
+  it('setExchangeOverride PATCHes with {state:"closed"}', async () => {
+    let body: unknown
+    mock.onPatch(/\/v1\/exchanges\/.+\/override/).reply((cfg) => {
+      body = cfg.data ? JSON.parse(cfg.data) : undefined
+      return [200, { mic: 'XNAS', overrideState: 'closed' }]
+    })
+    await setExchangeOverride('XNAS', 'closed')
+    expect(body).toEqual({ state: 'closed' })
+  })
+
+  it('setExchangeOverride PATCHes with {state:"after_hours"}', async () => {
+    let body: unknown
+    mock.onPatch(/\/v1\/exchanges\/.+\/override/).reply((cfg) => {
+      body = cfg.data ? JSON.parse(cfg.data) : undefined
+      return [200, { mic: 'XNAS', overrideState: 'after_hours' }]
+    })
+    await setExchangeOverride('XNAS', 'after_hours')
+    expect(body).toEqual({ state: 'after_hours' })
+  })
+
+  it('setExchangeOverride PATCHes with {state:""} when clearing', async () => {
     let body: unknown
     mock.onPatch(/\/v1\/exchanges\/.+\/override/).reply((cfg) => {
       body = cfg.data ? JSON.parse(cfg.data) : undefined
       return [200, { mic: 'XNAS' }]
     })
     await setExchangeOverride('XNAS', null)
-    expect(body).toEqual({ clear: true })
+    expect(body).toEqual({ state: '' })
   })
 
   it('setExchangeOverride URL-encodes the MIC path segment', async () => {
@@ -55,7 +75,7 @@ describe('exchanges wrappers', () => {
       url = cfg.url
       return [200, { mic: 'X NAS' }]
     })
-    await setExchangeOverride('X NAS', false)
+    await setExchangeOverride('X NAS', 'closed')
     expect(url).toBe('/v1/exchanges/X%20NAS/override')
   })
 })

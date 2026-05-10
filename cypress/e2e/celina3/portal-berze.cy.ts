@@ -3,6 +3,7 @@
 // FE-14: exchange catalog admin (spec p.39 testing toggle).
 //   - admin sees the exchanges table
 //   - "Forsiraj zatvoreno" flips the badge to "Forsiran zatvoren"
+//   - "Forsiraj after-hours" flips the badge to "Forsiran after-hours"
 //   - "Vrati na raspored" clears the override badge
 //   - non-admin (supervisor) cannot reach /portal/berze
 
@@ -90,10 +91,16 @@ describe('Celina 3 — portal berze (admin)', () => {
     cy.intercept('PATCH', '/api/v1/exchanges/XNAS/override', (req) => {
       const idx = exchanges.findIndex((e) => e.mic === 'XNAS')
       const updated = { ...exchanges[idx] }
-      if (req.body.clear) {
-        delete updated.overrideOpen
+      const state = (req.body.state as string) ?? ''
+      if (state === '') {
+        delete updated.overrideState
+        // Snap derived flags back to the schedule when clearing.
+        updated.isOpen = true
+        updated.isAfterHours = false
       } else {
-        updated.overrideOpen = !!req.body.open
+        updated.overrideState = state
+        updated.isOpen = state === 'open'
+        updated.isAfterHours = state === 'after_hours'
       }
       exchanges = exchanges.map((e, i) => (i === idx ? updated : e))
       req.reply({ statusCode: 200, body: updated })
@@ -108,12 +115,17 @@ describe('Celina 3 — portal berze (admin)', () => {
 
     // Force closed
     cy.get('[data-cy="force-closed-XNAS"]').click()
-    cy.wait('@patchOverride').its('request.body').should('deep.equal', { open: false })
+    cy.wait('@patchOverride').its('request.body').should('deep.equal', { state: 'closed' })
     cy.get('[data-cy="exchange-status-XNAS"]').should('contain', 'Forsiran zatvoren')
+
+    // Force after-hours
+    cy.get('[data-cy="force-after-hours-XNAS"]').click()
+    cy.wait('@patchOverride').its('request.body').should('deep.equal', { state: 'after_hours' })
+    cy.get('[data-cy="exchange-status-XNAS"]').should('contain', 'Forsiran after-hours')
 
     // Clear back to schedule
     cy.get('[data-cy="clear-override-XNAS"]').click()
-    cy.wait('@patchOverride').its('request.body').should('deep.equal', { clear: true })
+    cy.wait('@patchOverride').its('request.body').should('deep.equal', { state: '' })
     cy.get('[data-cy="exchange-status-XNAS"]').should('contain', 'Otvorena')
   })
 

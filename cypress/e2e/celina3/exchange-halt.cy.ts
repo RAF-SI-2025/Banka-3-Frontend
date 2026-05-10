@@ -6,7 +6,7 @@
 // the override and the badge reflects the resolved is_open from the
 // schedule.
 //
-// Note: the trading service uses `override_open` to compute is_open
+// Note: the trading service uses `override_state` to compute is_open
 // and the after-hours flag, but does NOT reject order placement on a
 // closed exchange — the spec only mandates after-hours fill slowdown
 // (p.56), so we don't assert order rejection here.
@@ -16,7 +16,7 @@ describe('Celina 3 (live) — admin force-closes XNYS i vraća na raspored', () 
     cy.resetBackend()
   })
 
-  it('flips XNYS to forced-closed and back to schedule', () => {
+  it('flips XNYS through closed → after-hours → schedule', () => {
     cy.loginAsAdmin()
     cy.visit('/portal/berze')
     cy.contains('h1', 'Berze', { timeout: 15000 }).should('be.visible')
@@ -24,6 +24,9 @@ describe('Celina 3 (live) — admin force-closes XNYS i vraća na raspored', () 
     cy.get('[data-cy="exchange-row-XNYS"]').should('be.visible')
     cy.get('[data-cy="force-closed-XNYS"]').click()
     cy.get('[data-cy="exchange-status-XNYS"]', { timeout: 8000 }).should('contain', 'Forsiran zatvoren')
+
+    cy.get('[data-cy="force-after-hours-XNYS"]').click()
+    cy.get('[data-cy="exchange-status-XNYS"]', { timeout: 8000 }).should('contain', 'Forsiran after-hours')
 
     cy.get('[data-cy="clear-override-XNYS"]').click()
     cy.get('[data-cy="exchange-status-XNYS"]', { timeout: 8000 })
