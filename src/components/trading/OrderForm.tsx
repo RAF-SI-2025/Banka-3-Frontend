@@ -46,6 +46,12 @@ interface OrderFormProps {
   // Used when navigating from portfolio sell deep-link.
   initialDirection?: Side
   initialQuantity?: number
+  // Spec p.57 / C3-tests scenario 45-47: pre-submit market-state notice
+  // so the user is warned before clicking Pošalji nalog when the
+  // exchange is closed or in after-hours. Resolved by ListingDetail
+  // from the exchange list keyed by MIC; undefined means "not loaded
+  // yet / unknown" — no notice rendered.
+  marketState?: { isOpen?: boolean; isAfterHours?: boolean }
 }
 
 export function OrderForm({
@@ -56,6 +62,7 @@ export function OrderForm({
   settlementDate,
   initialDirection,
   initialQuantity,
+  marketState,
 }: OrderFormProps) {
   const qc = useQueryClient()
   const userId = useAuthStore((s) => s.userId)
@@ -368,6 +375,24 @@ export function OrderForm({
                 data-cy="settlement-past"
               >
                 Datum izvršenja hartije je prošao — nalog se ne može plasirati.
+              </div>
+            )}
+
+            {marketState?.isOpen === false && !marketState.isAfterHours && (
+              <div
+                className="rounded-md border border-warning/40 bg-warning-soft p-2 text-xs"
+                data-cy="exchange-closed-warning"
+              >
+                Berza je trenutno zatvorena. Nalog možete poslati, ali biće izvršen tek kada se trgovina nastavi.
+              </div>
+            )}
+
+            {marketState?.isAfterHours === true && (
+              <div
+                className="rounded-md border border-warning/40 bg-warning-soft p-2 text-xs"
+                data-cy="exchange-after-hours-warning"
+              >
+                Berza je u after-hours periodu. Nalozi se izvršavaju sporije nego u redovnom radnom vremenu.
               </div>
             )}
 

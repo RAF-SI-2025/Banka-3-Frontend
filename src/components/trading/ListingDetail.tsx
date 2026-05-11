@@ -6,6 +6,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getSecurity, getOptionChain } from '@/lib/api/securities'
 import { getListingHistory } from '@/lib/api/listings'
+import { listExchanges } from '@/lib/api/exchanges'
 import { keys } from '@/lib/query-keys'
 import { v1SecurityType } from '@/lib/api/generated/models/v1SecurityType'
 import { v1OptionType } from '@/lib/api/generated/models/v1OptionType'
@@ -87,6 +88,24 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
   const showOrderForm = canTrade && tradable && Boolean(sec?.id)
   const contractSize = sec?.contractSize ? Number(sec.contractSize) : (lst?.contractSize ? Number(lst.contractSize) : 1)
 
+  // C3-tests scenarios 45 + 47: warn at form-open time when the
+  // exchange is fully closed or in after-hours. We only need the
+  // resolved is_open / is_after_hours flags off the row matching the
+  // security's MIC; reuse the catalog's exchange-list query so the
+  // cache is shared.
+  const mic = lst?.exchangeMic ?? sec?.exchangeMic
+  const exchanges = useQuery({
+    queryKey: keys.exchange.list(),
+    queryFn: () => listExchanges(),
+    enabled: showOrderForm && Boolean(mic),
+  })
+  const marketState = useMemo(() => {
+    if (!mic) return undefined
+    const row = exchanges.data?.exchanges?.find((e) => e.mic === mic)
+    if (!row) return undefined
+    return { isOpen: row.isOpen, isAfterHours: row.isAfterHours }
+  }, [exchanges.data, mic])
+
   return (
     <main className="container space-y-6 py-8">
       <Link to={basePath} className="text-sm text-muted-foreground hover:text-foreground">
@@ -147,6 +166,7 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
           settlementDate={sec!.settlementDate}
           initialDirection={initialDirection}
           initialQuantity={initialQuantity}
+          marketState={marketState}
         />
       )}
 

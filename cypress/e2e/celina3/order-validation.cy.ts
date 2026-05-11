@@ -125,12 +125,12 @@ describe('Celina 3 — SELL holdings guard (S37/S38)', () => {
   })
 })
 
-describe('Celina 3 — exchange-closed notice (S46)', () => {
+describe('Celina 3 — exchange-closed warning + notice (S45 + S46)', () => {
   beforeEach(() => {
     cy.resetBackend()
   })
 
-  it('S46 — order placed against a force-closed exchange surfaces the notice', () => {
+  it('S45 + S46 — closed exchange warns at form-open and confirms post-submit', () => {
     // Step 1: admin force-closes XNYS via the override toggle.
     cy.loginAsAdmin()
     cy.visit('/portal/berze')
@@ -138,10 +138,8 @@ describe('Celina 3 — exchange-closed notice (S46)', () => {
     cy.get('[data-cy="force-closed-XNYS"]').click()
     cy.get('[data-cy="exchange-status-XNYS"]', { timeout: 8000 }).should('contain', 'Forsiran zatvoren')
 
-    // Step 2: client places an AAPL BUY (XNYS-listed). The BE
-    // accepts the order (spec p.57: closed-but-placed) and returns
-    // the exchange_closed flag; the FE renders the post-submit
-    // notice.
+    // Step 2: client opens an AAPL listing (XNYS-listed). S45: the
+    // order form must show the closed-exchange warning before submit.
     cy.clearCookies()
     cy.window().then((w) => w.sessionStorage.clear())
     cy.loginAsClient()
@@ -149,6 +147,13 @@ describe('Celina 3 — exchange-closed notice (S46)', () => {
     cy.contains('tr', TICKER, { timeout: 15000 }).click()
     cy.url({ timeout: 10000 }).should('match', /\/banking\/trgovina\/[0-9a-f-]+/)
 
+    cy.get('[data-cy="exchange-closed-warning"]', { timeout: 10000 })
+      .should('be.visible')
+      .and('contain', 'Berza je trenutno zatvorena')
+
+    // S46: the BE accepts the order anyway (spec p.57: closed-but-
+    // placed) and returns the exchange_closed flag; the FE renders
+    // the post-submit notice.
     cy.get('#order-form').within(() => {
       cy.get('#of-qty').clear().type('1')
       pickUsdAccount()
