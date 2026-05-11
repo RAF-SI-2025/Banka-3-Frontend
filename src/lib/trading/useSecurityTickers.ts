@@ -12,6 +12,8 @@ import { keys } from '@/lib/query-keys'
 export interface TickerLookup {
   /** ticker for a given security id, or null while loading / on error. */
   get: (securityId: string | undefined) => string | null
+  /** ISO settlement date for a given security id, or null. */
+  getSettlementDate: (securityId: string | undefined) => string | null
   /** true while any underlying query is fetching. */
   isFetching: boolean
 }
@@ -30,13 +32,17 @@ export function useSecurityTickers(securityIds: ReadonlyArray<string | undefined
       staleTime: 5 * 60_000,
     })),
   })
-  const map = new Map<string, string>()
+  const tickers = new Map<string, string>()
+  const settlements = new Map<string, string>()
   results.forEach((r, i) => {
     const ticker = r.data?.security?.ticker
-    if (ticker) map.set(unique[i], ticker)
+    if (ticker) tickers.set(unique[i], ticker)
+    const sd = r.data?.security?.settlementDate
+    if (sd) settlements.set(unique[i], sd)
   })
   return {
-    get: (id) => (id ? (map.get(id) ?? null) : null),
+    get: (id) => (id ? (tickers.get(id) ?? null) : null),
+    getSettlementDate: (id) => (id ? (settlements.get(id) ?? null) : null),
     isFetching: results.some((r) => r.isFetching),
   }
 }

@@ -61,7 +61,8 @@ export const keys = {
     all: ['listing'] as const,
     list: (args: object) => ['listing', 'list', args] as const,
     detail: (id: string) => ['listing', 'detail', id] as const,
-    history: (id: string) => ['listing', 'history', id] as const,
+    history: (id: string, args?: { from?: string; to?: string }) =>
+      (args ? ['listing', 'history', id, args] : ['listing', 'history', id]) as readonly unknown[],
   },
   security: {
     all: ['security'] as const,

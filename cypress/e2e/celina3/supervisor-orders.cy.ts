@@ -88,6 +88,7 @@ describe('Celina 3 — supervisor orders decline + filters', () => {
     cy.get('[data-cy="filter-status"]').select('done')
     cy.wait('@listDone').its('request.url').should('include', 'status=done')
   })
+
 })
 
 describe('Celina 3 — porez tracking access + filters', () => {

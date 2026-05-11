@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { listOrders, approveOrder, declineOrder, cancelOrder } from '@/lib/api/orders'
 import { apiError } from '@/lib/api/error'
 import { useSecurityTickers } from '@/lib/trading/useSecurityTickers'
+import { isSettlementPast } from '@/lib/trading/settlement'
 import { useUserDisplayNames } from '@/lib/trading/useUserDisplayNames'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -175,6 +176,7 @@ function PortalNaloziList() {
                 key={o.id}
                 order={o}
                 ticker={tickers.get(o.securityId)}
+                settlementDate={tickers.getSettlementDate(o.securityId)}
                 agentName={names.get(o.userId)}
                 canActOnOthers={canSeeAll}
               />
@@ -189,10 +191,12 @@ function PortalNaloziList() {
 function RowActions({
   order,
   ticker,
+  settlementDate,
   agentName,
   canActOnOthers,
 }: {
   ticker: string | null
+  settlementDate: string | null
   agentName: string | null
   order: {
     id?: string
@@ -232,6 +236,10 @@ function RowActions({
   const isPending = order.status === v1OrderStatus.ORDER_STATUS_PENDING && !order.cancelled
   const cancellable = !order.cancelled && !order.isDone &&
     (order.status === v1OrderStatus.ORDER_STATUS_PENDING || order.status === v1OrderStatus.ORDER_STATUS_APPROVED)
+  // Spec p.50 / C3-tests S54: pending orders whose security has
+  // settled cannot be approved — only Decline. Backend re-checks at
+  // ApproveOrder, but the spec wants the button hidden in the UI.
+  const settlementPast = isSettlementPast(settlementDate)
 
   const busy = approve.isPending || decline.isPending || cancel.isPending
   const errMsg =
@@ -258,16 +266,18 @@ function RowActions({
         <TD className="space-x-2 whitespace-nowrap">
           {canActOnOthers && isPending && (
             <>
-              <Button
-                type="button"
-                size="sm"
-                variant="primary"
-                disabled={busy}
-                data-cy="approve-order"
-                onClick={() => approve.mutate()}
-              >
-                Odobri
-              </Button>
+              {!settlementPast && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  disabled={busy}
+                  data-cy="approve-order"
+                  onClick={() => approve.mutate()}
+                >
+                  Odobri
+                </Button>
+              )}
               <Button
                 type="button"
                 size="sm"

@@ -52,6 +52,9 @@ export function ListingsTable({ basePath, showForexAndOptions }: ListingsTablePr
   const securities = useQuery({
     queryKey: keys.security.list(args),
     queryFn: () => listSecurities(args),
+    // Spec C3-tests S17: catalog rows refresh on an interval without
+    // user action so price / volume / change stay live.
+    refetchInterval: 30_000,
   })
 
   const setKind = (k: v1SecurityType) => {

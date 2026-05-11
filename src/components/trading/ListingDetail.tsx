@@ -60,6 +60,10 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
   const security = useQuery({
     queryKey: keys.security.detail(listingId),
     queryFn: () => getSecurity(listingId),
+    // Spec C3-tests S17: listing detail's price/ask/bid refresh on an
+    // interval so the order form sees fresh quotes without a manual
+    // page reload.
+    refetchInterval: 30_000,
   })
 
   const sec = security.data?.security
@@ -69,7 +73,9 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
   const [days, setDays] = useState(90)
   const historyArgs = { from: isoNDaysAgo(days), to: isoNDaysAgo(0) }
   const history = useQuery({
-    queryKey: keys.listing.history(realListingId ?? listingId),
+    // Include from/to in the key — without them, clicking 30D / 1G
+    // does not refetch (C3-tests S19: period switch must refresh).
+    queryKey: keys.listing.history(realListingId ?? listingId, historyArgs),
     queryFn: () => getListingHistory(realListingId!, historyArgs),
     enabled: Boolean(realListingId),
   })

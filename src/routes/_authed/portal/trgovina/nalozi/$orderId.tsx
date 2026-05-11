@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { approveOrder, cancelOrder, declineOrder, getOrder } from '@/lib/api/orders'
 import { getSecurity } from '@/lib/api/securities'
+import { isSettlementPast } from '@/lib/trading/settlement'
 import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -79,6 +80,10 @@ function PortalOrderDetail() {
   const isPending = o?.status === v1OrderStatus.ORDER_STATUS_PENDING && !o.cancelled
   const cancellable = o && !o.cancelled && !o.isDone &&
     (o.status === v1OrderStatus.ORDER_STATUS_PENDING || o.status === v1OrderStatus.ORDER_STATUS_APPROVED)
+  // Spec p.50 / C3-tests S54: hide Approve when the security has
+  // settled. Backend `ApproveOrder` re-checks; the spec wants the UI
+  // to make Decline the only option.
+  const settlementPast = isSettlementPast(sec.data?.security?.settlementDate)
   const filled = o && o.quantity !== undefined && o.remainingQuantity !== undefined ? o.quantity - o.remainingQuantity : null
 
   const busy = approve.isPending || decline.isPending || cancel.isPending
@@ -108,15 +113,17 @@ function PortalOrderDetail() {
               <div className="flex flex-wrap gap-2">
                 {canAct && isPending && (
                   <>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      disabled={busy}
-                      data-cy="approve-order"
-                      onClick={() => approve.mutate()}
-                    >
-                      Odobri
-                    </Button>
+                    {!settlementPast && (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        disabled={busy}
+                        data-cy="approve-order"
+                        onClick={() => approve.mutate()}
+                      >
+                        Odobri
+                      </Button>
+                    )}
                     <Button
                       type="button"
                       variant="danger"
