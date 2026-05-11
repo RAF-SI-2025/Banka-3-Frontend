@@ -1,8 +1,9 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
+import { RouteErrorBoundary } from '@/components/shell/error-boundary'
 
 // /banking/* is the client-facing app. Employees use /portal — push
 // them there if they wander in.
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_authed/banking')({
 
 function BankingLayout() {
   const perms = useAuthStore((s) => s.permissions)
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
   const items: NavItem[] = [
     { to: '/banking', label: 'Početna' },
     { to: '/banking/racuni', label: 'Računi' },
@@ -36,7 +38,9 @@ function BankingLayout() {
       <div className="flex flex-1">
         <Sidebar items={items} />
         <main className="flex-1">
-          <Outlet />
+          <RouteErrorBoundary resetKey={pathname}>
+            <Outlet />
+          </RouteErrorBoundary>
         </main>
       </div>
     </div>

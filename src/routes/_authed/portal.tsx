@@ -1,8 +1,9 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has, hasAny } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
+import { RouteErrorBoundary } from '@/components/shell/error-boundary'
 
 // /portal/* is the employee back-office. Clients have no business
 // here — even if a route renders an empty "Nemate dozvolu" body, we
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_authed/portal')({
 
 function PortalLayout() {
   const perms = useAuthStore((s) => s.permissions)
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   const items: NavItem[] = [
     { to: '/portal', label: 'Početna' },
@@ -62,7 +64,9 @@ function PortalLayout() {
       <div className="flex flex-1">
         <Sidebar items={items} />
         <main className="flex-1">
-          <Outlet />
+          <RouteErrorBoundary resetKey={pathname}>
+            <Outlet />
+          </RouteErrorBoundary>
         </main>
       </div>
     </div>

@@ -20,6 +20,8 @@ import { Permissions, has, hasAny } from '@/lib/permissions'
 import { v1Direction } from '@/lib/api/generated/models/v1Direction'
 import type { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
 import { blackScholesTheta, daysUntil } from '@/lib/trading/option-greeks'
+import { applyStrikeWindow } from '@/lib/trading/strike-window'
+import { Input } from '@/components/ui/input'
 import { PriceHistoryChart } from './PriceHistoryChart'
 import { PriceOverrideDialog } from './PriceOverrideDialog'
 import { OrderForm } from './OrderForm'
@@ -309,6 +311,9 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
 
   const groups = useMemo(() => chain.data?.groups ?? [], [chain.data])
   const [picked, setPicked] = useState<string>('')
+  // Spec p.59 "Filtriranje broja prikazanih strike vrednosti opcija":
+  // N above + N below at-the-money. Empty input = "Sve" (no filter).
+  const [strikeWindowInput, setStrikeWindowInput] = useState<string>('')
 
   const settlementDates = useMemo(() => groups.map((g) => g.settlementDate ?? '').filter(Boolean), [groups])
   const activeDate = picked || settlementDates[0] || ''
@@ -325,6 +330,11 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
 
   const sharedPrice = activeGroup?.sharedPrice ? Number(activeGroup.sharedPrice) : null
   const dte = daysUntil(activeGroup?.settlementDate)
+  const strikeWindow = (() => {
+    const n = Number(strikeWindowInput)
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : null
+  })()
+  const visibleRows = applyStrikeWindow(activeGroup?.rows ?? [], sharedPrice, strikeWindow)
 
   return (
     <Card>
@@ -337,6 +347,17 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
               <option key={d} value={d}>{formatDate(d)}</option>
             ))}
           </Select>
+          <span className="text-xs text-muted-foreground">Strike ±N</span>
+          <Input
+            type="number"
+            min={1}
+            step={1}
+            placeholder="Sve"
+            value={strikeWindowInput}
+            onChange={(e) => setStrikeWindowInput(e.target.value)}
+            className="w-20"
+            data-cy="option-chain-strike-window"
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -370,7 +391,7 @@ function OptionChainCard({ stockId, basePath, currency }: { stockId: string; bas
                   </tr>
                 </thead>
                 <tbody>
-                  {(activeGroup.rows ?? []).map((row, i) => {
+                  {visibleRows.map((row, i) => {
                     const strike = row.strikePrice ? Number(row.strikePrice) : null
                     // Spec p.59 ITM/OTM colouring: a CALL is ITM when the
                     // underlying is *above* the strike (you'd exercise to
