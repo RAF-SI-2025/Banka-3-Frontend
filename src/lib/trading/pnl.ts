@@ -17,7 +17,9 @@ export function unrealizedPnL(h: PnLInputs): { abs: number; pct: number | null }
   const cur = Number(h.currentPrice ?? '0')
   if (qty <= 0) return { abs: 0, pct: null }
   const abs = h.profit !== undefined ? Number(h.profit) : (cur - cost) * qty
-  const denom = cost * qty
-  const pct = denom > 0 ? (abs / denom) * 100 : null
+  // Percent is per-unit so it's contractSize-agnostic; the server-side
+  // `profit` for futures/options already includes contract multiplier,
+  // so dividing it by cost*qty would inflate the ratio by contractSize.
+  const pct = cost > 0 ? ((cur - cost) / cost) * 100 : null
   return { abs, pct }
 }
