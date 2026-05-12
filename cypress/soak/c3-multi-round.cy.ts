@@ -61,6 +61,12 @@ interface SoakCtx {
   agentUsdAccountId: string
   stateTaxBefore: number[]
   stateTaxAfter: number[]
+  // Baselines captured before round 0. The soak suite runs against
+  // a persistent backend that survives between invocations, so the
+  // final invariants assert *deltas* against these baselines (not
+  // absolutes — those would couple to all-time soak history).
+  realizedBaseline: number
+  holdingBaseline: Map<string, number>
 }
 const ctx: SoakCtx = {
   supervisorToken: '',
@@ -70,6 +76,8 @@ const ctx: SoakCtx = {
   agentUsdAccountId: '',
   stateTaxBefore: [],
   stateTaxAfter: [],
+  realizedBaseline: 0,
+  holdingBaseline: new Map(),
 }
 
 // withCtx runs `fn` inside a cy.then so the parent before() has
@@ -130,6 +138,21 @@ describe('c3 soak — three rounds, one persistent backend', () => {
     // assertions are deltas, not absolutes).
     withCtx((c) => {
       cy.runResetJob(c.supervisorToken)
+      // Baseline realized_gains row count for the agent. Each round
+      // SELL contributes ≥ 1 row (one per fill), so the final
+      // invariant only asserts (final - baseline) >= ROUNDS.length.
+      cy.realizedGainsCount(c.agentEmployeeId).then((n) => {
+        ctx.realizedBaseline = n
+      })
+      // Baseline per-ticker holdings. The soak runs against a backend
+      // that survives across invocations, so the final invariant
+      // tests (final - baseline) per ticker rather than an absolute.
+      const tickers = new Set(ROUNDS.map((r) => r.ticker))
+      tickers.forEach((ticker) => {
+        cy.holdingQty(c.agentEmployeeId, ticker).then((q) => {
+          ctx.holdingBaseline.set(ticker, q)
+        })
+      })
     })
   })
 
@@ -260,6 +283,35 @@ describe('c3 soak — three rounds, one persistent backend', () => {
       cy.pendingExecutionCount().should('eq', 0)
       cy.unfinishedSagaCount().should('eq', 0)
       cy.duplicateOpLegCount().should('eq', 0)
+
+      // Holdings reconciliation: per-ticker delta from the baseline
+      // = Σ (buyQty − sellQty) across rounds for that ticker. Drift
+      // here means a fill silently wrote a phantom share or skipped
+      // one. Absolutes would couple to all-time soak history, so
+      // assert deltas only.
+      const tickerNet = new Map<string, number>()
+      ROUNDS.forEach((r) => {
+        tickerNet.set(r.ticker, (tickerNet.get(r.ticker) ?? 0) + r.buyQty - r.sellQty)
+      })
+      tickerNet.forEach((expectedDelta, ticker) => {
+        const baseline = ctx.holdingBaseline.get(ticker) ?? 0
+        cy.holdingQty(c.agentEmployeeId, ticker).then((got) => {
+          expect(
+            got - baseline,
+            `agent ${ticker} holding delta = Σ(buy − sell)`,
+          ).to.eq(expectedDelta)
+        })
+      })
+
+      // Realized-gains rows: at least one row per round's SELL — the
+      // partial-fill chunker may split a single SELL into 1..n rows
+      // so the lower bound is ROUNDS.length, not an exact count.
+      cy.realizedGainsCount(c.agentEmployeeId).then((finalCount) => {
+        expect(
+          finalCount - ctx.realizedBaseline,
+          `realized_gains rows added across ${ROUNDS.length} rounds`,
+        ).to.be.greaterThan(ROUNDS.length - 1)
+      })
 
       // Final reset before the dailyLimit/usedLimit assertion.  If
       // an earlier round failed before its in-round reset fired,

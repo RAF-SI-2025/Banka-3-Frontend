@@ -50,6 +50,10 @@ declare global {
       unfinishedSagaCount(): Chainable<number>
       /** Count transactions sharing the same (op_id, leg_index) — should be 0 always. */
       duplicateOpLegCount(): Chainable<number>
+      /** Count realized_gains rows for this user (employee unless overridden). */
+      realizedGainsCount(userId: string, userKind?: string): Chainable<number>
+      /** Sum of portfolio_holdings.quantity for this user × ticker. */
+      holdingQty(userId: string, ticker: string, userKind?: string): Chainable<number>
     }
   }
 }
@@ -241,6 +245,33 @@ Cypress.Commands.add('duplicateOpLegCount', () => {
        ) dups`,
     )
     .then((rows) => Number(rows[0]?.c ?? '0'))
+})
+
+// Per-user realized-gains row count. Soak rounds each generate one
+// SELL → exactly one new row should appear per round; an extra row
+// (e.g. from a stranded retry) or a missing row (a fill that didn't
+// commit the gain) both flag a regression.
+Cypress.Commands.add('realizedGainsCount', (userId: string, userKind: string = 'employee') => {
+  return cy
+    .psql(
+      `select count(*) as c from "trading".realized_gains where user_id = '${userId}' and user_kind = '${userKind}'`,
+    )
+    .then((rows) => Number(rows[0]?.c ?? '0'))
+})
+
+// Per-user × ticker holdings sum. After each round the agent's MSFT
+// (or AAPL) holding should equal cumulative (buyQty − sellQty) across
+// every round on that ticker; drift here means cost-basis or fill
+// accounting wrote a phantom share.
+Cypress.Commands.add('holdingQty', (userId: string, ticker: string, userKind: string = 'employee') => {
+  return cy
+    .psql(
+      `select coalesce(sum(h.quantity),0) as q
+         from "trading".portfolio_holdings h
+         join "trading".securities s on s.id = h.security_id
+        where h.user_id = '${userId}' and h.user_kind = '${userKind}' and s.ticker = '${ticker}'`,
+    )
+    .then((rows) => Number(rows[0]?.q ?? '0'))
 })
 
 export {}
