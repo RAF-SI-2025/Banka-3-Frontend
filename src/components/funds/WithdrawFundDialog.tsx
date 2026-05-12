@@ -14,6 +14,7 @@ import { apiError } from '@/lib/api/error'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { v1AccountStatus } from '@/lib/api/generated/models/v1AccountStatus'
+import { v1AccountKind } from '@/lib/api/generated/models/v1AccountKind'
 import { BANK_AS_CLIENT_OWNER_ID, FOREX_BOOK_OWNER_ID } from '@/lib/trading/sentinels'
 import { currencyLabel, formatMoney } from '@/lib/format'
 import { VerificationDialog } from '@/components/verification/verification-dialog'
@@ -72,6 +73,10 @@ export function WithdrawFundDialog({
       listAccounts({
         ownerClientId: ownerForList,
         status: v1AccountStatus.ACCOUNT_STATUS_ACTIVE,
+        // bank.ListAccounts excludes forex_book by default; pass `kind`
+        // explicitly when the supervisor is withdrawing to the bank's
+        // book so the picker sees the bank's per-currency book accounts.
+        ...(onBehalfBank ? { kind: v1AccountKind.ACCOUNT_KIND_FOREX_BOOK } : {}),
       }),
     enabled: open && Boolean(ownerForList),
   })
@@ -104,6 +109,7 @@ export function WithdrawFundDialog({
       qc.invalidateQueries({ queryKey: keys.funds.all })
       qc.invalidateQueries({ queryKey: keys.account.all })
       if (data.pending && onPending) onPending()
+      setShowVerify(false)
       onClose()
     },
     onError: (e) => setErr(apiError(e, 'Greška prilikom povlačenja iz fonda.')),

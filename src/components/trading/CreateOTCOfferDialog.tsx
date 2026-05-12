@@ -91,7 +91,9 @@ export function CreateOTCOfferDialog({
         quantity: Number(qty),
         pricePerUnit,
         premium,
-        settlementDate,
+        // The form is <input type="date"> → "YYYY-MM-DD"; the backend's
+        // proto.Timestamp requires RFC3339, so pin to midnight UTC.
+        settlementDate: settlementDate ? `${settlementDate}T00:00:00Z` : '',
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.otc.all })
