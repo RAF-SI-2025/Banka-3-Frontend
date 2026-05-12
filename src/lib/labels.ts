@@ -30,6 +30,7 @@ export const accountKindLabel: Record<v1AccountKind, string> = {
   [v1AccountKind.ACCOUNT_KIND_SYSTEM]: 'Sistemski (banka)',
   [v1AccountKind.ACCOUNT_KIND_FOREX_BOOK]: 'Forex inventory (banka)',
   [v1AccountKind.ACCOUNT_KIND_STATE_TAX]: 'Državni račun za porez',
+  [v1AccountKind.ACCOUNT_KIND_FUND]: 'Račun investicionog fonda',
 }
 
 export const accountSubtypeLabel: Record<v1AccountSubtype, string> = {
@@ -149,6 +150,11 @@ export const txKindLabel: Record<v1TransactionKind, string> = {
   [v1TransactionKind.TRANSACTION_KIND_FEE]: 'Provizija',
   [v1TransactionKind.TRANSACTION_KIND_TRADE]: 'Trgovina',
   [v1TransactionKind.TRANSACTION_KIND_TAX]: 'Porez',
+  [v1TransactionKind.TRANSACTION_KIND_FOREX_FILL]: 'Forex izvršenje',
+  [v1TransactionKind.TRANSACTION_KIND_OTC_PREMIUM]: 'OTC premium',
+  [v1TransactionKind.TRANSACTION_KIND_OTC_EXERCISE]: 'OTC izvršenje',
+  [v1TransactionKind.TRANSACTION_KIND_FUND_INVEST]: 'Ulaganje u fond',
+  [v1TransactionKind.TRANSACTION_KIND_FUND_WITHDRAW]: 'Povlačenje iz fonda',
 }
 
 export const txStatusLabel: Record<v1TransactionStatus, string> = {

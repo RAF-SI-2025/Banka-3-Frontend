@@ -4,7 +4,15 @@ import { api } from './client'
 // Adding a new action means: add a constant here, register a rule in
 // the gateway's verification middleware, and gate the form with the
 // dialog below.
-export type VerificationKind = 'payment' | 'transfer' | 'limit_change' | 'card_issue'
+export type VerificationKind =
+  | 'payment'
+  | 'transfer'
+  | 'limit_change'
+  | 'card_issue'
+  | 'otc_accept'
+  | 'otc_exercise'
+  | 'fund_invest'
+  | 'fund_withdraw'
 
 // VerificationProof is what the dialog hands back to the caller. The
 // caller passes it on to the gated mutation (payments, transfers,

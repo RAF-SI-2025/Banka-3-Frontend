@@ -1,0 +1,11 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export enum v1OTCContractStatus {
+    OTC_CONTRACT_STATUS_UNSPECIFIED = 'OTC_CONTRACT_STATUS_UNSPECIFIED',
+    OTC_CONTRACT_STATUS_ACTIVE = 'OTC_CONTRACT_STATUS_ACTIVE',
+    OTC_CONTRACT_STATUS_EXERCISED = 'OTC_CONTRACT_STATUS_EXERCISED',
+    OTC_CONTRACT_STATUS_EXPIRED = 'OTC_CONTRACT_STATUS_EXPIRED',
+    OTC_CONTRACT_STATUS_SETTLING = 'OTC_CONTRACT_STATUS_SETTLING',
+}

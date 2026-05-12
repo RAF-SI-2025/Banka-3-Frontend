@@ -27,6 +27,14 @@ export const Permissions = {
   ActuaryAgent: 'actuary.agent',
   TradingClient: 'trading.client',
   TradingMargin: 'trading.margin',
+  OTCRead: 'otc.read',
+  OTCTradeClient: 'otc.trade.client',
+  OTCTradeSupervisor: 'otc.trade.supervisor',
+  FundsReadClient: 'funds.read.client',
+  FundsInvestClient: 'funds.invest.client',
+  FundsReadSupervisor: 'funds.read.supervisor',
+  FundsManageSupervisor: 'funds.manage.supervisor',
+  BankProfitRead: 'bank.profit.read',
 } as const
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions]
@@ -61,4 +69,12 @@ export const permissionLabels: Record<Permission, string> = {
   [Permissions.ActuaryAgent]: 'Aktuar — agent',
   [Permissions.TradingClient]: 'Klijent — trgovina',
   [Permissions.TradingMargin]: 'Trgovina margin nalozima',
+  [Permissions.OTCRead]: 'OTC — pregled',
+  [Permissions.OTCTradeClient]: 'OTC — trgovina (klijent)',
+  [Permissions.OTCTradeSupervisor]: 'OTC — trgovina (supervizor)',
+  [Permissions.FundsReadClient]: 'Fondovi — pregled (klijent)',
+  [Permissions.FundsInvestClient]: 'Fondovi — ulaganje (klijent)',
+  [Permissions.FundsReadSupervisor]: 'Fondovi — pregled (supervizor)',
+  [Permissions.FundsManageSupervisor]: 'Fondovi — upravljanje',
+  [Permissions.BankProfitRead]: 'Profit banke — pregled',
 }

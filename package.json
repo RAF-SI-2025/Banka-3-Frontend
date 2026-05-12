@@ -14,6 +14,7 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "cypress:soak": "cypress run --config-file cypress.soak.config.ts",
+    "cypress:soak-e2e": "cypress run --config-file cypress.soak-e2e.config.ts",
     "api:gen": "openapi-typescript-codegen --input ../Banka-3-Backend/gen/openapi/banka.swagger.json --output src/lib/api/generated --client axios --useOptions"
   },
   "dependencies": {

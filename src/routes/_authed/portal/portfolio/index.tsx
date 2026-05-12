@@ -14,6 +14,7 @@ import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ExerciseOptionDialog } from '@/components/trading/ExerciseOptionDialog'
+import { PublicCountEditor } from '@/components/trading/PublicCountEditor'
 
 const TRADING_PERMS = [
   Permissions.Actuary,
@@ -65,7 +66,7 @@ function PortalPortfolioPage() {
         </Card>
       </header>
 
-      <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_STOCK]} rows={stocks} loading={holdings.isFetching} />
+      <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_STOCK]} rows={stocks} loading={holdings.isFetching} showPublic />
       <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FUTURE]} rows={futures} loading={holdings.isFetching} />
       {forex.length > 0 && (
         <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FOREX]} rows={forex} loading={holdings.isFetching} />
@@ -144,7 +145,7 @@ function OptionsSection({ rows, loading }: { rows: v1Holding[]; loading: boolean
   )
 }
 
-function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Holding[]; loading: boolean }) {
+function HoldingsSection({ title, rows, loading, showPublic }: { title: string; rows: v1Holding[]; loading: boolean; showPublic?: boolean }) {
   const navigate = useNavigate()
   return (
     <Card>
@@ -160,12 +161,13 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
               <TH className="text-right">Tržišna vrednost</TH>
               <TH className="text-right">Nerealizovan P&L</TH>
               <TH>Poslednja izmena</TH>
+              {showPublic && <TH className="text-right">Javno</TH>}
               <TH>{/* actions */}</TH>
             </TR>
           </THead>
           <TBody>
             {rows.length === 0 ? (
-              <EmptyRow colSpan={8}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
+              <EmptyRow colSpan={showPublic ? 9 : 8}>{loading ? 'Učitavanje…' : 'Nemate pozicije'}</EmptyRow>
             ) : (
               rows.map((h) => {
                 const pnl = unrealizedPnL({
@@ -193,6 +195,11 @@ function HoldingsSection({ title, rows, loading }: { title: string; rows: v1Hold
                       {pnl.pct !== null && <span className="text-xs"> ({sign}{pnl.pct.toFixed(2)}%)</span>}
                     </TD>
                     <TD className="text-muted-foreground">{formatDate(h.updatedAt)}</TD>
+                    {showPublic && (
+                      <TD className="text-right">
+                        <PublicCountEditor holding={h} />
+                      </TD>
+                    )}
                     <TD>
                       {securityId && qty > 0 && (
                         <Link

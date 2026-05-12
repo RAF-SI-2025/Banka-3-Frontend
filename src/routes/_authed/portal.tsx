@@ -56,6 +56,21 @@ function PortalLayout() {
       hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
     },
     { to: '/portal/berze', label: 'Berze', hidden: !has(perms, Permissions.Admin) },
+    {
+      to: '/portal/otc',
+      label: 'OTC',
+      hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor]),
+    },
+    {
+      to: '/portal/otc/ponude',
+      label: '↳ Aktivne ponude',
+      hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor]),
+    },
+    {
+      to: '/portal/otc/ugovori',
+      label: '↳ Sklopljeni ugovori',
+      hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor]),
+    },
   ]
 
   return (

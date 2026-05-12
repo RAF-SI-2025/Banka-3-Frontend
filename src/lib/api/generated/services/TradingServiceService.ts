@@ -3,10 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { rpcStatus } from '../models/rpcStatus';
+import type { TradingServiceAcceptOTCOfferBody } from '../models/TradingServiceAcceptOTCOfferBody';
 import type { TradingServiceApproveOrderBody } from '../models/TradingServiceApproveOrderBody';
 import type { TradingServiceCancelOrderBody } from '../models/TradingServiceCancelOrderBody';
+import type { TradingServiceCounterOfferOTCBody } from '../models/TradingServiceCounterOfferOTCBody';
 import type { TradingServiceDeclineOrderBody } from '../models/TradingServiceDeclineOrderBody';
 import type { TradingServiceExerciseOptionBody } from '../models/TradingServiceExerciseOptionBody';
+import type { TradingServiceExerciseOTCContractBody } from '../models/TradingServiceExerciseOTCContractBody';
+import type { TradingServiceInvestInFundBody } from '../models/TradingServiceInvestInFundBody';
 import type { TradingServiceResetActuaryUsedLimitBody } from '../models/TradingServiceResetActuaryUsedLimitBody';
 import type { TradingServiceSetActuaryNeedApprovalBody } from '../models/TradingServiceSetActuaryNeedApprovalBody';
 import type { TradingServiceSetExchangeOverrideBody } from '../models/TradingServiceSetExchangeOverrideBody';
@@ -14,24 +18,45 @@ import type { TradingServiceSetPublicCountBody } from '../models/TradingServiceS
 import type { TradingServiceUpdateActuaryLimitBody } from '../models/TradingServiceUpdateActuaryLimitBody';
 import type { TradingServiceUpsertActuaryInfoBody } from '../models/TradingServiceUpsertActuaryInfoBody';
 import type { TradingServiceUpsertExchangeBody } from '../models/TradingServiceUpsertExchangeBody';
+import type { TradingServiceWithdrawFromFundBody } from '../models/TradingServiceWithdrawFromFundBody';
+import type { TradingServiceWithdrawOTCOfferBody } from '../models/TradingServiceWithdrawOTCOfferBody';
+import type { v1AcceptOTCOfferResponse } from '../models/v1AcceptOTCOfferResponse';
 import type { v1ActuaryInfo } from '../models/v1ActuaryInfo';
+import type { v1CreateFundRequest } from '../models/v1CreateFundRequest';
 import type { v1CreateOrderRequest } from '../models/v1CreateOrderRequest';
 import type { v1CreateOrderResponse } from '../models/v1CreateOrderResponse';
+import type { v1CreateOTCOfferRequest } from '../models/v1CreateOTCOfferRequest';
 import type { v1Exchange } from '../models/v1Exchange';
 import type { v1ExerciseOptionResponse } from '../models/v1ExerciseOptionResponse';
+import type { v1ExerciseOTCContractResponse } from '../models/v1ExerciseOTCContractResponse';
+import type { v1Fund } from '../models/v1Fund';
+import type { v1FundTransactionResponse } from '../models/v1FundTransactionResponse';
+import type { v1GetFundPerformanceResponse } from '../models/v1GetFundPerformanceResponse';
+import type { v1GetFundResponse } from '../models/v1GetFundResponse';
 import type { v1GetListingDailyHistoryResponse } from '../models/v1GetListingDailyHistoryResponse';
 import type { v1GetOptionChainResponse } from '../models/v1GetOptionChainResponse';
+import type { v1GetOTCThreadResponse } from '../models/v1GetOTCThreadResponse';
 import type { v1Holding } from '../models/v1Holding';
 import type { v1ListActuariesResponse } from '../models/v1ListActuariesResponse';
+import type { v1ListActuaryPerformancesResponse } from '../models/v1ListActuaryPerformancesResponse';
+import type { v1ListBankFundPositionsResponse } from '../models/v1ListBankFundPositionsResponse';
 import type { v1ListExchangesResponse } from '../models/v1ListExchangesResponse';
+import type { v1ListFundPositionsResponse } from '../models/v1ListFundPositionsResponse';
+import type { v1ListFundsResponse } from '../models/v1ListFundsResponse';
+import type { v1ListFundTransactionsResponse } from '../models/v1ListFundTransactionsResponse';
 import type { v1ListHoldingsResponse } from '../models/v1ListHoldingsResponse';
 import type { v1Listing } from '../models/v1Listing';
 import type { v1ListListingsResponse } from '../models/v1ListListingsResponse';
 import type { v1ListOrdersResponse } from '../models/v1ListOrdersResponse';
+import type { v1ListOTCContractsResponse } from '../models/v1ListOTCContractsResponse';
+import type { v1ListOTCThreadsResponse } from '../models/v1ListOTCThreadsResponse';
+import type { v1ListPublicHoldingsResponse } from '../models/v1ListPublicHoldingsResponse';
 import type { v1ListRealizedPnLResponse } from '../models/v1ListRealizedPnLResponse';
 import type { v1ListSecuritiesResponse } from '../models/v1ListSecuritiesResponse';
 import type { v1ListTaxPositionsResponse } from '../models/v1ListTaxPositionsResponse';
 import type { v1Order } from '../models/v1Order';
+import type { v1OTCContract } from '../models/v1OTCContract';
+import type { v1OTCOffer } from '../models/v1OTCOffer';
 import type { v1RunDailyResetActuariesResponse } from '../models/v1RunDailyResetActuariesResponse';
 import type { v1RunTaxRequest } from '../models/v1RunTaxRequest';
 import type { v1RunTaxResponse } from '../models/v1RunTaxResponse';
@@ -247,6 +272,248 @@ export class TradingServiceService {
         });
     }
     /**
+     * ListFunds returns the fund discovery list (spec p.71). Supervisors
+     * and clients with funds.read.* can browse; rows include total_value,
+     * profit, and minimum_contribution for sorting/filtering.
+     * @returns v1ListFundsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListFunds({
+        status,
+        managerUserId,
+        minContributionAtLeast,
+        minContributionAtMost,
+        sort,
+        order,
+    }: {
+        /**
+         * status: "active" (default), "any".
+         */
+        status?: string,
+        /**
+         * Filter by manager (supervisor view).
+         */
+        managerUserId?: string,
+        /**
+         * Filter by minimum_contribution range (RSD, decimal strings).
+         * Empty disables the bound.
+         */
+        minContributionAtLeast?: string,
+        minContributionAtMost?: string,
+        /**
+         * Sort: "name" (default), "total_value", "profit", "minimum_contribution".
+         */
+        sort?: string,
+        /**
+         * "asc" (default) or "desc".
+         */
+        order?: string,
+    }): CancelablePromise<v1ListFundsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/funds',
+            query: {
+                'status': status,
+                'managerUserId': managerUserId,
+                'minContributionAtLeast': minContributionAtLeast,
+                'minContributionAtMost': minContributionAtMost,
+                'sort': sort,
+                'order': order,
+            },
+        });
+    }
+    /**
+     * CreateFund mints a new fund (supervisor only — spec p.74). Bank
+     * service is called internally to open the fund's RSD account; the
+     * creator becomes the default manager.
+     * @returns v1Fund A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceCreateFund({
+        body,
+    }: {
+        body: v1CreateFundRequest,
+    }): CancelablePromise<v1Fund | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/funds',
+            body: body,
+        });
+    }
+    /**
+     * ListFundPositions returns the caller's positions across all funds
+     * (clients) or a specified user's (supervisors/admin). Supervisors
+     * may pass the BankAsClient sentinel UUID to see the bank's stakes
+     * (FE-FUND-6, Profit Banke "Bank fund positions").
+     * @returns v1ListFundPositionsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListFundPositions({
+        clientId,
+        status,
+    }: {
+        /**
+         * Empty client_id = caller's own positions. Supervisors/admin may
+         * narrow to a specific client (or to the BankAsClient sentinel for
+         * Profit Banke).
+         */
+        clientId?: string,
+        /**
+         * status: "active" (default, units > 0), "any".
+         */
+        status?: string,
+    }): CancelablePromise<v1ListFundPositionsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/funds/positions',
+            query: {
+                'clientId': clientId,
+                'status': status,
+            },
+        });
+    }
+    /**
+     * GetFund returns the fund detail including its holdings list and the
+     * caller's position when one exists. Spec p.74.
+     * @returns v1GetFundResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceGetFund({
+        id,
+    }: {
+        id: string,
+    }): CancelablePromise<v1GetFundResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/funds/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * InvestInFund runs the fund_invest SAGA: reserves the source
+     * account, transfers to the fund's bank account (FX hop if needed),
+     * upserts the client_fund_positions row (units math) and writes a
+     * client_fund_transactions row. Verification-gated (FOUND-9).
+     * @returns v1FundTransactionResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceInvestInFund({
+        id,
+        body,
+    }: {
+        id: string,
+        body: TradingServiceInvestInFundBody,
+    }): CancelablePromise<v1FundTransactionResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/funds/{id}/invest',
+            path: {
+                'id': id,
+            },
+            body: body,
+        });
+    }
+    /**
+     * GetFundPerformance returns the daily liquid_rsd + holdings_value_rsd
+     * time series for a fund. FE-FUND-2 chart.
+     * @returns v1GetFundPerformanceResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceGetFundPerformance({
+        id,
+        days,
+    }: {
+        id: string,
+        /**
+         * Sliding window: defaults to 30d when zero.
+         */
+        days?: number,
+    }): CancelablePromise<v1GetFundPerformanceResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/funds/{id}/performance',
+            path: {
+                'id': id,
+            },
+            query: {
+                'days': days,
+            },
+        });
+    }
+    /**
+     * ListFundTransactions returns the audit log of invest/withdraw rows
+     * for a fund. Supervisors see everything; clients see only their own.
+     * @returns v1ListFundTransactionsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListFundTransactions({
+        id,
+        clientId,
+        status,
+        page,
+        pageSize,
+    }: {
+        id: string,
+        /**
+         * narrow when caller is supervisor
+         */
+        clientId?: string,
+        /**
+         * "" / "pending" / "completed" / "failed"
+         */
+        status?: string,
+        page?: number,
+        pageSize?: number,
+    }): CancelablePromise<v1ListFundTransactionsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/funds/{id}/transactions',
+            path: {
+                'id': id,
+            },
+            query: {
+                'clientId': clientId,
+                'status': status,
+                'page': page,
+                'pageSize': pageSize,
+            },
+        });
+    }
+    /**
+     * WithdrawFromFund runs the fund_withdraw SAGA. Liquid path (fund
+     * has enough RSD on its bank account) reserves and transfers
+     * directly; illiquid path stays in `pending` while auto-liquidation
+     * orders settle the gap. Verification-gated.
+     * @returns v1FundTransactionResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceWithdrawFromFund({
+        id,
+        body,
+    }: {
+        id: string,
+        body: TradingServiceWithdrawFromFundBody,
+    }): CancelablePromise<v1FundTransactionResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/funds/{id}/withdraw',
+            path: {
+                'id': id,
+            },
+            body: body,
+        });
+    }
+    /**
      * @returns v1ListListingsResponse A successful response.
      * @returns rpcStatus An unexpected error response.
      * @throws ApiError
@@ -364,8 +631,14 @@ export class TradingServiceService {
         status?: string,
         /**
          * employee/client filter (supervisor view)
+         *
+         * - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
          */
-        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE',
+        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
         /**
          * narrow to a single trader
          */
@@ -485,6 +758,266 @@ export class TradingServiceService {
         });
     }
     /**
+     * ListOTCContracts drives the "Sklopljeni ugovori" page (spec p.69)
+     * for the caller. Supervisors/admin may filter by user_id.
+     * @returns v1ListOTCContractsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListOtcContracts({
+        partyUserId,
+        partyUserKind = 'USER_KIND_UNSPECIFIED',
+        status,
+    }: {
+        /**
+         * Supervisor/admin: empty user_id returns all; non-empty narrows.
+         */
+        partyUserId?: string,
+        /**
+         *  - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
+         */
+        partyUserKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
+        /**
+         * "active"/"any"/"" (default "active").
+         */
+        status?: string,
+    }): CancelablePromise<v1ListOTCContractsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/otc/contracts',
+            query: {
+                'partyUserId': partyUserId,
+                'partyUserKind': partyUserKind,
+                'status': status,
+            },
+        });
+    }
+    /**
+     * GetOTCContract returns one contract (caller must be a party or
+     * supervisor/admin).
+     * @returns v1OTCContract A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceGetOtcContract({
+        id,
+    }: {
+        id: string,
+    }): CancelablePromise<v1OTCContract | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/otc/contracts/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * ExerciseOTCContract runs the otc_exercise SAGA on an active
+     * contract (spec p.80 intra-bank): buyer pays qty * strike to seller,
+     * shares transfer, contract flips to `exercised`. Buyer's cost basis
+     * on the received shares is `strike_price`; seller writes a
+     * realized_gains row.
+     * @returns v1ExerciseOTCContractResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceExerciseOtcContract({
+        id,
+        body,
+    }: {
+        id: string,
+        body: TradingServiceExerciseOTCContractBody,
+    }): CancelablePromise<v1ExerciseOTCContractResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/otc/contracts/{id}/exercise',
+            path: {
+                'id': id,
+            },
+            body: body,
+        });
+    }
+    /**
+     * ListPublicHoldings drives the OTC discovery board (spec p.67):
+     * holdings owned by other users that have public_count > reserved_count
+     * are visible. Filterable by ticker.
+     * @returns v1ListPublicHoldingsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListPublicHoldings({
+        ticker,
+    }: {
+        ticker?: string,
+    }): CancelablePromise<v1ListPublicHoldingsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/otc/discovery',
+            query: {
+                'ticker': ticker,
+            },
+        });
+    }
+    /**
+     * ListOTCThreads drives the "Aktivne ponude" page (spec p.69) — every
+     * thread the caller participates in (as buyer or seller), most-recent
+     * iteration per thread.
+     * @returns v1ListOTCThreadsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListOtcThreads({
+        partyUserId,
+        partyUserKind = 'USER_KIND_UNSPECIFIED',
+        status,
+    }: {
+        /**
+         * For supervisor/admin views — narrow to a single party. Empty for
+         * self.
+         */
+        partyUserId?: string,
+        /**
+         *  - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
+         */
+        partyUserKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
+        /**
+         * "open" / "any" / "" (default "open").
+         */
+        status?: string,
+    }): CancelablePromise<v1ListOTCThreadsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/otc/offers',
+            query: {
+                'partyUserId': partyUserId,
+                'partyUserKind': partyUserKind,
+                'status': status,
+            },
+        });
+    }
+    /**
+     * CreateOTCOffer opens a new negotiation thread. The buyer initiates;
+     * the seller_holding_id resolves the seller (its owner). Increments
+     * reserved_count on the seller's holding by quantity.
+     * @returns v1OTCOffer A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceCreateOtcOffer({
+        body,
+    }: {
+        body: v1CreateOTCOfferRequest,
+    }): CancelablePromise<v1OTCOffer | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/otc/offers',
+            body: body,
+        });
+    }
+    /**
+     * GetOTCThread returns every iteration in a thread (oldest first).
+     * Drives the thread-detail modal on spec p.69.
+     * @returns v1GetOTCThreadResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceGetOtcThread({
+        threadId,
+    }: {
+        threadId: string,
+    }): CancelablePromise<v1GetOTCThreadResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/otc/offers/{threadId}',
+            path: {
+                'threadId': threadId,
+            },
+        });
+    }
+    /**
+     * AcceptOTCOffer accepts the open iteration in a thread and mints
+     * an active contract via the otc_premium SAGA (premium transfers
+     * from buyer to seller; contract row is created; seller's holding
+     * reservation rolls over from offer to contract).
+     * @returns v1AcceptOTCOfferResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceAcceptOtcOffer({
+        threadId,
+        body,
+    }: {
+        threadId: string,
+        body: TradingServiceAcceptOTCOfferBody,
+    }): CancelablePromise<v1AcceptOTCOfferResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/otc/offers/{threadId}/accept',
+            path: {
+                'threadId': threadId,
+            },
+            body: body,
+        });
+    }
+    /**
+     * CounterOfferOTC appends a new iteration to an existing thread. The
+     * prior open row flips to `superseded`; reservation is adjusted if
+     * quantity changed. modified_by tracks which party last touched the
+     * thread (drives the FE unread badge).
+     * @returns v1OTCOffer A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceCounterOfferOtc({
+        threadId,
+        body,
+    }: {
+        threadId: string,
+        body: TradingServiceCounterOfferOTCBody,
+    }): CancelablePromise<v1OTCOffer | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/otc/offers/{threadId}/counter',
+            path: {
+                'threadId': threadId,
+            },
+            body: body,
+        });
+    }
+    /**
+     * WithdrawOTCOffer pulls a thread out of negotiation. Either party
+     * may call; the open row flips to `withdrawn` and the seller's
+     * reservation is released.
+     * @returns v1OTCOffer A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceWithdrawOtcOffer({
+        threadId,
+        body,
+    }: {
+        threadId: string,
+        body: TradingServiceWithdrawOTCOfferBody,
+    }): CancelablePromise<v1OTCOffer | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/otc/offers/{threadId}/withdraw',
+            path: {
+                'threadId': threadId,
+            },
+            body: body,
+        });
+    }
+    /**
      * @returns v1ListHoldingsResponse A successful response.
      * @returns rpcStatus An unexpected error response.
      * @throws ApiError
@@ -498,7 +1031,14 @@ export class TradingServiceService {
          * For supervisor view; clients/agents see only their own.
          */
         userId?: string,
-        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE',
+        /**
+         *  - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
+         */
+        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
         type?: 'SECURITY_TYPE_UNSPECIFIED' | 'SECURITY_TYPE_STOCK' | 'SECURITY_TYPE_FUTURE' | 'SECURITY_TYPE_FOREX' | 'SECURITY_TYPE_OPTION',
     }): CancelablePromise<v1ListHoldingsResponse | rpcStatus> {
         return __request(OpenAPI, {
@@ -554,6 +1094,41 @@ export class TradingServiceService {
                 'id': id,
             },
             body: body,
+        });
+    }
+    /**
+     * @returns v1ListActuaryPerformancesResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListActuaryPerformances({
+        type,
+        nameQuery,
+    }: {
+        /**
+         * "agent" / "supervisor" / "" (default both). Mirrors actuary_info.type.
+         */
+        type?: string,
+        nameQuery?: string,
+    }): CancelablePromise<v1ListActuaryPerformancesResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/profit/actuaries',
+            query: {
+                'type': type,
+                'nameQuery': nameQuery,
+            },
+        });
+    }
+    /**
+     * @returns v1ListBankFundPositionsResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceListBankFundPositions(): CancelablePromise<v1ListBankFundPositionsResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/profit/funds',
         });
     }
     /**
@@ -713,7 +1288,14 @@ export class TradingServiceService {
         userKind = 'USER_KIND_UNSPECIFIED',
         nameQuery,
     }: {
-        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE',
+        /**
+         *  - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
+         */
+        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
         nameQuery?: string,
     }): CancelablePromise<v1ListTaxPositionsResponse | rpcStatus> {
         return __request(OpenAPI, {
@@ -737,7 +1319,14 @@ export class TradingServiceService {
         to,
     }: {
         userId?: string,
-        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE',
+        /**
+         *  - USER_KIND_FUND: USER_KIND_FUND identifies investment-fund-as-actor rows (c4 PR3,
+         * spec p.74-75). A fund-actor order's user_id is the fund's id; its
+         * settlement account is the fund's bank account. Fund-actor sells do
+         * not write realized_gains rows — funds are pre-tax vehicles; tax
+         * attaches to the client at withdrawal time (EDGE-3).
+         */
+        userKind?: 'USER_KIND_UNSPECIFIED' | 'USER_KIND_CLIENT' | 'USER_KIND_EMPLOYEE' | 'USER_KIND_FUND',
         from?: string,
         to?: string,
     }): CancelablePromise<v1ListRealizedPnLResponse | rpcStatus> {

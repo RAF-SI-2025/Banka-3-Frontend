@@ -21,5 +21,12 @@ export type v1Holding = {
     profit?: string;
     acquiredAt?: string;
     updatedAt?: string;
+    /**
+     * c4 (spec p.68) — count of shares committed against outstanding OTC
+     * offers + active OTC contracts. public_count and reserved_count are
+     * orthogonal; the FE renders public_count − reserved_count as the
+     * "available on the OTC board" number.
+     */
+    reservedCount?: number;
 };
 

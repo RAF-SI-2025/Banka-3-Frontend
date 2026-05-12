@@ -14,5 +14,13 @@ export type v1CreateOrderRequest = {
     allOrNone?: boolean;
     margin?: boolean;
     accountId?: string;
+    /**
+     * c4 PR3 fund-actor (spec p.74-75). When set, the caller is acting on
+     * behalf of an investment fund they manage; the order's owner/account
+     * are the fund's. Validated against the fund row (caller is manager,
+     * account is fund.bank_account_id). Empty for normal client/employee
+     * orders.
+     */
+    onBehalfOfFundId?: string;
 };
 

@@ -14,6 +14,7 @@
  * - ACCOUNT_KIND_SYSTEM: bank-owned house  (TT=99, internal)
  * - ACCOUNT_KIND_FOREX_BOOK: bank's per-currency FX inventory book (internal, addressable for actuary trading)
  * - ACCOUNT_KIND_STATE_TAX: RSD destination for capital-gains tax remittance (internal)
+ * - ACCOUNT_KIND_FUND: investment fund's liquidity account (c4 PR3, spec p.74; FundsOwnerID sentinel as owner)
  */
 export enum v1AccountKind {
     ACCOUNT_KIND_UNSPECIFIED = 'ACCOUNT_KIND_UNSPECIFIED',
@@ -24,4 +25,5 @@ export enum v1AccountKind {
     ACCOUNT_KIND_SYSTEM = 'ACCOUNT_KIND_SYSTEM',
     ACCOUNT_KIND_FOREX_BOOK = 'ACCOUNT_KIND_FOREX_BOOK',
     ACCOUNT_KIND_STATE_TAX = 'ACCOUNT_KIND_STATE_TAX',
+    ACCOUNT_KIND_FUND = 'ACCOUNT_KIND_FUND',
 }

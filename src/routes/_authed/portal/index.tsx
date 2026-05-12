@@ -43,6 +43,9 @@ const tiles: Tile[] = [
   { to: '/portal/aktuari', label: 'Aktuari', description: 'Upravljanje aktuarima i dnevnim limitima.', perms: [Permissions.Admin, Permissions.ActuarySupervisor] },
   { to: '/portal/porez', label: 'Porez', description: 'Kapitalni dobici i pokretanje obračuna poreza.', perms: [Permissions.Admin, Permissions.ActuarySupervisor] },
   { to: '/portal/berze', label: 'Berze', description: 'Katalog berzi i radno vreme.', perms: [Permissions.Admin] },
+  { to: '/portal/otc', label: 'OTC', description: 'Vansistemska trgovina hartijama.', perms: [Permissions.OTCRead, Permissions.OTCTradeSupervisor] },
+  { to: '/portal/otc/ponude', label: 'Aktivne ponude', description: 'Tekuća pregovaranja.', perms: [Permissions.OTCRead, Permissions.OTCTradeSupervisor] },
+  { to: '/portal/otc/ugovori', label: 'Sklopljeni ugovori', description: 'Aktivni i istekli OTC ugovori.', perms: [Permissions.OTCRead, Permissions.OTCTradeSupervisor] },
 ]
 
 function PortalLanding() {

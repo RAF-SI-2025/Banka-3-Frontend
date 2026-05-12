@@ -32,5 +32,14 @@ export type v1Order = {
     remainingQuantity?: number;
     lastModification?: string;
     createdAt?: string;
+    /**
+     * c4 PR3 — actor_kind discriminates whether this order was placed on
+     * behalf of the user themselves or for an investment fund they
+     * manage. on_behalf_of_fund_id is non-empty when actor_kind == FUND.
+     * For backward compat, default actor_kind is whatever user_kind
+     * resolved to at create time (client or employee).
+     */
+    actorKind?: bankaTradingV1UserKind;
+    onBehalfOfFundId?: string;
 };
 

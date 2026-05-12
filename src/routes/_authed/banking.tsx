@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
-import { Permissions, has } from '@/lib/permissions'
+import { Permissions, has, hasAny } from '@/lib/permissions'
 import { Header } from '@/components/shell/header'
 import { Sidebar, type NavItem } from '@/components/shell/sidebar'
 import { RouteErrorBoundary } from '@/components/shell/error-boundary'
@@ -30,6 +30,9 @@ function BankingLayout() {
     { to: '/banking/portfolio', label: 'Portfolio', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/trgovina', label: 'Trgovina', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/trgovina/nalozi', label: '↳ Moji nalozi', hidden: !has(perms, Permissions.TradingClient) },
+    { to: '/banking/otc', label: 'OTC', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
+    { to: '/banking/otc/ponude', label: '↳ Aktivne ponude', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
+    { to: '/banking/otc/ugovori', label: '↳ Sklopljeni ugovori', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
   ]
 
   return (
