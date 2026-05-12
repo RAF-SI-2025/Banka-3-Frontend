@@ -139,10 +139,21 @@ the backend first.
 ## C1 + C2 + C3 status
 
 c1 + c2 + c3 frontend is feature-complete on the `rewrite` branch as
-of 2026-05-10. `tsc -b` clean, `npm run lint` clean, vitest 121 green,
-cypress c3 canned suite green plus all 5 c3 live specs (tax-run,
-exchange-halt, client-trading, agent-pending-approval,
-supervisor-cancel — each green individually).
+of 2026-05-10. `tsc -b` clean, `npm run lint` clean (0 errors / 0
+warnings), vitest 192 green, cypress c3 canned suite green plus the
+c3 live specs (tax-run, exchange-halt, client-trading, agent-pending-
+approval, supervisor-cancel, **e2e-trading-day**). The
+`e2e-trading-day` spec walks the C3-E2E.pdf "kompletan radni dan"
+scenario end-to-end (12 DEO blocks) and gates on numeric invariants:
+bank's USD trading-book delta after BUY (= notional + $7 commission),
+again after the round-trip, realized_gains row values
+(cost/proceeds/profit_native to ±$0.01), and `state-tax` RSD account
+delta == agent's unpaid before the run. The soak suite at
+`cypress/soak/c3-multi-round.cy.ts` (`npm run cypress:soak`) is the
+cross-round gate — runs three BUY/SELL/tax/reset rounds back-to-back
+without resetBackend and asserts state_tax monotonicity + continuity,
+zero pending exec / saga / duplicate-op-leg rows, and usedLimit
+accumulation+reset.
 
 **Routes**:
 - `/login`, `/activate`, `/password-reset[/confirm]` — c1 auth surface
