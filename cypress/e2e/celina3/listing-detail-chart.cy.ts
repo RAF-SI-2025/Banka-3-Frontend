@@ -41,9 +41,9 @@ describe('Celina 3 — listing detail chart period (S19)', () => {
       // Expect the recorded spans to include 30, 90, and 365 (give
       // or take a day for TZ rounding).
       const has = (n: number) => spans.some((s) => Math.abs(s - n) <= 1)
-      expect(has(30), `30D in spans=${spans.join(',')}`).to.be.true
-      expect(has(90), `90D in spans=${spans.join(',')}`).to.be.true
-      expect(has(365), `1G in spans=${spans.join(',')}`).to.be.true
+      expect(has(30), `30D in spans=${spans.join(',')}`).to.equal(true)
+      expect(has(90), `90D in spans=${spans.join(',')}`).to.equal(true)
+      expect(has(365), `1G in spans=${spans.join(',')}`).to.equal(true)
     })
   })
 })

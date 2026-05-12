@@ -105,7 +105,7 @@ describe('Celina 3 — catalog filters', () => {
     // cell has the rose (OTM) tone.
     cy.get('[data-cy="option-chain-table"] tbody tr').then(($rows) => {
       const matchRow = $rows.toArray().find((r) => /180,00|200,00/.test(r.textContent ?? ''))
-      expect(matchRow, 'a strike row at 180 or 200 exists').to.not.be.undefined
+      expect(matchRow, 'a strike row at 180 or 200 exists').to.not.equal(undefined)
     })
     cy.get('[data-cy="option-chain-table"]').within(() => {
       cy.get('.bg-emerald-500\\/10').should('have.length.greaterThan', 0)
