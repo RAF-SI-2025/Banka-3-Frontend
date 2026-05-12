@@ -264,7 +264,11 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
       })
 
     // ───────────── DEO 10 ─────────────
-    // Supervizor pregleda porez tracking i pokrece obracun.
+    // Supervizor pregleda porez tracking i pokrece obracun za agenta.
+    // The seed plants pre-existing unpaid realized_gains on Test
+    // Klijent so a global run would tax both users; scoping the run
+    // to the agent's detail page taxes only Marko, which is the
+    // scenario DEO 10 describes.
     cy.clearCookies()
     cy.window().then((w) => w.sessionStorage.clear())
     cy.loginAsSupervisor()
@@ -274,30 +278,51 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
     // The agent's row appears with a positive RSD-denominated
     // outstanding balance (5 × $19.80 ≈ $99 ≈ 9974 RSD; tax = 15%
     // ≈ 1496 RSD). Display labels the agent by full name.
-    cy.contains('Marko Marković', { timeout: 15000 }).should('be.visible')
+    cy.contains('Marko Marković', { timeout: 15000 }).should('be.visible').click()
+    cy.url({ timeout: 10000 }).should('match', /\/portal\/porez\/[0-9a-f-]+/)
+    cy.contains('h1', 'Marko Marković', { timeout: 10000 }).should('be.visible')
 
-    cy.get('[data-cy="run-tax"]').click()
-    cy.get('[data-cy="confirm-run-tax"]').click()
-    // The seed plants pre-existing unpaid realized_gains on Test
-    // Klijent (one positive, one loss) so this run taxes both the
-    // agent's fresh round-trip gain AND the client's seed gain. The
-    // exact user count / RSD total is therefore seed-dependent — the
-    // stable assertion is "the success banner rendered" plus DEO 11's
-    // per-row check that the agent's unpaid is now zero.
-    cy.get('[data-cy="run-tax-result"]', { timeout: 15000 })
+    // Before the run: standings show non-zero unpaid for this user.
+    cy.get('[data-cy="standings-unpaid"]', { timeout: 10000 })
+      .invoke('text')
+      .then((t) => {
+        // FE money format: "1.234,56" → Number 1234.56
+        const n = Number(t.replace(/\./g, '').replace(',', '.'))
+        expect(n).to.be.greaterThan(0)
+      })
+
+    cy.get('[data-cy="run-tax-user"]').click()
+    cy.get('[data-cy="confirm-run-tax-user"]').click()
+    cy.get('[data-cy="run-tax-user-result"]', { timeout: 15000 })
       .should('be.visible')
       .and('contain', 'Obračun završen')
+      .and('contain', '1 korisnika')
+
+    // After the run: standings reload via tax.all invalidation; unpaid
+    // collapses to zero.
+    cy.get('[data-cy="standings-unpaid"]', { timeout: 10000 })
+      .should('contain', '0,00')
 
     // ───────────── DEO 11 ─────────────
-    // Verifikacija krajnjeg stanja: portfolio = 5 MSFT, agent's
-    // unpaid tax for the month is now 0 (supervisor's manual run
-    // collected it).
+    // Verifikacija krajnjeg stanja: portfolio = 5 MSFT; agent's
+    // unpaid tax for the month is 0 on the list page; Test Klijent's
+    // seed-planted unpaid debt is still positive (proves the scoping
+    // worked).
     cy.visit('/portal/porez')
     cy.contains('Marko Marković', { timeout: 15000 })
       .parents('tr')
       .within(() => {
-        // The unpaid column shows zeros once the cron has settled.
         cy.contains('0,00').should('be.visible')
+      })
+    cy.contains('Test Klijent', { timeout: 10000 })
+      .parents('tr')
+      .within(() => {
+        cy.get('[data-cy="cell-unpaid"]')
+          .invoke('text')
+          .then((t) => {
+            const n = Number(t.replace(/\./g, '').replace(',', '.'))
+            expect(n).to.be.greaterThan(0)
+          })
       })
 
     // ───────────── DEO 12 ─────────────

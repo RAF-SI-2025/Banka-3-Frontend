@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { listRealizedPnL, listTaxPositions, type RealizedPnLRow } from '@/lib/api/tax'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { listRealizedPnL, listTaxPositions, runTaxJob, type RealizedPnLRow } from '@/lib/api/tax'
+import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, hasAny } from '@/lib/permissions'
 import { bankaTradingV1UserKind } from '@/lib/api/generated/models/bankaTradingV1UserKind'
 import { formatDateTime, formatMoney, currencyLabel } from '@/lib/format'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+import { ErrorBanner } from '@/components/ui/error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
@@ -52,6 +56,30 @@ function isoMinusDays(days: number): string {
 function TaxDetail() {
   const { userId } = Route.useParams()
   const { kind } = Route.useSearch()
+  const qc = useQueryClient()
+
+  const [confirmRun, setConfirmRun] = useState(false)
+  const [lastResult, setLastResult] = useState<{ users: number; total: string } | null>(null)
+
+  // Scoped tax run: passes {userId, userKind} so the backend's RunTax
+  // limits the candidate set to this one user (tax.go:195). Lets a
+  // supervisor settle one user's debt without sweeping every other
+  // unpaid position on the board.
+  const run = useMutation({
+    mutationFn: () =>
+      runTaxJob({
+        userId,
+        ...(kind ? { userKind: kind } : {}),
+      }),
+    onSuccess: (res) => {
+      setLastResult({
+        users: Number(res.usersTaxed ?? 0),
+        total: String(res.totalCollectedRsd ?? '0'),
+      })
+      setConfirmRun(false)
+      qc.invalidateQueries({ queryKey: keys.tax.all })
+    },
+  })
 
   // Default range: last 365 days. Spec p.62 capital-gains rolls over by
   // calendar year, but supervisors will want to see history beyond the
@@ -88,17 +116,38 @@ function TaxDetail() {
   })
 
   const rows: RealizedPnLRow[] = realized.data?.rows ?? []
+  const runError = apiError(run.error, '') || null
 
   return (
     <main className="container space-y-4 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">
           {me?.displayName || 'Korisnik'}
         </h1>
-        <Link to="/portal/porez" className="text-primary hover:underline">
-          ← Nazad na listu
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button
+            data-cy="run-tax-user"
+            onClick={() => setConfirmRun(true)}
+            disabled={run.isPending}
+          >
+            {run.isPending ? 'Obračun…' : 'Pokreni obračun za korisnika'}
+          </Button>
+          <Link to="/portal/porez" className="text-primary hover:underline">
+            ← Nazad na listu
+          </Link>
+        </div>
       </div>
+
+      {runError && <ErrorBanner>{runError}</ErrorBanner>}
+
+      {lastResult && (
+        <div
+          data-cy="run-tax-user-result"
+          className="rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-900"
+        >
+          Obračun završen: {lastResult.users} korisnika, ukupno {formatMoney(lastResult.total)} RSD.
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -222,6 +271,33 @@ function TaxDetail() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={confirmRun}
+        onClose={() => setConfirmRun(false)}
+        title="Pokretanje obračuna poreza"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmRun(false)}>
+              Otkaži
+            </Button>
+            <Button
+              data-cy="confirm-run-tax-user"
+              disabled={run.isPending}
+              onClick={() => run.mutate()}
+            >
+              {run.isPending ? 'Obračun…' : 'Pokreni'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">
+          Sa korisnika <b>{me?.displayName || 'Korisnik'}</b> biće naplaćeno 15%
+          neuplaćenog dobitka iz računa povezanog sa prodajom u RSD ekvivalentu
+          (spec p.62). Akcija je idempotentna — već oporezovani redovi se
+          preskaču.
+        </p>
+      </Dialog>
     </main>
   )
 }
