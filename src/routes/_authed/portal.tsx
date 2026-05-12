@@ -71,6 +71,15 @@ function PortalLayout() {
       label: '↳ Sklopljeni ugovori',
       hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor]),
     },
+    {
+      to: '/portal/fondovi',
+      label: 'Fondovi',
+      hidden: !hasAny(perms, [
+        Permissions.Admin,
+        Permissions.FundsReadSupervisor,
+        Permissions.FundsManageSupervisor,
+      ]),
+    },
   ]
 
   return (

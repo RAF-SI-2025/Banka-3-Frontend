@@ -99,6 +99,16 @@ export const keys = {
     contracts: (args: object) => ['otc', 'contracts', args] as const,
     contract: (id: string) => ['otc', 'contract', id] as const,
   },
+  funds: {
+    all: ['funds'] as const,
+    list: (args: object) => ['funds', 'list', args] as const,
+    detail: (id: string) => ['funds', 'detail', id] as const,
+    positions: (args: object) => ['funds', 'positions', args] as const,
+    performance: (id: string, days?: number) =>
+      ['funds', 'performance', id, days ?? 0] as const,
+    transactions: (id: string, args: object) =>
+      ['funds', 'transactions', id, args] as const,
+  },
   tax: {
     all: ['tax'] as const,
     board: (args: object) => ['tax', 'board', args] as const,

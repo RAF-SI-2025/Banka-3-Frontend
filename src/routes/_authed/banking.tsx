@@ -33,6 +33,11 @@ function BankingLayout() {
     { to: '/banking/otc', label: 'OTC', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
     { to: '/banking/otc/ponude', label: '↳ Aktivne ponude', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
     { to: '/banking/otc/ugovori', label: '↳ Sklopljeni ugovori', hidden: !hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeClient]) },
+    {
+      to: '/banking/fondovi',
+      label: 'Fondovi',
+      hidden: !hasAny(perms, [Permissions.FundsReadClient, Permissions.FundsInvestClient]),
+    },
   ]
 
   return (

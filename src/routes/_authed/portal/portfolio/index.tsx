@@ -15,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ExerciseOptionDialog } from '@/components/trading/ExerciseOptionDialog'
 import { PublicCountEditor } from '@/components/trading/PublicCountEditor'
+import { MyFundPositions } from '@/components/funds/MyFundPositions'
+import { cn } from '@/lib/utils'
+import type { ReactNode } from 'react'
 
 const TRADING_PERMS = [
   Permissions.Actuary,
@@ -35,6 +38,13 @@ export const Route = createFileRoute('/_authed/portal/portfolio/')({
 
 function PortalPortfolioPage() {
   const userId = useAuthStore((s) => s.userId) ?? ''
+  const perms = useAuthStore((s) => s.permissions)
+  const fundsEnabled = hasAny(perms, [
+    Permissions.Admin,
+    Permissions.FundsReadSupervisor,
+    Permissions.FundsManageSupervisor,
+  ])
+  const [tab, setTab] = useState<'securities' | 'funds'>('securities')
   // Server forces own-portfolio for non-supervisor callers anyway.
   // Fills land async via the trading worker — without a poll the page
   // would render the pre-fill snapshot and silently rot. 5s strikes a
@@ -66,13 +76,30 @@ function PortalPortfolioPage() {
         </Card>
       </header>
 
-      <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_STOCK]} rows={stocks} loading={holdings.isFetching} showPublic />
-      <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FUTURE]} rows={futures} loading={holdings.isFetching} />
-      {forex.length > 0 && (
-        <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FOREX]} rows={forex} loading={holdings.isFetching} />
+      {fundsEnabled && (
+        <div className="flex gap-1 border-b border-border" data-cy="portfolio-tabs">
+          <PTabButton active={tab === 'securities'} onClick={() => setTab('securities')} dataCy="portfolio-tab-securities">
+            Moje hartije
+          </PTabButton>
+          <PTabButton active={tab === 'funds'} onClick={() => setTab('funds')} dataCy="portfolio-tab-funds">
+            Moji fondovi
+          </PTabButton>
+        </div>
       )}
-      {options.length > 0 && (
-        <OptionsSection rows={options} loading={holdings.isFetching} />
+
+      {tab === 'securities' ? (
+        <>
+          <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_STOCK]} rows={stocks} loading={holdings.isFetching} showPublic />
+          <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FUTURE]} rows={futures} loading={holdings.isFetching} />
+          {forex.length > 0 && (
+            <HoldingsSection title={securityTypeLabel[v1SecurityType.SECURITY_TYPE_FOREX]} rows={forex} loading={holdings.isFetching} />
+          )}
+          {options.length > 0 && (
+            <OptionsSection rows={options} loading={holdings.isFetching} />
+          )}
+        </>
+      ) : (
+        <MyFundPositions basePath="/portal/portfolio" />
       )}
     </main>
   )
@@ -81,6 +108,34 @@ function PortalPortfolioPage() {
 // OptionsSection adds the spec p.61.d "Iskoristi" action plus the
 // option-specific columns the regular HoldingsSection doesn't show
 // (Tip, Strike, Datum izvršenja).
+function PTabButton({
+  active,
+  onClick,
+  children,
+  dataCy,
+}: {
+  active: boolean
+  onClick: () => void
+  children: ReactNode
+  dataCy?: string
+}) {
+  return (
+    <button
+      type="button"
+      data-cy={dataCy}
+      onClick={onClick}
+      className={cn(
+        'border-b-2 px-4 py-2 text-sm transition',
+        active
+          ? 'border-primary font-medium text-primary'
+          : 'border-transparent text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 function OptionsSection({ rows, loading }: { rows: v1Holding[]; loading: boolean }) {
   const [exercising, setExercising] = useState<v1Holding | null>(null)
   return (
