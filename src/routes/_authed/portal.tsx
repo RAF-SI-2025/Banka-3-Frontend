@@ -80,6 +80,16 @@ function PortalLayout() {
         Permissions.FundsManageSupervisor,
       ]),
     },
+    {
+      to: '/portal/profit-banke/aktuari',
+      label: 'Profit banke',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.BankProfitRead]),
+    },
+    {
+      to: '/portal/profit-banke/fondovi',
+      label: '↳ Pozicije u fondovima',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.BankProfitRead]),
+    },
   ]
 
   return (

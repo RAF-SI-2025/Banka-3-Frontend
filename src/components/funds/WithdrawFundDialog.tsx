@@ -27,13 +27,21 @@ interface Props {
   position: v1FundPosition | null
   onClose: () => void
   onPending?: () => void
+  defaultOnBehalfBank?: boolean
 }
 
 // Spec p.75. Amount is in RSD (server-side accounting unit). When
 // the fund lacks liquidity the server falls into the illiquid path
 // (auto-liquidation) and returns pending=true; we surface that as
 // a toast.
-export function WithdrawFundDialog({ open, fund, position, onClose, onPending }: Props) {
+export function WithdrawFundDialog({
+  open,
+  fund,
+  position,
+  onClose,
+  onPending,
+  defaultOnBehalfBank = false,
+}: Props) {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const userId = useAuthStore((s) => s.userId) ?? ''
@@ -48,14 +56,14 @@ export function WithdrawFundDialog({ open, fund, position, onClose, onPending }:
 
   useEffect(() => {
     if (open) {
-      setOnBehalfBank(false)
+      setOnBehalfBank(canActAsBank && defaultOnBehalfBank)
       setDestAccountId('')
       setAmount('')
       setWithdrawAll(false)
       setShowVerify(false)
       setErr(null)
     }
-  }, [open])
+  }, [open, canActAsBank, defaultOnBehalfBank])
 
   const ownerForList = onBehalfBank ? FOREX_BOOK_OWNER_ID : userId
   const accounts = useQuery({

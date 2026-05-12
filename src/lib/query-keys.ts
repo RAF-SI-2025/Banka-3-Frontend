@@ -109,6 +109,11 @@ export const keys = {
     transactions: (id: string, args: object) =>
       ['funds', 'transactions', id, args] as const,
   },
+  profit: {
+    all: ['profit'] as const,
+    actuaries: (args: object) => ['profit', 'actuaries', args] as const,
+    funds: ['profit', 'funds'] as const,
+  },
   tax: {
     all: ['tax'] as const,
     board: (args: object) => ['tax', 'board', args] as const,

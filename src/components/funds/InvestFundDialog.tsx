@@ -24,13 +24,14 @@ interface Props {
   open: boolean
   fund: v1Fund | null
   onClose: () => void
+  defaultOnBehalfBank?: boolean
 }
 
 // Spec p.75. Clients invest from their own accounts; supervisors can
 // additionally invest "u ime banke" (BANK_AS_CLIENT sentinel + a
 // bank-side source account). Amount is in source-account currency;
 // server converts to RSD via menjačnica.
-export function InvestFundDialog({ open, fund, onClose }: Props) {
+export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = false }: Props) {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const userId = useAuthStore((s) => s.userId) ?? ''
@@ -44,13 +45,13 @@ export function InvestFundDialog({ open, fund, onClose }: Props) {
 
   useEffect(() => {
     if (open) {
-      setOnBehalfBank(false)
+      setOnBehalfBank(canActAsBank && defaultOnBehalfBank)
       setSourceAccountId('')
       setAmount('')
       setShowVerify(false)
       setErr(null)
     }
-  }, [open])
+  }, [open, canActAsBank, defaultOnBehalfBank])
 
   const ownerForList = onBehalfBank ? FOREX_BOOK_OWNER_ID : userId
   const accounts = useQuery({
