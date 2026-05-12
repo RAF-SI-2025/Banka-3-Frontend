@@ -278,9 +278,15 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
 
     cy.get('[data-cy="run-tax"]').click()
     cy.get('[data-cy="confirm-run-tax"]').click()
+    // The seed plants pre-existing unpaid realized_gains on Test
+    // Klijent (one positive, one loss) so this run taxes both the
+    // agent's fresh round-trip gain AND the client's seed gain. The
+    // exact user count / RSD total is therefore seed-dependent — the
+    // stable assertion is "the success banner rendered" plus DEO 11's
+    // per-row check that the agent's unpaid is now zero.
     cy.get('[data-cy="run-tax-result"]', { timeout: 15000 })
       .should('be.visible')
-      .and('contain', '1') // affected user count
+      .and('contain', 'Obračun završen')
 
     // ───────────── DEO 11 ─────────────
     // Verifikacija krajnjeg stanja: portfolio = 5 MSFT, agent's
