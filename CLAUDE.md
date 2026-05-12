@@ -136,6 +136,75 @@ npm run api:gen          # regenerate src/lib/api from gen/openapi/banka.swagger
 `../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto` in
 the backend first.
 
+## C4 status
+
+c4 frontend feature-complete + E2E gates green on `rewrite`. PR8
+landed three new live cypress specs:
+
+- `cypress/e2e/celina4/otc-day.cy.ts` — spec p.79 worked example
+  (Marija ↔ Luka), seller publishes 10 AAPL → buyer offers → seller
+  counters → buyer accepts (verification-gated) → admin price bump
+  → buyer exercises (verification-gated) → tax cron. Pins premium
+  ($10) + strike ($1000) numeric invariants; asserts
+  `reserved_count` returns to 0 on exercise + the seller realized_gain
+  row + state_tax credit == reported totalRsd.
+
+- `cypress/e2e/celina4/funds-day.cy.ts` — supervisor creates fund +
+  invests "u ime banke" 30k RSD → client invests 30k → supervisor
+  places fund-actor MARKET BUY for 400 NIS via gateway (FE has no
+  fund-actor BUY UI; only SELL via `FundSellHoldingDialog`) → NIS
+  price bump → liquid 5k withdraw → 18k withdraw exceeds liquid →
+  illiquid path triggers auto-liquidation → both withdraws flip to
+  completed → client realized_gain rows (RSD, gain > 0) → tax cron.
+
+- `cypress/soak/c4-multi-round.cy.ts` (`npm run cypress:soak`) —
+  3 OTC + fund cycles back-to-back. Cross-round invariants:
+  `holdings.reserved_count=0`, no `bank.reservations` in 'held',
+  no `saga_executions` in {running,compensating} past 60s,
+  `state_tax` monotonic + continuity across rounds, tax idempotency
+  at the end. Pairs with c3-multi-round; both are persistent-backend
+  gates after touching SAGA / settlement / tax paths.
+
+**Routes added**: `_authed/{portal,banking}/otc/{index,ponude,ugovori}`,
+`_authed/{portal,banking}/fondovi/{index,$fundId}`,
+`_authed/portal/profit-banke/{aktuari,fondovi}`. The portal+banking
+OTC + funds pages share the same components — only the route URL
+differs.
+
+**Resolved on 2026-05-12 (c4-PR8):**
+
+- *OTC offer/counter date conversion* — `CreateOTCOfferDialog` +
+  `OTCThreadModal` now pin `settlementDate` to midnight UTC
+  (`${value}T00:00:00Z`) before calling the backend. The bare
+  `YYYY-MM-DD` string from `<input type="date">` rejected through
+  grpc-gateway as "invalid google.protobuf.Timestamp"; the canned
+  unit spec mocked the endpoint so it didn't surface this. Pattern
+  applies to every new endpoint with a Timestamp field — see
+  `[[yyyymmdd-proto-timestamp]]`.
+
+- *Fund dialog source/dest pickers when acting on behalf of bank* —
+  `InvestFundDialog` + `WithdrawFundDialog` now pass
+  `kind=ACCOUNT_KIND_FOREX_BOOK` when the supervisor toggles
+  "u ime banke". `bank.ListAccounts` silently excludes
+  system/state_tax/forex_book/fund unless `kind=` is set, so the
+  picker came back empty under the FOREX_BOOK_OWNER_ID sentinel.
+  See `[[listaccounts-exclude-kinds]]`.
+
+- *Fund dialogs leaked the verification overlay on success* — both
+  `InvestFundDialog` and `WithdrawFundDialog`'s mutation `onSuccess`
+  now reset `showVerify=false` before closing the outer dialog.
+  Without it, the outer closed but the verification overlay stayed
+  in the DOM with a fixed-inset modal scrim that covered the next
+  click target.
+
+- *Cypress resetBackend missed c4 schema tables* — `cypress.config.ts`
+  TRUNCATE list now includes `investment_funds`,
+  `client_fund_positions`, `client_fund_transactions`,
+  `fund_performance_snapshots`, `otc_offers`, `otc_contracts`, and
+  `bank.reservations`. A re-run of any OTC or funds spec after a
+  prior run rejected the second `CreateFund` with "fond sa istim
+  imenom već postoji".
+
 ## C1 + C2 + C3 status
 
 c1 + c2 + c3 frontend is feature-complete on the `rewrite` branch as
