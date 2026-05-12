@@ -150,10 +150,19 @@ again after the round-trip, realized_gains row values
 (cost/proceeds/profit_native to ±$0.01), and `state-tax` RSD account
 delta == agent's unpaid before the run. The soak suite at
 `cypress/soak/c3-multi-round.cy.ts` (`npm run cypress:soak`) is the
-cross-round gate — runs three BUY/SELL/tax/reset rounds back-to-back
-without resetBackend and asserts state_tax monotonicity + continuity,
-zero pending exec / saga / duplicate-op-leg rows, and usedLimit
-accumulation+reset.
+cross-round gate — runs four BUY/SELL/tax/reset rounds (round 4 uses
+ORDER_TYPE_LIMIT to exercise the spec p.51 min(limit,ask)/
+max(limit,bid) fill-price path) back-to-back without resetBackend
+and asserts state_tax monotonicity + continuity, zero pending exec
+/ saga / duplicate-op-leg rows, usedLimit accumulation+reset, the
+bank's USD forex_book strict-decrease per round, per-round
+sum(new realized_gains.quantity) == sellQty (defends against the
+partial-fill chunker dropping or duplicating a row), positive
+gain_native/gain_rsd per round, and a final tax-idempotency invariant
+(extra runTax after all rounds returns 0/0 and doesn't move
+state_tax). The `psql` task in `cypress.soak.config.ts` uses `--csv`
+without `--no-align`; combining the two silently reverts the
+delimiter to `|` and breaks multi-column row parsing.
 
 **Routes**:
 - `/login`, `/activate`, `/password-reset[/confirm]` — c1 auth surface

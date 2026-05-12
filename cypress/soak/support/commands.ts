@@ -54,6 +54,14 @@ declare global {
       realizedGainsCount(userId: string, userKind?: string): Chainable<number>
       /** Sum of portfolio_holdings.quantity for this user × ticker. */
       holdingQty(userId: string, ticker: string, userKind?: string): Chainable<number>
+      /** Read the bank's per-currency forex_book account balance. */
+      forexBookBalance(currency: string): Chainable<number>
+      /** Aggregate the most recent N realized_gains rows for a user. */
+      realizedGainsAggregateLastN(
+        userId: string,
+        n: number,
+        userKind?: string,
+      ): Chainable<{ sumQty: number; sumGainNative: number; sumGainRsd: number }>
     }
   }
 }
@@ -273,5 +281,44 @@ Cypress.Commands.add('holdingQty', (userId: string, ticker: string, userKind: st
     )
     .then((rows) => Number(rows[0]?.q ?? '0'))
 })
+
+// Bank's per-currency forex_book account ("trading-book"; spec p.42).
+// Both BUY and SELL legs of an actuary order debit/credit this account
+// (the agent uses it as their own owner). Soak asserts strict-decrease
+// per round since buyQty > sellQty in every round.
+Cypress.Commands.add('forexBookBalance', (currency: string) => {
+  const safe = currency.replace(/'/g, "''")
+  return cy
+    .psql(`select balance from "bank".accounts where kind='forex_book' and currency='${safe}' limit 1`)
+    .then((rows) => Number(rows[0]?.balance ?? '0'))
+})
+
+// Aggregate over the most recent N realized_gains rows for a user.
+// Used per-round to assert sum(quantity) == sellQty across the partial-
+// fill chunker's 1..n row split (see [[feedback-partial-fills]]).
+Cypress.Commands.add(
+  'realizedGainsAggregateLastN',
+  (userId: string, n: number, userKind: string = 'employee') => {
+    const lim = Math.max(0, Math.floor(n))
+    return cy
+      .psql(
+        `select coalesce(sum(quantity),0) as q,
+                coalesce(sum(gain_native),0) as pn,
+                coalesce(sum(gain_rsd),0) as pr
+           from (
+             select quantity, gain_native, gain_rsd
+               from "trading".realized_gains
+              where user_id = '${userId}' and user_kind = '${userKind}'
+              order by realized_at desc
+              limit ${lim}
+           ) t`,
+      )
+      .then((rows) => ({
+        sumQty: Number(rows[0]?.q ?? '0'),
+        sumGainNative: Number(rows[0]?.pn ?? '0'),
+        sumGainRsd: Number(rows[0]?.pr ?? '0'),
+      }))
+  },
+)
 
 export {}

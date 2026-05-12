@@ -36,17 +36,22 @@ interface RoundContext {
   buyQty: number
   sellQty: number
   bumpFactor: number // multiplied against the *current* listing price
+  orderType?: 'MARKET' | 'LIMIT' // default MARKET
 }
 
 // Two distinct securities so rounds 1 and 2 don't fight over the
 // same listing's last_price.  Round 3 deliberately re-uses MSFT to
-// stress shared-listing state.  bumpFactor is relative — prior soak
-// runs leave the listing at arbitrary last_price values so absolute
-// targets would silently flip from "gain" to "loss" between runs.
+// stress shared-listing state.  Round 4 exercises the LIMIT fill-
+// price code path (spec p.51 — buy fills at min(limit,ask), sell at
+// max(limit,bid)) which MARKET rounds don't reach.  bumpFactor is
+// relative — prior soak runs leave the listing at arbitrary
+// last_price values so absolute targets would silently flip from
+// "gain" to "loss" between runs.
 const ROUNDS: RoundContext[] = [
   { ticker: 'MSFT', buyQty: 10, sellQty: 5, bumpFactor: 1.07 },
   { ticker: 'AAPL', buyQty: 12, sellQty: 6, bumpFactor: 1.08 },
   { ticker: 'MSFT', buyQty: 8, sellQty: 4, bumpFactor: 1.06 },
+  { ticker: 'MSFT', buyQty: 6, sellQty: 3, bumpFactor: 1.05, orderType: 'LIMIT' },
 ]
 
 // Module-scoped state.  Cypress queues commands synchronously, so
@@ -159,10 +164,21 @@ describe('c3 soak — three rounds, one persistent backend', () => {
   ROUNDS.forEach((round, idx) => {
     const roundNo = idx + 1
 
-    it(`round ${roundNo}: ${round.ticker} BUY ${round.buyQty} → bump → SELL ${round.sellQty} → tax → reset`, () => {
+    it(`round ${roundNo}: ${round.ticker} ${round.orderType ?? 'MARKET'} BUY ${round.buyQty} → bump → SELL ${round.sellQty} → tax → reset`, () => {
       withCtx((c) => {
         cy.stateTaxBalance().then((bal) => {
           ctx.stateTaxBefore[idx] = bal
+        })
+        // Capture the bank's USD trading-book balance before the
+        // round.  Net flow per round is BUY out − SELL in − fees;
+        // since buyQty > sellQty in every round (and prices stay in
+        // the same order of magnitude), the post-round balance
+        // must be strictly less than this baseline.  Drift in the
+        // wrong direction here would point to a SELL crediting more
+        // than the BUY debited, or a missed commission charge.
+        let forexBookBefore = 0
+        cy.forexBookBalance('USD').then((bal) => {
+          forexBookBefore = bal
         })
 
         // Resolve the round's security+listing once.  Aliases set
@@ -170,16 +186,40 @@ describe('c3 soak — three rounds, one persistent backend', () => {
         // resets them regardless of testIsolation), so stash on a
         // local rather than @listing.
         cy.findListingByTicker(c.supervisorToken, round.ticker).then((lst) => {
+          // For LIMIT orders we need the current touch to set a
+          // marketable limit price.  Read once before BUY; if not
+          // LIMIT we just pass the field as undefined and skip.
+          let buyLimit = ''
+          let sellLimit = ''
+          if (round.orderType === 'LIMIT') {
+            cy.request({
+              url: `${'/api/v1/listings'}/${lst.listingId}`,
+              headers: { Authorization: `Bearer ${c.supervisorToken}` },
+            }).then((lresp) => {
+              const ask = Number(lresp.body.ask ?? lresp.body.price ?? '0')
+              if (!Number.isFinite(ask) || ask <= 0) {
+                throw new Error(`listing ${lst.listingId} ask not numeric: ${lresp.body.ask}`)
+              }
+              // Buy-limit set well above touch — fills at ask per
+              // spec p.51 min(limit, ask).
+              buyLimit = String(round4(ask + 5))
+            })
+          }
+
           // BUY
-          cy.placeOrder(c.agentToken, {
-            securityId: lst.securityId,
-            orderType: 'ORDER_TYPE_MARKET',
-            direction: 'DIRECTION_BUY',
-            quantity: round.buyQty,
-            accountId: c.agentUsdAccountId,
-          }).then((buyId) => {
-            cy.approveOrder(c.supervisorToken, buyId)
-            cy.waitOrderDone(c.supervisorToken, buyId, 240)
+          withCtx(() => {
+            const body: Record<string, unknown> = {
+              securityId: lst.securityId,
+              orderType: round.orderType === 'LIMIT' ? 'ORDER_TYPE_LIMIT' : 'ORDER_TYPE_MARKET',
+              direction: 'DIRECTION_BUY',
+              quantity: round.buyQty,
+              accountId: c.agentUsdAccountId,
+            }
+            if (round.orderType === 'LIMIT') body.limitPrice = buyLimit
+            cy.placeOrder(c.agentToken, body).then((buyId) => {
+              cy.approveOrder(c.supervisorToken, buyId)
+              cy.waitOrderDone(c.supervisorToken, buyId, 240)
+            })
           })
 
           cy.pendingExecutionCount().should('eq', 0)
@@ -208,22 +248,63 @@ describe('c3 soak — three rounds, one persistent backend', () => {
               ask: round4(target + 0.5),
               bid: round4(target - 0.5),
             })
+            if (round.orderType === 'LIMIT') {
+              // Sell-limit set well below touch — fills at bid per
+              // spec p.51 max(limit, bid).
+              sellLimit = String(round4(target - 0.5 - 5))
+            }
+          })
+
+          // Capture realized_gains row count for the agent right
+          // before SELL.  After SELL completes we read the new
+          // (final − before) rows and assert sum(quantity) ==
+          // round.sellQty: catches the chunker dropping a fill or
+          // double-counting one (per [[feedback-partial-fills]]).
+          let rgBeforeSell = 0
+          cy.realizedGainsCount(c.agentEmployeeId).then((n) => {
+            rgBeforeSell = n
           })
 
           // SELL
-          cy.placeOrder(c.agentToken, {
-            securityId: lst.securityId,
-            orderType: 'ORDER_TYPE_MARKET',
-            direction: 'DIRECTION_SELL',
-            quantity: round.sellQty,
-            accountId: c.agentUsdAccountId,
-          }).then((sellId) => {
-            cy.approveOrder(c.supervisorToken, sellId)
-            cy.waitOrderDone(c.supervisorToken, sellId, 240)
+          withCtx(() => {
+            const body: Record<string, unknown> = {
+              securityId: lst.securityId,
+              orderType: round.orderType === 'LIMIT' ? 'ORDER_TYPE_LIMIT' : 'ORDER_TYPE_MARKET',
+              direction: 'DIRECTION_SELL',
+              quantity: round.sellQty,
+              accountId: c.agentUsdAccountId,
+            }
+            if (round.orderType === 'LIMIT') body.limitPrice = sellLimit
+            cy.placeOrder(c.agentToken, body).then((sellId) => {
+              cy.approveOrder(c.supervisorToken, sellId)
+              cy.waitOrderDone(c.supervisorToken, sellId, 240)
+            })
           })
 
           cy.pendingExecutionCount().should('eq', 0)
           cy.duplicateOpLegCount().should('eq', 0)
+
+          // Per-round SELL aggregate: all newly-added realized_gains
+          // rows for this agent must sum back to round.sellQty.
+          cy.realizedGainsCount(c.agentEmployeeId).then((rgAfter) => {
+            const newRows = rgAfter - rgBeforeSell
+            expect(newRows, `round ${roundNo} new realized_gains rows`).to.be.greaterThan(0)
+            cy.realizedGainsAggregateLastN(c.agentEmployeeId, newRows).then((agg) => {
+              expect(agg.sumQty, `round ${roundNo} Σ realized.qty == sellQty`).to.eq(round.sellQty)
+              // bumpFactor > 1 + we bumped before SELL, so every new
+              // row should be a positive realized gain.  Drift here
+              // points to either inverted price math or a stale
+              // cost-basis lookup at fill time.
+              expect(
+                agg.sumGainNative,
+                `round ${roundNo} Σ realized.gain_native > 0`,
+              ).to.be.greaterThan(0)
+              expect(
+                agg.sumGainRsd,
+                `round ${roundNo} Σ realized.gain_rsd > 0`,
+              ).to.be.greaterThan(0)
+            })
+          })
         })
 
         // usedLimit accumulates across BUY+SELL inside a round.
@@ -259,6 +340,20 @@ describe('c3 soak — three rounds, one persistent backend', () => {
           expect(r.affected, `round ${roundNo} reset affected`).to.be.greaterThan(0)
         })
         cy.agentUsedLimit(c.supervisorToken, c.agentEmployeeId).should('eq', 0)
+
+        // Bank's USD trading-book strict-decrease invariant.  Every
+        // round buys more shares than it sells (buyQty > sellQty)
+        // and prices stay in the same order of magnitude across the
+        // bump, so the bank's net dollar outflow on this round must
+        // be positive.  A flat or rising balance would point to a
+        // SELL leg crediting more than the BUY debited, or a missed
+        // commission charge on the BUY.
+        cy.forexBookBalance('USD').then((after) => {
+          expect(
+            after,
+            `round ${roundNo} bank USD forex_book strictly decreased`,
+          ).to.be.lessThan(forexBookBefore)
+        })
       })
     })
   })
@@ -324,6 +419,28 @@ describe('c3 soak — three rounds, one persistent backend', () => {
       }).then((r) => {
         expect(Number(r.body.dailyLimit ?? '0')).to.eq(200000)
         expect(Number(r.body.usedLimit ?? '0')).to.eq(0)
+      })
+
+      // Tax idempotency: every realized gain accumulated across the
+      // soak was settled by its round's runTax.  Running the cron
+      // one more time must be a no-op — totalRsd == 0, state_tax
+      // unchanged, no fresh pending exec.  This catches a
+      // regression in the "already taxed" tracking where the cron
+      // would re-charge the same gains on a follow-up sweep.
+      cy.stateTaxBalance().then((preIdempBal) => {
+        cy.runTax(c.supervisorToken).then((res) => {
+          expect(res.totalRsd, 'tax idempotent: nothing left to charge').to.eq(0)
+          expect(res.usersTaxed, 'tax idempotent: zero users').to.eq(0)
+          cy.stateTaxBalance().then((postIdempBal) => {
+            expect(
+              round4(postIdempBal - preIdempBal),
+              'tax idempotent: state_tax unchanged',
+            ).to.eq(0)
+          })
+        })
+        cy.pendingExecutionCount().should('eq', 0)
+        cy.duplicateOpLegCount().should('eq', 0)
+        cy.unfinishedSagaCount().should('eq', 0)
       })
     })
   })

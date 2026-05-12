@@ -29,9 +29,11 @@ function psql({ sql, args = [] }: { sql: string; args?: string[] }): unknown[] {
       PG_USER,
       '-d',
       PG_DB,
+      // --csv emits comma-separated rows; never combine with --no-align,
+      // which silently overrides the delimiter back to | for multi-
+      // column queries and breaks the comma-splitter below.
       '--csv',
       '--quiet',
-      '--no-align',
       ...params,
       '-c',
       sql,
