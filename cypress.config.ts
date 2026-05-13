@@ -113,6 +113,31 @@ function waitForReady(url: string, maxSeconds: number): void {
   }
 }
 
+// pgSql runs an arbitrary SQL statement against the test Postgres so
+// specs can plant fixtures the FE/gateway can't (e.g. backdating an
+// otc_contracts.settlement_date so the c4-tests S22 / S27 expired-
+// contract scenarios become reproducible). Returns the rows as a JSON
+// blob when the statement is a SELECT, otherwise an empty array.
+// Spec-only: never call this against a real environment.
+function pgSql({ sql }: { sql: string }): unknown {
+  const out = dockerExec(POSTGRES_CONTAINER, [
+    'psql',
+    '-U',
+    PG_USER,
+    '-d',
+    PG_DB,
+    '-A',
+    '-t',
+    '-c',
+    sql,
+  ])
+  // psql -A -t emits one row per line, columns joined by '|'. For
+  // assertions we just hand back the raw text; specs that need
+  // structured data can split themselves. Trim trailing newlines so
+  // an empty result is "".
+  return out.replace(/\n+$/, '')
+}
+
 // latestLink scrapes user-service stdout for the most recent email body
 // addressed to `to` containing `marker` (e.g. "/activate?token="),
 // returns the rest of the URL up to the first whitespace or backslash-n.
@@ -144,6 +169,7 @@ export default defineConfig({
       on('task', {
         resetBackend,
         latestLink,
+        pgSql,
       })
     },
     // One auto-retry in headless mode absorbs the vite cold-start

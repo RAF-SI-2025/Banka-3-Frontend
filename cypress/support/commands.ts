@@ -30,6 +30,8 @@ declare global {
       loginAsSupervisor(): Chainable<string>
       /** Reads the user service container's stdout, returns the most recent email body for `to` matching `marker`. */
       captureLink(to: string, marker: string): Chainable<string>
+      /** Run arbitrary SQL against the test Postgres. Returns rows as raw psql -A -t text (pipe-separated columns, newline-separated rows). */
+      pgSql(sql: string): Chainable<string>
     }
   }
 }
@@ -98,6 +100,10 @@ Cypress.Commands.add('loginAsSupervisor', () => {
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
   return cy.wrap(SUPERVISOR_EMAIL)
+})
+
+Cypress.Commands.add('pgSql', (sql: string) => {
+  return cy.task<string>('pgSql', { sql })
 })
 
 Cypress.Commands.add('captureLink', (to: string, marker: string) => {
