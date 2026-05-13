@@ -1,4 +1,4 @@
-import { type ReactNode, type ThHTMLAttributes, type TdHTMLAttributes, type MouseEvent, type KeyboardEvent } from 'react'
+import { type ReactNode, type ThHTMLAttributes, type TdHTMLAttributes, type MouseEvent, type KeyboardEvent, type HTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
@@ -30,13 +30,14 @@ export function TR({
   children,
   className,
   onClick,
+  ...rest
 }: {
   children: ReactNode
   className?: string
   onClick?: () => void
-}) {
+} & Omit<HTMLAttributes<HTMLTableRowElement>, 'onClick' | 'className' | 'children'>) {
   if (!onClick) {
-    return <tr className={cn(className)}>{children}</tr>
+    return <tr className={cn(className)} {...rest}>{children}</tr>
   }
   const handleClick = (e: MouseEvent<HTMLTableRowElement>) => {
     // Don't hijack clicks that landed on an interactive element inside a cell
@@ -61,6 +62,7 @@ export function TR({
         'cursor-pointer transition-colors hover:bg-accent/60 focus:bg-accent/60 focus:outline-none',
         className,
       )}
+      {...rest}
     >
       {children}
     </tr>
