@@ -30,7 +30,7 @@ function gatewayLogin(email: string, password: string): Cypress.Chainable<string
 
 function loginViaUi(email: string, password: string): void {
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(email)
+  cy.findByLabelText('Email', { timeout: 30000 }).clear().type(email)
   cy.findByLabelText('Lozinka').clear().type(password)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
@@ -422,24 +422,48 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                                     securityId: sec.security?.id,
                                     orderType: 'ORDER_TYPE_MARKET',
                                     direction: 'DIRECTION_BUY',
-                                    quantity: 200,
-                                    accountId: fr.body.bankAccountId,
+                                    // Drain enough of the fund's liquid that
+                                    // even after the client's 20k invest the
+                                    // 25k withdraw still exceeds liquidity.
+                                    // Fund has ~43k pre-buy (S33+S35 carryover
+                                    // 13k + bank's 30k). 400 NIS @ 100.5 =
+                                    // 40.2k; post-buy 2.8k + 20k client invest
+                                    // = 22.8k liquid → 25k withdraw forces
+                                    // auto-liquidation.
+                                    quantity: 400,
+                                    accountId: fr.body.fund.bankAccountId,
                                     onBehalfOfFundId: fundId,
                                   },
                                 }),
-                              ),
+                              )
+                              .then((or) => or.body.order.id as string),
                           )
                       })
-                      .then(() =>
-                        investFund(clientTok, fundId, '20000', rsdId).then(() =>
-                          // Client withdraw 25k > liquid ≈ 30k of RSD initially,
-                          // but post-NIS-buy liquid is roughly 30k - 20k = 10k. 25k > 10k → illiquid.
-                          withdrawFund(clientTok, fundId, '25000', rsdId).then((r) => {
-                            expect(r.status).to.eq(200)
-                            expect(r.body.pending ?? false, 'illiquid path returns pending=true').to.eq(true)
-                          }),
-                        ),
-                      ),
+                      .then((orderId) => {
+                        // Wait for the fund-actor BUY to settle before
+                        // the client withdraws — otherwise the fund's
+                        // liquid balance still includes the un-spent
+                        // 20k and the 25k withdraw becomes liquid (test
+                        // expects pending=true on the illiquid path).
+                        function pollDone(remaining: number): void {
+                          if (remaining <= 0) throw new Error('fund BUY did not settle')
+                          gatewayLogin(SUP_EMAIL, SUP_PASSWORD).then((tok) =>
+                            cy
+                              .request({ url: `/api/v1/orders/${orderId}`, headers: { Authorization: `Bearer ${tok}` } })
+                              .then((r) => {
+                                if (r.body.isDone === true) return
+                                cy.wait(3000)
+                                pollDone(remaining - 1)
+                              }),
+                          )
+                        }
+                        pollDone(40)
+                        investFund(clientTok, fundId, '20000', rsdId)
+                        withdrawFund(clientTok, fundId, '25000', rsdId).then((r) => {
+                          expect(r.status).to.eq(200)
+                          expect(r.body.pending ?? false, 'illiquid path returns pending=true').to.eq(true)
+                        })
+                      }),
                   ),
                 ),
               ),
@@ -472,7 +496,7 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                 })
                 .then((accRes) =>
                   investFund(clientTok, fundId, '10000', rsdId).then(() =>
-                    withdrawFund(clientTok, fundId, '5000', accRes.body.account.id).then((r) => {
+                    withdrawFund(clientTok, fundId, '5000', accRes.body.id).then((r) => {
                       expect(r.status, 'EUR withdrawal accepted').to.eq(200)
                     }),
                   ),
@@ -639,7 +663,10 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
     alphaFund().then((alpha) =>
       setupNisListing().then((nisId) =>
         gatewayLogin(SUP_EMAIL, SUP_PASSWORD).then((supTok) =>
-          // Fund has 0 RSD liquid (no invest yet). 1000 RSD worth of NIS is too much.
+          // Prior tests in this describe (S40) injected ~30k RSD into the
+          // fund and spent ~5k on NIS, leaving ~25k liquid. Pick a quantity
+          // that vastly exceeds that so the assertion holds regardless of
+          // S40's fill outcome (NIS @ 100.5 × 1000 = 100,500 RSD).
           cy
             .request({
               method: 'POST',
@@ -650,7 +677,7 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
                 securityId: nisId,
                 orderType: 'ORDER_TYPE_MARKET',
                 direction: 'DIRECTION_BUY',
-                quantity: 10,
+                quantity: 1000,
                 accountId: alpha.bankAccountId,
                 onBehalfOfFundId: alpha.id,
               },
@@ -670,7 +697,6 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
 describe('Celina 4 — Moj portfolio: Moji fondovi (S43-S45)', () => {
   before(() => {
     cy.resetBackend()
-    // Create Alpha + client A invests 10k.
     gatewayLogin(SUP_EMAIL, SUP_PASSWORD).then((supTok) =>
       createFund(supTok, 'Alpha Fond', 1000, 'Diversifikovani').then(() => {
         gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) =>
@@ -701,6 +727,24 @@ describe('Celina 4 — Moj portfolio: Moji fondovi (S43-S45)', () => {
   })
 
   it('S44 — supervizor vidi fondove kojima upravlja u Moj portfolio → Moji fondovi', () => {
+    // The supervisor's "Moji fondovi" tab shows bank positions (the FE
+    // queries client_id=BANK_AS_CLIENT_OWNER_ID for supervisors).
+    // Plant a bank stake here, locally to S44, so S45's % math (which
+    // expects A's share to drop from 100% to ~10% with a 1:9 dilution)
+    // stays untouched.
+    gatewayLogin(SUP_EMAIL, SUP_PASSWORD).then((supTok) =>
+      gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) =>
+        findRsdAccount(adminTok, FOREX_BOOK_OWNER_ID, 'ACCOUNT_KIND_FOREX_BOOK').then((bankRsdId) =>
+          cy
+            .request({ url: '/api/v1/funds', headers: { Authorization: `Bearer ${supTok}` } })
+            .then((fr) => {
+              const fundId = (fr.body.funds ?? [])[0].id as string
+              return investFund(supTok, fundId, '5000', bankRsdId, { onBehalfBank: true })
+            }),
+        ),
+      ),
+    )
+
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/portfolio')
@@ -709,7 +753,10 @@ describe('Celina 4 — Moj portfolio: Moji fondovi (S43-S45)', () => {
   })
 
   it('S45 — kada drugi klijent uloži veliki iznos, procenat ovog klijenta opada', () => {
-    // klijent2 invests 90k → klijent A's share drops from 100% to ~10%.
+    // klijent2 invests 50k → with bank's 5k (planted in S44) + A's 10k
+    // already in the fund, A's share = 10/65 ≈ 15.4%. The regex below
+    // wants the 10-19% range; 50k keeps us inside that band whether or
+    // not S44 has run first.
     gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) =>
       gatewayLogin(CLIENT2_EMAIL, CLIENT2_PASSWORD).then((client2Tok) =>
         meUserID(client2Tok).then((client2Id) =>
@@ -720,8 +767,8 @@ describe('Celina 4 — Moj portfolio: Moji fondovi (S43-S45)', () => {
               headers: { Authorization: `Bearer ${adminTok}` },
               body: {
                 ownerClientId: client2Id,
-                kind: 'ACCOUNT_KIND_PERSONAL_RSD',
-                subtype: 'ACCOUNT_SUBTYPE_UNSPECIFIED',
+                kind: 'ACCOUNT_KIND_PERSONAL_CHECKING_RSD',
+                subtype: 'ACCOUNT_SUBTYPE_STANDARD',
                 currency: 'CURRENCY_RSD',
                 name: 'Klijent2 RSD',
                 openingBalance: '200000',
@@ -732,7 +779,7 @@ describe('Celina 4 — Moj portfolio: Moji fondovi (S43-S45)', () => {
                 .request({ url: '/api/v1/funds', headers: { Authorization: `Bearer ${client2Tok}` } })
                 .then((fr) => {
                   const fundId = (fr.body.funds ?? [])[0].id as string
-                  return investFund(client2Tok, fundId, '90000', accRes.body.account.id)
+                  return investFund(client2Tok, fundId, '50000', accRes.body.id)
                 }),
             ),
         ),
