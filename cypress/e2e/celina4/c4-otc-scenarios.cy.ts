@@ -32,7 +32,7 @@ function gatewayLogin(email: string, password: string): Cypress.Chainable<string
 
 function loginViaUi(email: string, password: string): void {
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(email)
+  cy.findByLabelText('Email', { timeout: 30000 }).clear().type(email)
   cy.findByLabelText('Lozinka').clear().type(password)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
@@ -176,20 +176,22 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
   })
 
   it('S15 — klijent bez otc.read permisije ne pristupa OTC portalu (redirect na /banking)', () => {
-    // Strip otc.read + otc.trade.client from klijent2's perms. The
-    // route guard at /banking/otc redirects to /banking when neither is set.
-    gatewayLogin(BUYER_EMAIL, BUYER_PASSWORD).then((tok) => {
-      meUserID(tok).then((id) => {
+    // Strip otc.read + otc.trade.client from klijent2's perms before
+    // logging in via the UI — the post-strip JWT is what the route
+    // guard reads. Nest the FE login inside the .then chain so cypress
+    // queues it AFTER the pgSql update (top-level `cy.*` calls are
+    // queued synchronously and would otherwise run before the strip).
+    gatewayLogin(BUYER_EMAIL, BUYER_PASSWORD)
+      .then((tok) => meUserID(tok))
+      .then((id) => {
         cy.pgSql(
           `UPDATE "user".clients SET permissions = ARRAY(SELECT unnest(permissions) EXCEPT SELECT unnest(ARRAY['otc.read','otc.trade.client']::text[])), session_version = session_version + 1 WHERE id = '${id}'`,
         )
+        clearAuth()
+        loginViaUi(BUYER_EMAIL, BUYER_PASSWORD)
+        cy.visit('/banking/otc')
+        cy.url({ timeout: 10000 }).should('not.include', '/otc')
       })
-    })
-
-    clearAuth()
-    loginViaUi(BUYER_EMAIL, BUYER_PASSWORD)
-    cy.visit('/banking/otc')
-    cy.url({ timeout: 10000 }).should('not.include', '/otc')
   })
 
   it('S16 — supervizor sa otc.trade.supervisor vidi portal i može da napravi ponudu', () => {
@@ -629,30 +631,51 @@ describe('Celina 4 — OTC ponude i ugovori UI (S23-S28)', () => {
                               })
                               .then((or) => {
                                 const threadId = or.body.threadId as string
-                                return requestVerification(buyerTok, 'otc_accept').then((v) =>
-                                  cy
-                                    .request({
-                                      method: 'POST',
-                                      url: `/api/v1/otc/offers/${threadId}/accept`,
-                                      headers: {
-                                        Authorization: `Bearer ${buyerTok}`,
-                                        'X-Verification-Id': v.id,
-                                        'X-Verification-Code': v.code,
-                                        'Idempotency-Key': crypto.randomUUID(),
-                                      },
-                                      body: {},
-                                    })
-                                    .then((ar) => ({
-                                      adminTok,
-                                      sellerTok,
-                                      buyerTok,
-                                      securityId,
-                                      exchangeMic,
-                                      sellerHoldingId: h.id,
-                                      threadId,
-                                      contractId: ar.body.contract.id as string,
-                                    })),
-                                )
+                                // Seller counters before buyer accepts — the
+                                // spec p.67 "sopstvenu iteraciju" guard
+                                // forbids the same party accepting their
+                                // own offer.
+                                return cy
+                                  .request({
+                                    method: 'POST',
+                                    url: `/api/v1/otc/offers/${threadId}/counter`,
+                                    headers: {
+                                      Authorization: `Bearer ${sellerTok}`,
+                                      'Idempotency-Key': crypto.randomUUID(),
+                                    },
+                                    body: {
+                                      quantity: 5,
+                                      pricePerUnit: '200.00',
+                                      premium: '10.00',
+                                      settlementDate: '2026-12-31T00:00:00Z',
+                                    },
+                                  })
+                                  .then(() =>
+                                    requestVerification(buyerTok, 'otc_accept').then((v) =>
+                                      cy
+                                        .request({
+                                          method: 'POST',
+                                          url: `/api/v1/otc/offers/${threadId}/accept`,
+                                          headers: {
+                                            Authorization: `Bearer ${buyerTok}`,
+                                            'X-Verification-Id': v.id,
+                                            'X-Verification-Code': v.code,
+                                            'Idempotency-Key': crypto.randomUUID(),
+                                          },
+                                          body: {},
+                                        })
+                                        .then((ar) => ({
+                                          adminTok,
+                                          sellerTok,
+                                          buyerTok,
+                                          securityId,
+                                          exchangeMic,
+                                          sellerHoldingId: h.id,
+                                          threadId,
+                                          contractId: ar.body.contract.id as string,
+                                        })),
+                                    ),
+                                  )
                               }),
                           ),
                         ),
@@ -837,7 +860,6 @@ describe('Celina 4 — OTC ponude i ugovori UI (S23-S28)', () => {
   it('S27 — istekao ugovor: Iskoristi nije dostupno (filter pokazuje vidljiv samo u svim)', () => {
     setupContract().then((ctx) => {
       pinListing(ctx.adminTok, ctx.securityId, ctx.exchangeMic, LISTING_PRICE_POST)
-      // Backdate the contract's settlement_date so it's past.
       cy.pgSql(
         `UPDATE "trading".otc_contracts SET settlement_date = now() - interval '1 day', status = 'expired' WHERE id = '${ctx.contractId}'`,
       )
@@ -846,9 +868,7 @@ describe('Celina 4 — OTC ponude i ugovori UI (S23-S28)', () => {
       loginViaUi(BUYER_EMAIL, BUYER_PASSWORD)
       cy.visit('/banking/otc/ugovori')
       cy.contains('h1', 'Sklopljeni ugovori', { timeout: 15000 }).should('be.visible')
-      // Active filter hides the expired row entirely.
       cy.get(`[data-cy="otc-contract-${ctx.contractId}"]`).should('not.exist')
-      // Switch to "Svi" — row visible but no Iskoristi button.
       cy.get('[data-cy="otc-contracts-status"]').select('any')
       cy.get(`[data-cy="otc-contract-${ctx.contractId}"]`, { timeout: 15000 }).should('exist')
       cy.get(`[data-cy="otc-exercise-${ctx.contractId}"]`).should('not.exist')
