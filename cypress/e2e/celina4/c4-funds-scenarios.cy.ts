@@ -80,7 +80,8 @@ function createFund(supTok: string, name: string, min: number, description = 'op
       headers: { Authorization: `Bearer ${supTok}`, 'Idempotency-Key': crypto.randomUUID() },
       body: { name, description, minimumContribution: String(min) },
     })
-    .then((r) => r.body.fund.id as string)
+    // CreateFund returns the Fund proto directly (no wrapper).
+    .then((r) => r.body.id as string)
 }
 
 function investFund(
@@ -228,6 +229,18 @@ describe('Celina 4 — Investicioni fondovi: pristup i prikaz (S29-S32)', () => 
                           bid: '99.5',
                         },
                       })
+                      .then(() =>
+                        // Force XBEL "open" so the order doesn't get
+                        // stamped afterHours=true; the +30min cadence
+                        // penalty puts a 10-share fill past the test's
+                        // poll horizon.
+                        cy.request({
+                          method: 'PATCH',
+                          url: '/api/v1/exchanges/XBEL/override',
+                          headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
+                          body: { overrideState: 'open' },
+                        }),
+                      )
                       .then(() =>
                         cy
                           .request({
@@ -385,6 +398,16 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                             },
                           })
                           .then(() =>
+                            // Force XBEL open so the BUY doesn't pay
+                            // the +30min after-hours cadence penalty.
+                            cy.request({
+                              method: 'PATCH',
+                              url: '/api/v1/exchanges/XBEL/override',
+                              headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
+                              body: { overrideState: 'open' },
+                            }),
+                          )
+                          .then(() =>
                             cy
                               .request({ url: `/api/v1/funds/${fundId}`, headers: { Authorization: `Bearer ${supTok}` } })
                               .then((fr) =>
@@ -400,7 +423,7 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                                     orderType: 'ORDER_TYPE_MARKET',
                                     direction: 'DIRECTION_BUY',
                                     quantity: 200,
-                                    accountId: fr.body.fund.bankAccountId,
+                                    accountId: fr.body.bankAccountId,
                                     onBehalfOfFundId: fundId,
                                   },
                                 }),
@@ -521,6 +544,17 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
               headers: { Authorization: `Bearer ${adminTok}` },
               body: { securityId: id, exchangeMic: 'XBEL', price: '100', ask: '100.5', bid: '99.5' },
             })
+            .then(() =>
+              // XBEL "open" override — keeps the BUY off the +30min
+              // after-hours cadence path so partial fills finish
+              // inside the test poll budget.
+              cy.request({
+                method: 'PATCH',
+                url: '/api/v1/exchanges/XBEL/override',
+                headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
+                body: { overrideState: 'open' },
+              }),
+            )
             .then(() => id)
         }),
     )

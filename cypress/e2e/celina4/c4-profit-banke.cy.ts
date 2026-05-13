@@ -69,7 +69,8 @@ function createFund(supTok: string, name: string, min: number) {
       headers: { Authorization: `Bearer ${supTok}`, 'Idempotency-Key': crypto.randomUUID() },
       body: { name, description: name, minimumContribution: String(min) },
     })
-    .then((r) => r.body.fund.id as string)
+    // CreateFund returns the Fund proto directly (no wrapper).
+    .then((r) => r.body.id as string)
 }
 
 function investFund(

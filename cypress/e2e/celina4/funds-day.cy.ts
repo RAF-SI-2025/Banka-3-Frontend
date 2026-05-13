@@ -215,6 +215,16 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
         cy.wrap(securityId).as('nisId')
         cy.wrap(exchangeMic).as('nisMic')
         pinListing(adminTok, securityId, exchangeMic, NIS_BUY_PRICE, NIS_BUY_PRICE + 0.5, NIS_BUY_PRICE - 0.5)
+        // Force XBEL "open" so the fund-actor BUY isn't flagged
+        // after-hours at create time — afterHours adds a flat 30min to
+        // every cadence roll (spec p.56), which makes a 400-share fill
+        // run hours instead of minutes against the test's 240s poll.
+        cy.request({
+          method: 'PATCH',
+          url: `/api/v1/exchanges/${exchangeMic}/override`,
+          headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
+          body: { overrideState: 'open' },
+        })
       })
       stateTaxRSDBalance(adminTok).then((b) => cy.wrap(b).as('stateTaxBefore'))
       // Bank's per-currency forex_book RSD account is the source for
