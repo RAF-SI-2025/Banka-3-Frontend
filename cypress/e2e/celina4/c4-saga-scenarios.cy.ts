@@ -296,7 +296,7 @@ function sagaRowStatus(adminTok: string, contractId: string): Cypress.Chainable<
   // saga_executions row tagged with the contract via state JSON.
   return cy
     .pgSql(
-      `SELECT status FROM "trading".saga_executions WHERE state->>'ContractID' = '${contractId}' ORDER BY updated_at DESC LIMIT 1`,
+      `SELECT status FROM "trading".saga_executions WHERE state->>'contract_id' = '${contractId}' ORDER BY updated_at DESC LIMIT 1`,
     )
     .then((s) => (s as string).trim())
 }
@@ -412,7 +412,7 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         // up immediately. The recovery context has no force-fail directive,
         // so the second pass runs normally.
         cy.pgSql(
-          `UPDATE "trading".saga_executions SET next_attempt_at = now() - interval '1 minute' WHERE state->>'ContractID' = '${contractId}'`,
+          `UPDATE "trading".saga_executions SET next_attempt_at = now() - interval '1 minute' WHERE state->>'contract_id' = '${contractId}'`,
         )
         // Trading service's recovery worker ticks every
         // SAGA_RECOVERY_TICK (default 30s); allow up to 60s.
@@ -532,13 +532,15 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
     // recovery worker picks up).
   })
 
-  it('S12 — buyer account blocked mid-flight: SAGA fails, funds locked but accounted', () => {
+  it('S12 — buyer account inactive mid-flight: SAGA fails, funds locked but accounted', () => {
     fixtures().then((f) => {
       activeContract(f).then((contractId) => {
-        // Flip the buyer's USD account to BLOCKED so the bank's
-        // SettleTrade rejects the strike-transfer step.
+        // Flip the buyer's USD account to INACTIVE so the bank's
+        // SettleTrade rejects the strike-transfer step. (The schema's
+        // status enum only carries active/inactive — bank
+        // reservations.go/payments.go reject any non-active status.)
         cy.pgSql(
-          `UPDATE "bank".accounts SET status = 'blocked' WHERE id = '${f.buyerUsdId}'`,
+          `UPDATE "bank".accounts SET status = 'inactive' WHERE id = '${f.buyerUsdId}'`,
         )
         exercise(f, contractId).then((r) => {
           expect(r.status).to.not.eq(200)
@@ -553,11 +555,11 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
     })
   })
 
-  it('S13 — seller account closed mid-flight: SAGA fails, shares stay with seller', () => {
+  it('S13 — seller account inactive mid-flight: SAGA fails, shares stay with seller', () => {
     fixtures().then((f) => {
       activeContract(f).then((contractId) => {
         cy.pgSql(
-          `UPDATE "bank".accounts SET status = 'closed' WHERE id = '${f.sellerUsdId}'`,
+          `UPDATE "bank".accounts SET status = 'inactive' WHERE id = '${f.sellerUsdId}'`,
         )
         exercise(f, contractId).then((r) => {
           expect(r.status).to.not.eq(200)
