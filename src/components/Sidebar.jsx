@@ -91,6 +91,7 @@ export default function MenuDropdown() {
                         { label: "Hartije od vrednosti", path: "/securities" },
                         { label: "Moj portfolio", path: "/portfolio" },
                         { label: "Moji nalozi", path: "/orders/my" },
+                        { label: "OTC Trgovina", path: "/otc" },
                     ],
                 }
             );
@@ -129,6 +130,7 @@ export default function MenuDropdown() {
                 { label: "Hartije od vrednosti", path: "/securities" },
                 { label: "Moj portfolio", path: "/portfolio" },
                 { label: "Moji nalozi", path: "/orders/my" },
+                { label: "OTC Trgovina", path: "/otc" },
             ];
             sections.push({
                 title: "Trgovanje",

@@ -39,6 +39,7 @@ import ActuaryManagementPage from "../pages/ActuaryManagementPage.jsx";
 import CreateOrderPage from "../pages/CreateOrderPage.jsx";
 import MyOrdersPage from "../pages/MyOrdersPage.jsx";
 import OrdersReviewPage from "../pages/OrdersReviewPage.jsx";
+import OTCPage from "../pages/OTCPage.jsx";
 
 export default function AppRouter() {
   return (
@@ -106,6 +107,7 @@ export default function AppRouter() {
           <Route path="/employee-loans" element={<ProtectedRoute requiredRole="employee"><EmployeeLoansPage /></ProtectedRoute>} />
           <Route path="/employee-loans-list" element={<ProtectedRoute requiredRole="employee"><EmployeeLoansListPage /></ProtectedRoute>} />
           <Route path="/tax" element={<ProtectedRoute requiredRole="employee" requiredPermission="supervisor"><TaxDashboardPage /></ProtectedRoute>} />
+          <Route path="/otc" element={<ProtectedRoute><OTCPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
   );
