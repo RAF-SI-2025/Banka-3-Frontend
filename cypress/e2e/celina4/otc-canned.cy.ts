@@ -52,6 +52,9 @@ const ACCOUNTS = {
   ],
 }
 
+// authBeforeEach wires the canned auth endpoints. Call it once per
+// test before cy.visit; sessionStorage is seeded via onBeforeLoad on
+// the visit itself so it lands before the SPA reads it.
 function authBeforeEach() {
   cy.intercept('POST', '/api/v1/auth/refresh', {
     statusCode: 200,
@@ -61,15 +64,20 @@ function authBeforeEach() {
     statusCode: 200,
     body: { client: { id: 'c', email: 'c@e.com', permissions: PERMS } },
   })
-  cy.window().then((win) => {
-    win.sessionStorage.setItem(
-      'banka-auth',
-      JSON.stringify({
-        state: { accessToken: fakeToken(), userId: 'c', userKind: 'client', permissions: PERMS },
-        version: 0,
-      }),
-    )
-  })
+}
+
+// seedAuthStorage primes sessionStorage from inside cy.visit's
+// onBeforeLoad — using cy.window().then in a beforeEach silently
+// no-ops on the first test of fresh isolation (see
+// [[cypress-session-storage]]).
+function seedAuthStorage(win: Window) {
+  win.sessionStorage.setItem(
+    'banka-auth',
+    JSON.stringify({
+      state: { accessToken: fakeToken(), userId: 'c', userKind: 'client', permissions: PERMS },
+      version: 0,
+    }),
+  )
 }
 
 describe('Celina 4 — OTC FE (canned)', () => {
@@ -88,7 +96,7 @@ describe('Celina 4 — OTC FE (canned)', () => {
       req.reply({ statusCode: 200, body: { id: 'o-1', threadId: 't-1' } })
     }).as('createOffer')
 
-    cy.visit('/banking/otc', { onBeforeLoad: authBeforeEach })
+    cy.visit('/banking/otc', { onBeforeLoad: seedAuthStorage })
     cy.contains('h1', 'OTC trgovina', { timeout: 15000 }).should('be.visible')
     cy.get('[data-cy="otc-make-offer-h-seller-1"]').click()
     cy.contains('Napravi ponudu — AAPL').should('be.visible')
@@ -139,7 +147,7 @@ describe('Celina 4 — OTC FE (canned)', () => {
       req.reply({ statusCode: 200, body: { contract: { id: 'c-1' }, premiumOpId: 'op-1' } })
     }).as('acceptOTC')
 
-    cy.visit('/banking/otc/ponude', { onBeforeLoad: authBeforeEach })
+    cy.visit('/banking/otc/ponude', { onBeforeLoad: seedAuthStorage })
     cy.contains('h1', 'Aktivne ponude', { timeout: 15000 }).should('be.visible')
     cy.get('[data-cy="otc-thread-t-1"]').click()
     cy.contains('Pregovaranje — AAPL').should('be.visible')

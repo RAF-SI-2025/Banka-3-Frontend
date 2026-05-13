@@ -9,6 +9,7 @@ import path from 'node:path'
 
 const POSTGRES_CONTAINER = process.env.CYPRESS_POSTGRES_CONTAINER ?? 'banka-postgres-1'
 const USER_CONTAINER = process.env.CYPRESS_USER_CONTAINER ?? 'banka-user-1'
+const NOTIFICATION_CONTAINER = process.env.CYPRESS_NOTIFICATION_CONTAINER ?? 'banka-notification-1'
 const PG_USER = process.env.CYPRESS_PG_USER ?? 'banka'
 const PG_DB = process.env.CYPRESS_PG_DB ?? 'banka'
 const BACKEND_REPO = process.env.CYPRESS_BACKEND_REPO ?? path.resolve(__dirname, '../Banka-3-Backend')
@@ -138,22 +139,27 @@ function pgSql({ sql }: { sql: string }): unknown {
   return out.replace(/\n+$/, '')
 }
 
-// latestLink scrapes user-service stdout for the most recent email body
+// latestLink scrapes service stdout for the most recent email body
 // addressed to `to` containing `marker` (e.g. "/activate?token="),
 // returns the rest of the URL up to the first whitespace or backslash-n.
+// When NOTIFICATION_GRPC_ADDR is wired (c4 PR4) emails route through
+// notification-svc and its LogSender is the source of truth; the
+// older user-svc path is kept as a fallback for slice-1 dev.
 function latestLink({ to, marker }: { to: string; marker: string }): string {
-  const logs = execFileSync('docker', ['logs', '--tail', '500', USER_CONTAINER], {
-    encoding: 'utf8',
-  })
-  const lines = logs.split('\n').filter((l) => l.includes('"email') && l.includes(`"${to}"`))
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const idx = lines[i].indexOf(marker)
-    if (idx < 0) continue
-    const rest = lines[i].slice(idx + marker.length)
-    // Email body is JSON-escaped, so the URL ends at the first \n
-    // sequence (literal backslash + n) or quote.
-    const end = rest.search(/\\n|"/)
-    return end < 0 ? rest : rest.slice(0, end)
+  for (const container of [NOTIFICATION_CONTAINER, USER_CONTAINER]) {
+    const logs = execFileSync('docker', ['logs', '--tail', '500', container], {
+      encoding: 'utf8',
+    })
+    const lines = logs.split('\n').filter((l) => l.includes('"email') && l.includes(`"${to}"`))
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const idx = lines[i].indexOf(marker)
+      if (idx < 0) continue
+      const rest = lines[i].slice(idx + marker.length)
+      // Email body is JSON-escaped, so the URL ends at the first \n
+      // sequence (literal backslash + n) or quote.
+      const end = rest.search(/\\n|"/)
+      return end < 0 ? rest : rest.slice(0, end)
+    }
   }
   return ''
 }
@@ -165,6 +171,11 @@ export default defineConfig({
     supportFile: 'cypress/support/e2e.ts',
     viewportWidth: 1440,
     viewportHeight: 900,
+    // Vite-dev compiles route bundles lazily; the first cy.visit on a
+    // new route after a docker restart can paint 4-8 s late, which is
+    // longer than cypress's 4 s default. 12 s is enough margin to
+    // absorb the compile without being chatty on real failures.
+    defaultCommandTimeout: 12000,
     setupNodeEvents(on) {
       on('task', {
         resetBackend,
