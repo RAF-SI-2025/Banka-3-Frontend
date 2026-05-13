@@ -147,7 +147,11 @@ function requestVerification(token: string, kind: string) {
 // ─── Pristup (S14-S16) ────────────────────────────────────────────
 
 describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
-  before(() => {
+  // Per-test reset: S17-S19 now accepts a contract (was previously
+   // failing silently on a 200.00 vs 200.0000 expect), which locks
+   // the seller's reserved_count and breaks later tests in the same
+   // describe. beforeEach gives each it() a clean slate.
+  beforeEach(() => {
     cy.resetBackend()
   })
 
@@ -202,7 +206,11 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
 // ─── Pregovaranje (S17-S22) ──────────────────────────────────────
 
 describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
-  before(() => {
+  // Per-test reset: S17-S19 now accepts a contract (was previously
+   // failing silently on a 200.00 vs 200.0000 expect), which locks
+   // the seller's reserved_count and breaks later tests in the same
+   // describe. beforeEach gives each it() a clean slate.
+  beforeEach(() => {
     cy.resetBackend()
   })
 
@@ -313,7 +321,9 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
           }).then((r) => {
             const iters = (r.body.iterations ?? []) as Array<{ modifiedBy?: string; pricePerUnit?: string }>
             expect(iters[iters.length - 1].modifiedBy, 'last iteration modifiedBy = seller').to.eq(sellerId)
-            expect(iters[iters.length - 1].pricePerUnit).to.eq('200.00')
+            // Backend stores numeric(20,4); canonical money format is
+            // 4-decimal — see pkg/money AmountScale.
+            expect(iters[iters.length - 1].pricePerUnit).to.eq('200.0000')
           })
         })
 
@@ -421,6 +431,23 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
             }).then((r1) => {
               expect(r1.status).to.eq(200)
               const threadId = r1.body.threadId as string
+              // Seller must counter so the buyer (creator) becomes the
+              // accepting side — spec p.67 + service guard
+              // "ne možete da prihvatite sopstvenu iteraciju".
+              cy.request({
+                method: 'POST',
+                url: `/api/v1/otc/offers/${threadId}/counter`,
+                headers: {
+                  Authorization: `Bearer ${f.sellerTok}`,
+                  'Idempotency-Key': crypto.randomUUID(),
+                },
+                body: {
+                  quantity: 10,
+                  pricePerUnit: '195.00',
+                  premium: '10.00',
+                  settlementDate: '2026-12-31T00:00:00Z',
+                },
+              }).then((cr) => expect(cr.status, 'seller counter').to.eq(200))
               requestVerification(f.buyerTok, 'otc_accept').then((v) => {
                 cy.request({
                   method: 'POST',
@@ -492,6 +519,21 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
               },
             }).then((r) => {
               const threadId = r.body.threadId as string
+              // Seller counters to clear the "no self-accept" guard.
+              cy.request({
+                method: 'POST',
+                url: `/api/v1/otc/offers/${threadId}/counter`,
+                headers: {
+                  Authorization: `Bearer ${f.sellerTok}`,
+                  'Idempotency-Key': crypto.randomUUID(),
+                },
+                body: {
+                  quantity: 3,
+                  pricePerUnit: '195.00',
+                  premium: '5.00',
+                  settlementDate: '2026-12-31T00:00:00Z',
+                },
+              }).then((cr) => expect(cr.status, 'seller counter').to.eq(200))
               requestVerification(f.buyerTok, 'otc_accept').then((v) => {
                 cy.request({
                   method: 'POST',
@@ -545,7 +587,11 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
 // ─── Portal Aktivne ponude + Sklopljeni ugovori (S23-S28) ────────
 
 describe('Celina 4 — OTC ponude i ugovori UI (S23-S28)', () => {
-  before(() => {
+  // Per-test reset: S17-S19 now accepts a contract (was previously
+   // failing silently on a 200.00 vs 200.0000 expect), which locks
+   // the seller's reserved_count and breaks later tests in the same
+   // describe. beforeEach gives each it() a clean slate.
+  beforeEach(() => {
     cy.resetBackend()
   })
 
