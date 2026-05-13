@@ -175,17 +175,19 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
     cy.contains('tr', TICKER, { timeout: 15000 }).should('be.visible')
   })
 
-  it('S15 — klijent bez otc.read permisije ne pristupa OTC portalu (redirect na /banking)', () => {
-    // Strip otc.read + otc.trade.client from klijent2's perms before
-    // logging in via the UI — the post-strip JWT is what the route
-    // guard reads. Nest the FE login inside the .then chain so cypress
+  it('S15 — klijent bez trading.client permisije ne pristupa OTC portalu (redirect na /banking)', () => {
+    // Strip trading.client from klijent2's perms before logging in via
+    // the UI — the post-strip JWT is what the route guard reads. Spec
+    // p.4 collapses OTC + funds client access into the single
+    // trading.client flag, so this one strip gates all four c4
+    // portals. Nest the FE login inside the .then chain so cypress
     // queues it AFTER the pgSql update (top-level `cy.*` calls are
     // queued synchronously and would otherwise run before the strip).
     gatewayLogin(BUYER_EMAIL, BUYER_PASSWORD)
       .then((tok) => meUserID(tok))
       .then((id) => {
         cy.pgSql(
-          `UPDATE "user".clients SET permissions = ARRAY(SELECT unnest(permissions) EXCEPT SELECT unnest(ARRAY['otc.read','otc.trade.client']::text[])), session_version = session_version + 1 WHERE id = '${id}'`,
+          `UPDATE "user".clients SET permissions = ARRAY(SELECT unnest(permissions) EXCEPT SELECT 'trading.client'), session_version = session_version + 1 WHERE id = '${id}'`,
         )
         clearAuth()
         loginViaUi(BUYER_EMAIL, BUYER_PASSWORD)

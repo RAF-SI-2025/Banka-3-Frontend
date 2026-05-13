@@ -4,7 +4,7 @@
 // /banking/otc/ponude → thread modal (accept gated by verification),
 // /banking/otc/ugovori → exercise gated by verification.
 
-const PERMS = ['trading.client', 'otc.read', 'otc.trade.client']
+const PERMS = ['trading.client']
 
 function fakeToken(): string {
   const payload = btoa(

@@ -11,8 +11,6 @@ export const Route = createFileRoute('/_authed/portal/fondovi/')({
         Permissions.Admin,
         Permissions.FundsReadSupervisor,
         Permissions.FundsManageSupervisor,
-        Permissions.FundsReadClient,
-        Permissions.FundsInvestClient,
       ])
     ) {
       throw redirect({ to: '/portal' })

@@ -25,13 +25,13 @@ export const Permissions = {
   Actuary: 'actuary',
   ActuarySupervisor: 'actuary.supervisor',
   ActuaryAgent: 'actuary.agent',
+  // Spec p.4: stocks + OTC + funds are one client-side capability.
+  // The fine-grained otc.read / otc.trade.client / funds.read.client /
+  // funds.invest.client constants used in c3+c4 collapsed into this
+  // single flag; route guards and component visibility key off it.
   TradingClient: 'trading.client',
   TradingMargin: 'trading.margin',
-  OTCRead: 'otc.read',
-  OTCTradeClient: 'otc.trade.client',
   OTCTradeSupervisor: 'otc.trade.supervisor',
-  FundsReadClient: 'funds.read.client',
-  FundsInvestClient: 'funds.invest.client',
   FundsReadSupervisor: 'funds.read.supervisor',
   FundsManageSupervisor: 'funds.manage.supervisor',
   BankProfitRead: 'bank.profit.read',
@@ -67,13 +67,9 @@ export const permissionLabels: Record<Permission, string> = {
   [Permissions.Actuary]: 'Aktuar (trguje za banku)',
   [Permissions.ActuarySupervisor]: 'Aktuar — supervizor',
   [Permissions.ActuaryAgent]: 'Aktuar — agent',
-  [Permissions.TradingClient]: 'Klijent — trgovina',
+  [Permissions.TradingClient]: 'Klijent — trgovina (akcije + OTC + fondovi)',
   [Permissions.TradingMargin]: 'Trgovina margin nalozima',
-  [Permissions.OTCRead]: 'OTC — pregled',
-  [Permissions.OTCTradeClient]: 'OTC — trgovina (klijent)',
   [Permissions.OTCTradeSupervisor]: 'OTC — trgovina (supervizor)',
-  [Permissions.FundsReadClient]: 'Fondovi — pregled (klijent)',
-  [Permissions.FundsInvestClient]: 'Fondovi — ulaganje (klijent)',
   [Permissions.FundsReadSupervisor]: 'Fondovi — pregled (supervizor)',
   [Permissions.FundsManageSupervisor]: 'Fondovi — upravljanje',
   [Permissions.BankProfitRead]: 'Profit banke — pregled',

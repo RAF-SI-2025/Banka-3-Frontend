@@ -153,7 +153,7 @@ describe('Celina 4 — Investicioni fondovi: pristup i prikaz (S29-S32)', () => 
     )
   })
 
-  it('S29 — klijent sa funds.read.client vidi listu fondova sa naziv/opis/vrednost/profit/min', () => {
+  it('S29 — klijent sa trading.client vidi listu fondova sa naziv/opis/vrednost/profit/min', () => {
     clearAuth()
     loginViaUi(CLIENT_EMAIL, CLIENT_PASSWORD)
     cy.visit('/banking/fondovi')
@@ -535,9 +535,8 @@ describe('Celina 4 — Kreiranje fonda (S38-S39)', () => {
     loginViaUi(AGENT_EMAIL, AGENT_PASSWORD)
     cy.visit('/portal/fondovi', { failOnStatusCode: false })
     // Route guard redirects to /portal when none of {admin,
-    // funds.read.supervisor, funds.manage.supervisor,
-    // funds.read.client, funds.invest.client} are present. Agent has
-    // none of those.
+    // funds.read.supervisor, funds.manage.supervisor} are present.
+    // Agent has none of those.
     cy.url({ timeout: 10000 }).should('not.include', '/fondovi')
   })
 })

@@ -6,7 +6,7 @@ import { OTCThreadsPage } from '@/components/trading/OTCThreadsPage'
 export const Route = createFileRoute('/_authed/portal/otc/ponude')({
   beforeLoad: () => {
     const perms = useAuthStore.getState().permissions
-    if (!hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor, Permissions.Admin])) {
+    if (!hasAny(perms, [Permissions.OTCTradeSupervisor, Permissions.Admin])) {
       throw redirect({ to: '/portal' })
     }
   },

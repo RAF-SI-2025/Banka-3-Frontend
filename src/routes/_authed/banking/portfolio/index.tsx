@@ -5,7 +5,7 @@ import { listHoldings } from '@/lib/api/portfolio'
 import type { v1Holding } from '@/lib/api/generated/models/v1Holding'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
-import { Permissions, has, hasAny } from '@/lib/permissions'
+import { Permissions, has } from '@/lib/permissions'
 import { v1SecurityType } from '@/lib/api/generated/models/v1SecurityType'
 import { securityTypeLabel } from '@/lib/labels'
 import { formatDate, formatMoney } from '@/lib/format'
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_authed/banking/portfolio/')({
 function PortfolioPage() {
   const userId = useAuthStore((s) => s.userId) ?? ''
   const perms = useAuthStore((s) => s.permissions)
-  const fundsEnabled = hasAny(perms, [Permissions.FundsReadClient, Permissions.FundsInvestClient])
+  const fundsEnabled = has(perms, Permissions.TradingClient)
   const [tab, setTab] = useState<'securities' | 'funds'>('securities')
   // Fills land async via the trading worker — without a poll the page
   // would render the pre-fill snapshot and silently rot.

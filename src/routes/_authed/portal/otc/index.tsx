@@ -6,7 +6,7 @@ import { OTCDiscovery } from '@/components/trading/OTCDiscovery'
 export const Route = createFileRoute('/_authed/portal/otc/')({
   beforeLoad: () => {
     const perms = useAuthStore.getState().permissions
-    if (!hasAny(perms, [Permissions.OTCRead, Permissions.OTCTradeSupervisor, Permissions.Admin])) {
+    if (!hasAny(perms, [Permissions.OTCTradeSupervisor, Permissions.Admin])) {
       throw redirect({ to: '/portal' })
     }
   },
