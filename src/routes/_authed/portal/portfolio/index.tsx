@@ -13,6 +13,7 @@ import { unrealizedPnL } from '@/lib/trading/pnl'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { RefreshIndicator } from '@/components/ui/refresh-indicator'
 import { ExerciseOptionDialog } from '@/components/trading/ExerciseOptionDialog'
 import { PublicCountEditor } from '@/components/trading/PublicCountEditor'
 import { MyFundPositions } from '@/components/funds/MyFundPositions'
@@ -65,10 +66,17 @@ function PortalPortfolioPage() {
 
   return (
     <main className="container space-y-6 py-8">
-      <header className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Portfolio (aktuar)</h1>
-          <p className="text-sm text-muted-foreground">Vaše pozicije po hartiji.</p>
+      <header className="flex items-end justify-between gap-4">
+        <div className="space-y-2">
+          <div>
+            <h1 className="text-2xl font-semibold">Portfolio (aktuar)</h1>
+            <p className="text-sm text-muted-foreground">Vaše pozicije po hartiji.</p>
+          </div>
+          <RefreshIndicator
+            updatedAt={holdings.dataUpdatedAt}
+            isFetching={holdings.isFetching}
+            onRefresh={() => void holdings.refetch()}
+          />
         </div>
         <Card className="px-4 py-2 text-right">
           <p className="text-xs text-muted-foreground">Ukupan profit</p>
