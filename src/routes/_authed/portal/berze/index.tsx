@@ -38,16 +38,36 @@ function ExchangeCatalog() {
     },
   })
 
-  const error = override.error ? apiError(override.error, 'Greška pri menjanju statusa berze.') : null
+  const openAll = useMutation({
+    mutationFn: async (mics: string[]) => {
+      await Promise.all(mics.map((mic) => setExchangeOverride(mic, 'open')))
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.exchange.all })
+    },
+  })
+
+  const error =
+    (override.error ? apiError(override.error, 'Greška pri menjanju statusa berze.') : null) ??
+    (openAll.error ? apiError(openAll.error, 'Greška pri otvaranju svih berzi.') : null)
   const rows = list.data?.exchanges ?? []
 
   return (
     <main className="container space-y-6 py-8">
-      <header>
-        <h1 className="text-2xl font-semibold">Berze</h1>
-        <p className="text-sm text-muted-foreground">
-          Pregled berzi i ručno forsiranje statusa rada (spec p.39).
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Berze</h1>
+          <p className="text-sm text-muted-foreground">
+            Pregled berzi i ručno forsiranje statusa rada (spec p.39).
+          </p>
+        </div>
+        <Button
+          data-cy="open-all-exchanges"
+          disabled={openAll.isPending || rows.length === 0}
+          onClick={() => openAll.mutate(rows.map((r) => r.mic ?? '').filter(Boolean))}
+        >
+          {openAll.isPending ? 'Otvaranje…' : 'Otvori sve berze'}
+        </Button>
       </header>
 
       {error && <ErrorBanner>{error}</ErrorBanner>}
