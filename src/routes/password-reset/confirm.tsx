@@ -6,7 +6,7 @@ import { confirmPasswordReset } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/error'
 import { passwordSchema } from '@/lib/auth/password'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error'
@@ -71,14 +71,22 @@ function ResetConfirmPage() {
             </p>
             <div>
               <Label htmlFor="password">Nova lozinka</Label>
-              <Input id="password" type="password" {...form.register('password')} />
+              <PasswordInput
+                id="password"
+                autoComplete="new-password"
+                {...form.register('password')}
+              />
               {form.formState.errors.password && (
                 <p className="mt-1 text-xs text-danger">{form.formState.errors.password.message}</p>
               )}
             </div>
             <div>
               <Label htmlFor="confirm">Potvrdi lozinku</Label>
-              <Input id="confirm" type="password" {...form.register('confirm')} />
+              <PasswordInput
+                id="confirm"
+                autoComplete="new-password"
+                {...form.register('confirm')}
+              />
               {form.formState.errors.confirm && (
                 <p className="mt-1 text-xs text-danger">{form.formState.errors.confirm.message}</p>
               )}
