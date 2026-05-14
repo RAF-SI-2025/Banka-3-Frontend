@@ -155,6 +155,8 @@ export const txKindLabel: Record<v1TransactionKind, string> = {
   [v1TransactionKind.TRANSACTION_KIND_OTC_EXERCISE]: 'OTC izvršenje',
   [v1TransactionKind.TRANSACTION_KIND_FUND_INVEST]: 'Ulaganje u fond',
   [v1TransactionKind.TRANSACTION_KIND_FUND_WITHDRAW]: 'Povlačenje iz fonda',
+  [v1TransactionKind.TRANSACTION_KIND_LOAN_DISBURSEMENT]: 'Isplata kredita',
+  [v1TransactionKind.TRANSACTION_KIND_LOAN_INSTALLMENT]: 'Otplata rate kredita',
 }
 
 export const txStatusLabel: Record<v1TransactionStatus, string> = {
