@@ -119,22 +119,31 @@ overview; this file is the frontend-specific working memory.
 
 ## Commands
 
+`make help` lists every target. Each one runs inside the
+`banka-frontend` container (`Dockerfile.dev`); `make HOST=1 <target>`
+bypasses the container for devs with node installed locally.
+
 ```
-npm run dev              # vite dev server
-npm run build            # type-check + vite build
-npm run preview          # preview production build
-npm run lint             # eslint
-npm run typecheck        # tsc --noEmit
-npm run test             # vitest run
-npm run test:watch       # vitest watch
-npm run cypress:open     # cypress GUI
-npm run cypress:run      # headless
-npm run api:gen          # regenerate src/lib/api from gen/openapi/banka.swagger.json
+make dev                 # vite dev server (container, port 5173)
+make build               # type-check + vite build
+make lint                # eslint
+make typecheck           # tsc -b --noEmit
+make test                # vitest run
+make api-gen             # regenerate src/lib/api from gen/openapi/banka.swagger.json
+make cypress-run         # headless cypress (HOST-only — see below)
+make cypress-open        # cypress GUI (HOST-only)
+make cypress-soak        # persistent-backend soak suite (HOST-only)
 ```
 
-`api:gen` expects the swagger doc to exist locally at
-`../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto` in
-the backend first.
+Cypress targets always shell to host `npm` regardless of `HOST=`,
+because `cypress.config.ts` and `cypress.soak.config.ts` `docker exec`
+directly into the backend containers and shell out to the backend
+`seed.sh`. Pulling those into a container needs the docker socket +
+backend-repo bind-mount and is intentionally out of scope for now.
+
+`api-gen` expects the swagger doc to exist locally at
+`../Banka-3-Backend/gen/openapi/banka.swagger.json`. Run `make proto`
+in the backend first.
 
 ## C4 status
 
