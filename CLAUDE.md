@@ -255,7 +255,7 @@ delimiter to `|` and breaks multi-column row parsing.
   (client kartice page can issue cards; spec-mandated email/code
   confirmation runs through the same VerificationDialog primitive)
 - generated OpenAPI types under `src/lib/api/generated/` (checked in;
-  regenerate with `npm run api:gen` after `task proto` in backend
+  regenerate with `npm run api:gen` after `make proto` in backend
   when the swagger doc changes) — types only; hand-written axios
   wrappers do the calls
 - typed axios error helper `apiError()` in `src/lib/api/error.ts` —

@@ -20,7 +20,7 @@
 //   - Agent's usedLimit only resets on the `reset-job` cron; between
 //     rounds it accumulates (BUY+SELL both charge under spec p.55).
 //
-// The suite seeds-once via the regular `task seed` before the run
+// The suite seeds-once via the regular `make seed` before the run
 // (handled by the wrapper script).  It does NOT call resetBackend at
 // any point.
 

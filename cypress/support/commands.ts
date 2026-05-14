@@ -22,7 +22,7 @@ declare global {
       resetBackend(): Chainable<void>
       /** Programmatic login via /api/v1/auth/login; populates the auth store and returns the token. */
       loginAsAdmin(): Chainable<string> // resolves to admin email; navigates browser to /portal
-      /** Login as the seeded c2 test client (planted by `task seed`). */
+      /** Login as the seeded c2 test client (planted by `make seed`). */
       loginAsClient(): Chainable<string>
       /** Login as the seeded c3 actuary agent (200k RSD daily limit). */
       loginAsAgent(): Chainable<string>

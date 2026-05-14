@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 // Mirrors scenarios from spec/Banka2025-E2E.pdf, "Feature: Autentifikacija
-// korisnika". Once `task seed` plants a bootstrap admin, these can run
+// korisnika". Once `make seed` plants a bootstrap admin, these can run
 // against the live backend; for now they validate the FE flow against
 // canned responses.
 
