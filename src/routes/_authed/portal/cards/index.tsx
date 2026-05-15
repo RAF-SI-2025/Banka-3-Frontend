@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { listCards, setCardStatus } from '@/lib/api/cards'
+import { listCards } from '@/lib/api/cards'
 import { listAccounts } from '@/lib/api/accounts'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_authed/portal/cards/')({
 })
 
 function PortalCards() {
-  const qc = useQueryClient()
+  const navigate = useNavigate()
   const perms = useAuthStore((s) => s.permissions)
   const canWrite = has(perms, Permissions.CardWrite)
   const [openCreate, setOpenCreate] = useState(false)
@@ -33,11 +33,6 @@ function PortalCards() {
     queryKey: keys.account.list({ pageSize: 200 }),
     queryFn: () => listAccounts({ pageSize: 200 }),
     enabled: canWrite,
-  })
-
-  const setStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: v1CardStatus }) => setCardStatus(id, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.card.all }),
   })
 
   return (
@@ -60,12 +55,14 @@ function PortalCards() {
               <TH>Broj</TH>
               <TH className="text-right">Limit</TH>
               <TH>Status</TH>
-              <TH></TH>
             </TR>
           </THead>
           <TBody>
             {cards.data.cards?.map((c) => (
-              <TR key={c.id}>
+              <TR
+                key={c.id}
+                onClick={() => navigate({ to: '/portal/cards/$id', params: { id: c.id! } })}
+              >
                 <TD>{c.name || '—'}</TD>
                 <TD>{cardBrandLabel[c.brand!]}</TD>
                 <TD className="font-mono text-xs">{formatCardNumber(c.number)}</TD>
@@ -75,44 +72,9 @@ function PortalCards() {
                     {cardStatusLabel[c.status!]}
                   </Badge>
                 </TD>
-                <TD>
-                  {canWrite && (
-                    <div className="flex gap-1">
-                      {c.status === v1CardStatus.CARD_STATUS_ACTIVE && (
-                        <Button
-                          variant="danger"
-                          className="px-2 py-1 text-xs"
-                          onClick={() => setStatus.mutate({ id: c.id!, status: v1CardStatus.CARD_STATUS_BLOCKED })}
-                          disabled={setStatus.isPending}
-                        >
-                          Blokiraj
-                        </Button>
-                      )}
-                      {c.status === v1CardStatus.CARD_STATUS_BLOCKED && (
-                        <Button
-                          className="px-2 py-1 text-xs"
-                          onClick={() => setStatus.mutate({ id: c.id!, status: v1CardStatus.CARD_STATUS_ACTIVE })}
-                          disabled={setStatus.isPending}
-                        >
-                          Odblokiraj
-                        </Button>
-                      )}
-                      {c.status !== v1CardStatus.CARD_STATUS_DEACTIVATED && (
-                        <Button
-                          variant="secondary"
-                          className="px-2 py-1 text-xs"
-                          onClick={() => setStatus.mutate({ id: c.id!, status: v1CardStatus.CARD_STATUS_DEACTIVATED })}
-                          disabled={setStatus.isPending}
-                        >
-                          Deaktiviraj
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </TD>
               </TR>
             ))}
-            {(!cards.data.cards || cards.data.cards.length === 0) && <EmptyRow colSpan={6}>Nema kartica.</EmptyRow>}
+            {(!cards.data.cards || cards.data.cards.length === 0) && <EmptyRow colSpan={5}>Nema kartica.</EmptyRow>}
           </TBody>
         </Table>
       )}

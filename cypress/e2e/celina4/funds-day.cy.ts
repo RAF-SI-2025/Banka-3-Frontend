@@ -50,14 +50,6 @@ function gatewayLogin(email: string, password: string): Cypress.Chainable<string
     .then((r) => r.body.accessToken as string)
 }
 
-function loginViaUi(email: string, password: string): void {
-  cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 30000 }).clear().type(email)
-  cy.findByLabelText('Lozinka').clear().type(password)
-  cy.findByRole('button', { name: /Prijavi se/ }).click()
-  cy.url({ timeout: 10000 }).should('not.include', '/login')
-}
-
 function clearAuth(): void {
   cy.clearCookies()
   cy.window().then((w) => {

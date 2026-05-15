@@ -53,7 +53,6 @@ const OTC_EXERCISE_STEPS = [
   'transfer_shares',
   'finalize',
 ] as const
-type ExerciseStep = (typeof OTC_EXERCISE_STEPS)[number]
 
 interface Ctx {
   adminTok: string

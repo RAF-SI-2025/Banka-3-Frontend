@@ -32,7 +32,6 @@ const BUYER_EMAIL = 'klijent2@banka.local'
 const BUYER_PASSWORD = 'Klijent123!'
 
 const FOREX_BOOK_OWNER_ID = '00000000-0000-0000-0000-000000000020'
-const STATE_TAX_OWNER_ID = '00000000-0000-0000-0000-000000000010'
 
 const ROUNDS = [
   { qty: 2, premium: 4, strikeBump: 1.1 },
