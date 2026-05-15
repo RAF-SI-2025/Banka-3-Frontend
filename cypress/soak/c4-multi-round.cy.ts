@@ -434,7 +434,7 @@ describe('c4 soak — OTC + funds across rounds, one persistent backend', () => 
               'X-Verification-Code': proof.code,
             },
             body: {
-              amount: investAmt,
+              amountRsd: investAmt,
               sourceAccountId: c.clientRsdAccountId,
             },
           })

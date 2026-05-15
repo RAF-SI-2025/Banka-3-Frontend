@@ -15,6 +15,7 @@ import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { v1AccountStatus } from '@/lib/api/generated/models/v1AccountStatus'
 import { v1AccountKind } from '@/lib/api/generated/models/v1AccountKind'
+import { bankaBankV1Currency } from '@/lib/api/generated/models/bankaBankV1Currency'
 import { BANK_AS_CLIENT_OWNER_ID, FOREX_BOOK_OWNER_ID } from '@/lib/trading/sentinels'
 import { currencyLabel, formatMoney } from '@/lib/format'
 import { VerificationDialog } from '@/components/verification/verification-dialog'
@@ -28,10 +29,13 @@ interface Props {
   defaultOnBehalfBank?: boolean
 }
 
-// Spec p.75. Clients invest from their own accounts; supervisors can
-// additionally invest "u ime banke" (BANK_AS_CLIENT sentinel + a
-// bank-side source account). Amount is in source-account currency;
-// server converts to RSD via menjačnica.
+// Spec p.71-75. Clients invest from their own accounts; supervisors
+// can additionally invest "u ime banke" (BANK_AS_CLIENT sentinel + a
+// bank-side source account). Amount is in RSD — the fund's accounting
+// unit (ClientFundTransaction.Iznos / minimumContribution are RSD).
+// When the source account is FX the server converts RSD → that
+// currency for the debit (commission on top for clients), so the fund
+// always receives the full committed RSD. Mirrors WithdrawFundDialog.
 export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = false }: Props) {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
@@ -87,7 +91,7 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
       const { data } = await api.post<v1FundTransactionResponse>(
         `/v1/funds/${encodeURIComponent(fund.id)}/invest`,
         {
-          amount,
+          amountRsd: amount,
           sourceAccountId,
           onBehalfClientId: onBehalfBank ? BANK_AS_CLIENT_OWNER_ID : undefined,
         },
@@ -104,15 +108,15 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
     onError: (e) => setErr(apiError(e, 'Greška prilikom uplate u fond.')),
   })
 
-  const amountValid = useMemo(() => {
-    const n = Number(amount)
-    return Number.isFinite(n) && n > 0
-  }, [amount])
-  const canSubmit = Boolean(fund?.id && sourceAccountId && amountValid)
-
-  // The fund's `minimumContribution` is RSD; we cannot enforce it
-  // here when the source account is FX (server converts), so just
-  // surface it as info text.
+  const amountNum = useMemo(() => Number(amount), [amount])
+  const amountValid = Number.isFinite(amountNum) && amountNum > 0
+  // minimumContribution is RSD and the amount is now RSD too, so the
+  // spec p.74 "proveriti constraint za minimumContribution" gate is
+  // enforceable client-side (the server re-checks authoritatively).
+  const minContribution = Number(fund?.minimumContribution ?? 0)
+  const belowMin =
+    amountValid && minContribution > 0 && amountNum < minContribution
+  const canSubmit = Boolean(fund?.id && sourceAccountId && amountValid && !belowMin)
   return (
     <>
       <Dialog
@@ -183,9 +187,7 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
             </div>
 
             <div>
-              <Label htmlFor="fund-invest-amount">
-                Iznos {selected?.currency ? `(${currencyLabel(selected.currency)})` : ''}
-              </Label>
+              <Label htmlFor="fund-invest-amount">Iznos (RSD)</Label>
               <Input
                 id="fund-invest-amount"
                 inputMode="decimal"
@@ -193,6 +195,19 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
                 onChange={(e) => setAmount(e.target.value)}
                 data-cy="fund-invest-amount"
               />
+              {selected?.currency &&
+                selected.currency !== bankaBankV1Currency.CURRENCY_RSD && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Sredstva se konvertuju iz {currencyLabel(selected.currency)} u
+                  RSD po prodajnom kursu{onBehalfBank ? '' : ' uz proviziju'}.
+                </p>
+              )}
+              {belowMin && (
+                <p className="mt-1 text-xs text-destructive" data-cy="fund-invest-below-min">
+                  Iznos je ispod minimalnog uloga (
+                  {formatMoney(fund.minimumContribution, 'RSD')}).
+                </p>
+              )}
             </div>
 
             {err && <ErrorBanner>{err}</ErrorBanner>}
@@ -204,7 +219,7 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
         open={showVerify}
         kind="fund_invest"
         title="Potvrda uplate u fond"
-        description={`Uplaćujete ${amount || '—'} u fond „${fund?.name ?? ''}".`}
+        description={`Uplaćujete ${amount || '—'} RSD u fond „${fund?.name ?? ''}".`}
         onCancel={() => setShowVerify(false)}
         onConfirm={async (proof) => {
           await invest.mutateAsync(proof)

@@ -844,7 +844,7 @@ describe(`c4 ${TAG} soak — concurrent, faulted, replayed, negative`, () => {
                 'X-Verification-Id': proof.verificationId,
                 'X-Verification-Code': proof.code,
               },
-              body: { amount: '2000', sourceAccountId: cc.sellerRsdAccountId },
+              body: { amountRsd: '2000', sourceAccountId: cc.sellerRsdAccountId },
             })
           })
           requestVerification(cc.sellerTok, 'fund_invest').then((proof2) => {
@@ -857,7 +857,7 @@ describe(`c4 ${TAG} soak — concurrent, faulted, replayed, negative`, () => {
                 'X-Verification-Id': proof2.verificationId,
                 'X-Verification-Code': proof2.code,
               },
-              body: { amount: '2000', sourceAccountId: cc.sellerRsdAccountId },
+              body: { amountRsd: '2000', sourceAccountId: cc.sellerRsdAccountId },
               failOnStatusCode: false,
             })
           })
@@ -1068,7 +1068,7 @@ describe(`c4 ${TAG} soak — concurrent, faulted, replayed, negative`, () => {
             'X-Verification-Id': proof.verificationId,
             'X-Verification-Code': proof.code,
           },
-          body: { amount: '100', sourceAccountId: c.sellerRsdAccountId },
+          body: { amountRsd: '100', sourceAccountId: c.sellerRsdAccountId },
         }).then((r) => expect(r.status, 'W8f: invest < min rejected').to.not.eq(200))
       })
 
@@ -1143,7 +1143,7 @@ describe(`c4 ${TAG} soak — concurrent, faulted, replayed, negative`, () => {
               'X-Verification-Id': proof.verificationId,
               'X-Verification-Code': proof.code,
             },
-            body: { amount: '1500', sourceAccountId: c.sellerRsdAccountId },
+            body: { amountRsd: '1500', sourceAccountId: c.sellerRsdAccountId },
           })
         })
       }

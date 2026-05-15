@@ -103,7 +103,7 @@ function investFund(
         'Idempotency-Key': crypto.randomUUID(),
       },
       body: {
-        amount,
+        amountRsd: amount,
         sourceAccountId,
         onBehalfClientId: opts.onBehalfBank ? BANK_AS_CLIENT_OWNER_ID : undefined,
       },
