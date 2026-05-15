@@ -100,7 +100,7 @@ export function FundDetail({ fundId }: Props) {
               v={formatMoney(fund.profitRsd, 'RSD')}
               className={Number(fund.profitRsd ?? '0') >= 0 ? 'text-emerald-600' : 'text-rose-600'}
             />
-            <KV k="Račun fonda" v={fund.bankAccountNumber ?? '—'} />
+            <KV k="Račun fonda" v={fund.bankAccountNumber ?? '—'} cy="fund-detail-bank-account" />
             <KV k="Likvidnost" v={formatMoney(fund.liquidRsd, 'RSD')} />
             <KV k="Vrednost hartija" v={formatMoney(fund.holdingsValueRsd, 'RSD')} />
             <KV k="Cena jedinice" v={formatMoney(fund.unitPriceRsd, 'RSD')} />
@@ -217,11 +217,13 @@ export function FundDetail({ fundId }: Props) {
   )
 }
 
-function KV({ k, v, className }: { k: string; v: string; className?: string }) {
+function KV({ k, v, className, cy }: { k: string; v: string; className?: string; cy?: string }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{k}</span>
-      <span className={`tabular-nums ${className ?? ''}`}>{v}</span>
+      <span className={`tabular-nums ${className ?? ''}`} data-cy={cy}>
+        {v}
+      </span>
     </div>
   )
 }

@@ -188,6 +188,12 @@ describe('Celina 4 — Investicioni fondovi: pristup i prikaz (S29-S32)', () => 
     cy.contains('Min. uplata').should('be.visible')
     cy.contains('Profit').should('be.visible')
     cy.contains('Račun fonda').should('be.visible')
+    // Račun fonda must render the real 18-digit fund account number,
+    // not the "—" placeholder (regression: decorateFund never
+    // populated bankAccountNumber).
+    cy.get('[data-cy="fund-detail-bank-account"]')
+      .invoke('text')
+      .should('match', /^\d{18}$/)
     cy.contains('Likvidnost').should('be.visible')
   })
 

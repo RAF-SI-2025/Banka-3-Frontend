@@ -81,6 +81,11 @@ function resetBackend(): { ok: true } {
       ...process.env,
       PATH: augmentedPath,
       DATABASE_URL: `postgres://${PG_USER}:banka@localhost:5432/${PG_DB}?sslmode=disable`,
+      // The c4 fund specs self-fixture their own funds and assume a
+      // pristine klijent. The seed's demo investment-fund mock data
+      // (klijent invests, fund holdings, perf history) would pollute
+      // that baseline, so opt out of it for the cypress reseed.
+      SEED_FUNDS: '0',
     },
   })
   return { ok: true }
