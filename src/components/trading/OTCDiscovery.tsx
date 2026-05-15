@@ -67,7 +67,6 @@ export function OTCDiscovery() {
             <THead>
               <TR>
                 <TH>Ticker</TH>
-                <TH>Prodavac</TH>
                 <TH className="text-right">Dostupno</TH>
                 <TH className="text-right">Tržišna cena</TH>
                 <TH>{/* actions */}</TH>
@@ -75,14 +74,13 @@ export function OTCDiscovery() {
             </THead>
             <TBody>
               {items.length === 0 ? (
-                <EmptyRow colSpan={5}>
+                <EmptyRow colSpan={4}>
                   {discovery.isFetching ? 'Učitavanje…' : 'Nema dostupnih hartija.'}
                 </EmptyRow>
               ) : (
                 items.map((it) => (
                   <TR key={it.holdingId}>
                     <TD className="font-mono">{it.security?.ticker ?? '—'}</TD>
-                    <TD>{it.sellerDisplayName ?? '—'}</TD>
                     <TD className="text-right tabular-nums" data-cy={`otc-available-${it.holdingId}`}>
                       {it.availableCount ?? 0}
                     </TD>
