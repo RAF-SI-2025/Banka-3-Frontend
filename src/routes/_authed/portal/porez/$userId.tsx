@@ -293,9 +293,8 @@ function TaxDetail() {
       >
         <p className="text-sm">
           Sa korisnika <b>{me?.displayName || 'Korisnik'}</b> biće naplaćeno 15%
-          neuplaćenog dobitka iz računa povezanog sa prodajom u RSD ekvivalentu
-          (spec p.62). Akcija je idempotentna — već oporezovani redovi se
-          preskaču.
+          neuplaćenog dobitka iz računa povezanog sa prodajom u RSD ekvivalentu.
+          Već naplaćeni dobici se neće ponovo oporezovati.
         </p>
       </Dialog>
     </main>

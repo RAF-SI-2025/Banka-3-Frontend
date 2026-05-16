@@ -51,8 +51,12 @@ function ActuaryDetail() {
   const [confirmReset, setConfirmReset] = useState(false)
 
   useEffect(() => {
-    if (actuary.data?.dailyLimit !== undefined) {
-      setLimit(actuary.data.dailyLimit ?? '')
+    const dl = actuary.data?.dailyLimit
+    if (dl !== undefined) {
+      // The backend sends numeric(20,4) verbatim ("200000.0000"); a
+      // type="number" input renders that string as-is. Re-stringify
+      // through Number so the editable field shows a clean "200000".
+      setLimit(dl == null || dl === '' ? '' : String(Number(dl)))
     }
   }, [actuary.data?.dailyLimit])
 
@@ -130,7 +134,7 @@ function ActuaryDetail() {
         <CardContent className="space-y-4">
           {isSupervisor ? (
             <p className="text-sm text-muted-foreground">
-              Supervizor nema dnevni limit (spec p.38).
+              Supervizor nema dnevni limit.
             </p>
           ) : (
             <>
@@ -147,16 +151,16 @@ function ActuaryDetail() {
                     onChange={(e) => setLimit(e.target.value)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Trenutno: {formatMoney(a.dailyLimit)} RSD
+                    Trenutno: {formatMoney(a.dailyLimit, 'RSD')}
                   </p>
                 </div>
                 <div>
                   <Label>Iskorišćeno danas</Label>
                   <p className="text-base font-medium" data-cy="used-limit-display">
-                    {formatMoney(a.usedLimit)} RSD
+                    {formatMoney(a.usedLimit, 'RSD')}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Cron resetuje na 0 svaki dan u 23:59 (Europe/Belgrade).
+                    Automatski se poništava na kraju svakog dana.
                   </p>
                 </div>
               </div>

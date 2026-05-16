@@ -96,7 +96,7 @@ function OrderDetail() {
             <CardHeader><CardTitle>Realizacije</CardTitle></CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Detaljan prikaz pojedinačnih realizacija dolazi sa proširenjem backend-a.
+                Pojedinačne realizacije nisu dostupne za prikaz.
               </p>
             </CardContent>
           </Card>

@@ -186,8 +186,8 @@ function TaxBoard() {
       >
         <p className="text-sm">
           Sa svakog korisnika koji ima neuplaćeni dobitak biće naplaćeno 15% iz
-          računa povezanog sa prodajom u RSD ekvivalentu (spec p.62). Akcija je
-          idempotentna — već oporezovani redovi se preskaču.
+          računa povezanog sa prodajom u RSD ekvivalentu. Već naplaćeni dobici
+          se neće ponovo oporezovati.
         </p>
       </Dialog>
     </main>

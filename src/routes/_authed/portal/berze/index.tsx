@@ -58,7 +58,7 @@ function ExchangeCatalog() {
         <div>
           <h1 className="text-2xl font-semibold">Berze</h1>
           <p className="text-sm text-muted-foreground">
-            Pregled berzi i ručno forsiranje statusa rada (spec p.39).
+            Pregled berzi i ručno forsiranje statusa rada.
           </p>
         </div>
         <Button

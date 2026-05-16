@@ -67,7 +67,7 @@ function ProfitFundsPage() {
       <header>
         <h1 className="text-2xl font-semibold">Profit banke — pozicije u fondovima</h1>
         <p className="text-sm text-muted-foreground">
-          Pozicije banke u investicionim fondovima (spec p.76).
+          Pozicije banke u investicionim fondovima.
         </p>
       </header>
 

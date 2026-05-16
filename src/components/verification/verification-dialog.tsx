@@ -185,7 +185,7 @@ function FakeQR() {
       height="80"
       viewBox="0 0 8 8"
       role="img"
-      aria-label="QR placeholder"
+      aria-label="QR kod"
       className="rounded border border-border"
     >
       <rect width="8" height="8" fill="#fff" />
