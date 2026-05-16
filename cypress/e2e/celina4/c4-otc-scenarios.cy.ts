@@ -176,6 +176,26 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
     cy.resetBackend()
   })
 
+  // seedActuaryPublicHolding plants the actuary public holding with a
+  // gen_random_uuid() account_id (the discovery board never reads it).
+  // resetBackend truncates portfolio_holdings in beforeEach, so the row
+  // is reaped before every *following* test — but the last S14/S16 run
+  // in a batch leaves it behind. That phantom-account row is unsellable
+  // through the normal order flow (assertHoldingAvailable keys on the
+  // submitted account_id), so it poisons a persistent dev stack until a
+  // full nuke. Reap it here too so the DB matches its pre-suite state
+  // no matter which test ran last. Predicate is exact: a real "u ime
+  // banke" actuary holding always settles against a real bank account,
+  // so an employee holding with no matching bank.accounts row can only
+  // be one of these fixtures.
+  afterEach(() => {
+    cy.pgSql(
+      `DELETE FROM "trading".portfolio_holdings
+        WHERE user_kind = 'employee'
+          AND account_id NOT IN (SELECT id FROM "bank".accounts)`,
+    )
+  })
+
   it('S14 — klijent vidi akcije koje su drugi klijenti stavili u javni režim (ne aktuara)', () => {
     // A client (SELLER) publishes 10 AAPL and an actuary publishes too.
     // Spec p.67 / Scenario 14: the client board shows the client offer
