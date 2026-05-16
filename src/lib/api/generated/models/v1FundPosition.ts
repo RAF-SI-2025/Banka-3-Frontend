@@ -18,5 +18,11 @@ export type v1FundPosition = {
     sharePct?: string;
     createdAt?: string;
     updatedAt?: string;
+    /**
+     * Fund-level context for the client "Moji fondovi" row (spec p.75:
+     * "Naziv i opis fonda, Vrednost fonda, …"). Computed at read time.
+     */
+    fundDescription?: string;
+    fundTotalValueRsd?: string;
 };
 

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { ErrorBanner } from '@/components/ui/error'
 import { listAccounts } from '@/lib/api/accounts'
+import { listFundPositions } from '@/lib/api/funds'
 import { proofHeaders } from '@/lib/api/verification'
 import { api } from '@/lib/api/client'
 import { keys } from '@/lib/query-keys'
@@ -90,6 +91,28 @@ export function WithdrawFundDialog({
     }
   }, [destAccountId, eligible])
 
+  // The displayed position must follow the resolved investor: when a
+  // supervisor toggles "u ime banke" the relevant position is the
+  // bank's (BankAsClient sentinel), not the caller's own. The static
+  // `position` prop is only a fallback while this resolves.
+  const positionsQ = useQuery({
+    queryKey: keys.funds.positions({
+      ctx: 'withdraw-display',
+      clientId: onBehalfBank ? BANK_AS_CLIENT_OWNER_ID : 'self',
+      fundId: fund?.id ?? '',
+    }),
+    queryFn: () =>
+      listFundPositions({
+        clientId: onBehalfBank ? BANK_AS_CLIENT_OWNER_ID : undefined,
+        status: 'active',
+      }),
+    enabled: open && Boolean(fund?.id),
+  })
+  const effectivePosition = useMemo(
+    () => positionsQ.data?.positions?.find((p) => p.fundId === fund?.id) ?? position,
+    [positionsQ.data, fund?.id, position],
+  )
+
   const withdraw = useMutation({
     mutationFn: async (proof: { id: string; code: string }): Promise<v1FundTransactionResponse> => {
       if (!fund?.id) throw new Error('no fund')
@@ -154,10 +177,11 @@ export function WithdrawFundDialog({
           <div className="space-y-3 text-sm">
             <div className="rounded-md bg-primary-soft p-3 text-primary-soft-foreground">
               <div className="font-medium">{fund.name}</div>
-              {position && (
+              {effectivePosition && (
                 <div className="text-xs">
-                  Vaša pozicija: {formatMoney(position.currentValueRsd, 'RSD')} (
-                  {position.units ?? '0'} jedinica)
+                  {onBehalfBank ? 'Pozicija banke' : 'Vaša pozicija'}:{' '}
+                  {formatMoney(effectivePosition.currentValueRsd, 'RSD')} (
+                  {effectivePosition.units ?? '0'} jedinica)
                 </div>
               )}
             </div>

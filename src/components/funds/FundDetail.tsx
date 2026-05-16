@@ -151,10 +151,10 @@ export function FundDetail({ fundId }: Props) {
               <TR>
                 <TH>Ticker</TH>
                 <TH className="text-right">Količina</TH>
-                <TH className="text-right">Prosečna nabavna</TH>
-                <TH className="text-right">Trenutna cena</TH>
-                <TH className="text-right">Tržišna vrednost</TH>
-                <TH className="text-right">Profit</TH>
+                <TH className="text-right">Cena</TH>
+                <TH className="text-right">Promena</TH>
+                <TH className="text-right">Obim</TH>
+                <TH className="text-right">Inicijalna marža</TH>
                 <TH>Datum nabavke</TH>
                 <TH>{/* actions */}</TH>
               </TR>
@@ -164,16 +164,18 @@ export function FundDetail({ fundId }: Props) {
                 <EmptyRow colSpan={8}>Fond trenutno nema otvorenih pozicija.</EmptyRow>
               ) : (
                 holdings.map((h) => {
-                  const pn = Number(h.profitNative ?? '0')
-                  const color = pn >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                  const chg = Number(h.changeAmt ?? '0')
+                  const color = chg >= 0 ? 'text-emerald-600' : 'text-rose-600'
                   return (
                     <TR key={h.holdingId} data-cy={`fund-holding-${h.holdingId}`}>
                       <TD className="font-mono">{h.security?.ticker ?? '—'}</TD>
                       <TD className="text-right">{h.quantity ?? 0}</TD>
-                      <TD className="text-right">{formatMoney(h.weightedAvgPrice, h.currency)}</TD>
                       <TD className="text-right">{formatMoney(h.currentPrice, h.currency)}</TD>
-                      <TD className="text-right">{formatMoney(h.marketValue, h.currency)}</TD>
-                      <TD className={`text-right ${color}`}>{formatMoney(h.profitNative, h.currency)}</TD>
+                      <TD className={`text-right ${color}`}>{formatMoney(h.changeAmt, h.currency)}</TD>
+                      <TD className="text-right tabular-nums">
+                        {h.volume != null ? Number(h.volume).toLocaleString('sr-RS') : '—'}
+                      </TD>
+                      <TD className="text-right">{formatMoney(h.initialMarginCost, h.currency)}</TD>
                       <TD>{formatDate(h.acquiredAt)}</TD>
                       <TD>
                         {canManage && (h.quantity ?? 0) > 0 && (
@@ -197,11 +199,17 @@ export function FundDetail({ fundId }: Props) {
         </CardContent>
       </Card>
 
-      <InvestFundDialog open={investOpen} fund={fund} onClose={() => setInvestOpen(false)} />
+      <InvestFundDialog
+        open={investOpen}
+        fund={fund}
+        defaultOnBehalfBank={canManage}
+        onClose={() => setInvestOpen(false)}
+      />
       <WithdrawFundDialog
         open={withdrawOpen}
         fund={fund}
         position={position ?? null}
+        defaultOnBehalfBank={canManage}
         onClose={() => setWithdrawOpen(false)}
         onPending={() =>
           setPendingToast('Likvidacija u toku — sredstva stižu uskoro.')

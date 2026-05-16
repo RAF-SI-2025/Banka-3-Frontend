@@ -15,5 +15,13 @@ export type v1FundHolding = {
     currency?: bankaTradingV1Currency;
     acquiredAt?: string;
     updatedAt?: string;
+    /**
+     * Spec p.74 fund-detail holdings columns: daily change, traded
+     * volume, and the security's initial margin cost (1.1 ×
+     * maintenance margin), in the holding's currency.
+     */
+    changeAmt?: string;
+    volume?: string;
+    initialMarginCost?: string;
 };
 
