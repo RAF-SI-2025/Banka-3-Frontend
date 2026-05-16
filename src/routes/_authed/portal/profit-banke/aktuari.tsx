@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listActuaryPerformances } from '@/lib/api/profit'
 import { keys } from '@/lib/query-keys'
@@ -24,6 +24,7 @@ export const Route = createFileRoute('/_authed/portal/profit-banke/aktuari')({
 })
 
 function ProfitActuariesPage() {
+  const navigate = useNavigate()
   const list = useQuery({
     queryKey: keys.profit.actuaries({}),
     queryFn: () => listActuaryPerformances({}),
@@ -39,7 +40,8 @@ function ProfitActuariesPage() {
       <header>
         <h1 className="text-2xl font-semibold">Profit banke — aktuari</h1>
         <p className="text-sm text-muted-foreground">
-          Rang lista aktuara po ostvarenoj kapitalnoj dobiti (RSD).
+          Rang lista aktuara po ostvarenoj kapitalnoj dobiti (RSD). Kliknite na
+          aktuara da vidite istoriju njegovih naloga.
         </p>
       </header>
 
@@ -49,28 +51,44 @@ function ProfitActuariesPage() {
       <Table>
         <THead>
           <TR>
-            <TH>Ime i prezime</TH>
-            <TH>Tip</TH>
-            <TH className="text-right">Broj realizovanih prodaja</TH>
-            <TH className="text-right">Profit (RSD)</TH>
+            <TH>Aktuar</TH>
+            <TH className="text-center">Broj realizovanih prodaja</TH>
+            <TH className="text-center">Profit (RSD)</TH>
           </TR>
         </THead>
         <TBody>
           {rows.length === 0 ? (
-            <EmptyRow colSpan={4}>{list.isFetching ? 'Učitavanje…' : 'Nema podataka.'}</EmptyRow>
+            <EmptyRow colSpan={3}>{list.isFetching ? 'Učitavanje…' : 'Nema podataka.'}</EmptyRow>
           ) : (
             rows.map((r) => {
               const isSupervisor = r.type === v1ActuaryType.ACTUARY_TYPE_SUPERVISOR
+              const uid = r.userId ?? ''
               return (
-                <TR key={r.userId ?? ''} data-cy={`profit-actuary-row-${r.userId ?? ''}`}>
-                  <TD>{r.displayName || <span className="text-muted-foreground">—</span>}</TD>
+                <TR
+                  key={uid}
+                  data-cy={`profit-actuary-row-${uid}`}
+                  onClick={
+                    uid
+                      ? () =>
+                          navigate({
+                            to: '/portal/trgovina/nalozi',
+                            search: { userId: uid },
+                          })
+                      : undefined
+                  }
+                >
                   <TD>
-                    <Badge tone={isSupervisor ? 'blue' : 'neutral'}>
-                      {r.type ? actuaryTypeLabel[r.type] : '—'}
-                    </Badge>
+                    <span className="inline-flex items-center gap-2">
+                      <span>
+                        {r.displayName || <span className="text-muted-foreground">—</span>}
+                      </span>
+                      <Badge tone={isSupervisor ? 'blue' : 'neutral'}>
+                        {r.type ? actuaryTypeLabel[r.type] : '—'}
+                      </Badge>
+                    </span>
                   </TD>
-                  <TD className="text-right">{r.realizedCount ?? '0'}</TD>
-                  <TD className="text-right" data-cy="cell-profit-rsd">
+                  <TD className="text-center">{r.realizedCount ?? '0'}</TD>
+                  <TD className="text-center" data-cy="cell-profit-rsd">
                     {formatMoney(r.profitRsd ?? '0', 'RSD')}
                   </TD>
                 </TR>

@@ -86,6 +86,10 @@ function resetBackend(): { ok: true } {
       // (klijent invests, fund holdings, perf history) would pollute
       // that baseline, so opt out of it for the cypress reseed.
       SEED_FUNDS: '0',
+      // Order specs self-fixture their own orders and several read
+      // /api/v1/orders?status=pending expecting only their own row;
+      // skip the historical done-order (Profit Banke) fixture.
+      SEED_ORDERS: '0',
     },
   })
   return { ok: true }
