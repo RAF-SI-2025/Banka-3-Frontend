@@ -31,6 +31,7 @@ import type { v1ExerciseOptionResponse } from '../models/v1ExerciseOptionRespons
 import type { v1ExerciseOTCContractResponse } from '../models/v1ExerciseOTCContractResponse';
 import type { v1Fund } from '../models/v1Fund';
 import type { v1FundTransactionResponse } from '../models/v1FundTransactionResponse';
+import type { v1GetBankProfitTimeseriesResponse } from '../models/v1GetBankProfitTimeseriesResponse';
 import type { v1GetFundPerformanceResponse } from '../models/v1GetFundPerformanceResponse';
 import type { v1GetFundResponse } from '../models/v1GetFundResponse';
 import type { v1GetListingDailyHistoryResponse } from '../models/v1GetListingDailyHistoryResponse';
@@ -1129,6 +1130,37 @@ export class TradingServiceService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/profit/funds',
+        });
+    }
+    /**
+     * GetBankProfitTimeseries buckets realized bank profit over a time
+     * window. Same per-row loss clamp as ListActuaryPerformances, so
+     * Σ buckets over the whole history reconciles with
+     * Σ ListActuaryPerformances.profit_rsd. Gated by `bank.profit.read`.
+     * @returns v1GetBankProfitTimeseriesResponse A successful response.
+     * @returns rpcStatus An unexpected error response.
+     * @throws ApiError
+     */
+    public static tradingServiceGetBankProfitTimeseries({
+        bucket,
+        from,
+        to,
+    }: {
+        /**
+         * "day" (default) / "week" / "month".
+         */
+        bucket?: string,
+        from?: string,
+        to?: string,
+    }): CancelablePromise<v1GetBankProfitTimeseriesResponse | rpcStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/profit/timeseries',
+            query: {
+                'bucket': bucket,
+                'from': from,
+                'to': to,
+            },
         });
     }
     /**

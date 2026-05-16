@@ -26,6 +26,17 @@ export function formatRate(rate: string | number | undefined): string {
   return n.toFixed(2)
 }
 
+// compactRsd renders an RSD amount for chart axes/labels where the
+// grouped form from formatMoney would overflow: 1.2M / 850k / 1.234.
+// Sign is preserved so loss bars read as negative.
+export function compactRsd(v: number): string {
+  if (!Number.isFinite(v)) return '0'
+  const abs = Math.abs(v)
+  if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`
+  if (abs >= 1_000) return `${(v / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
+  return v.toFixed(0)
+}
+
 export function currencyLabel(c: string | bankaBankV1Currency): string {
   // Strip CURRENCY_ prefix; UNSPECIFIED → empty.
   if (!c) return ''

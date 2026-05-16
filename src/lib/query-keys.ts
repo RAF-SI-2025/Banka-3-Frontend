@@ -113,6 +113,7 @@ export const keys = {
     all: ['profit'] as const,
     actuaries: (args: object) => ['profit', 'actuaries', args] as const,
     funds: ['profit', 'funds'] as const,
+    timeseries: (args: object) => ['profit', 'timeseries', args] as const,
   },
   tax: {
     all: ['tax'] as const,

@@ -47,6 +47,7 @@ const tiles: Tile[] = [
   { to: '/portal/otc/ponude', label: 'Aktivne ponude', description: 'Tekuća pregovaranja.', perms: [Permissions.OTCTradeSupervisor] },
   { to: '/portal/otc/ugovori', label: 'Sklopljeni ugovori', description: 'Aktivni i istekli OTC ugovori.', perms: [Permissions.OTCTradeSupervisor] },
   { to: '/portal/fondovi', label: 'Fondovi', description: 'Investicioni fondovi banke.', perms: [Permissions.Admin, Permissions.FundsReadSupervisor, Permissions.FundsManageSupervisor] },
+  { to: '/portal/profit-banke', label: 'Profit banke', description: 'Ostvarena kapitalna dobit banke, po periodu i kumulativno.', perms: [Permissions.Admin, Permissions.BankProfitRead] },
   { to: '/portal/profit-banke/aktuari', label: 'Profit banke — aktuari', description: 'Rang lista aktuara po ostvarenoj dobiti.', perms: [Permissions.Admin, Permissions.BankProfitRead] },
   { to: '/portal/profit-banke/fondovi', label: 'Profit banke — fondovi', description: 'Pozicije banke u investicionim fondovima.', perms: [Permissions.Admin, Permissions.BankProfitRead] },
 ]

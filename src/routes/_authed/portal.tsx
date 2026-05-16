@@ -81,8 +81,13 @@ function PortalLayout() {
       ]),
     },
     {
-      to: '/portal/profit-banke/aktuari',
+      to: '/portal/profit-banke',
       label: 'Profit banke',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.BankProfitRead]),
+    },
+    {
+      to: '/portal/profit-banke/aktuari',
+      label: '↳ Aktuari',
       hidden: !hasAny(perms, [Permissions.Admin, Permissions.BankProfitRead]),
     },
     {

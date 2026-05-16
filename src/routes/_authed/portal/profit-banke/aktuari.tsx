@@ -10,6 +10,7 @@ import { actuaryTypeLabel } from '@/lib/labels'
 import { formatMoney } from '@/lib/format'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { ActuaryProfitBarChart } from '@/components/profit/ActuaryProfitBarChart'
 
 const GATE = [Permissions.Admin, Permissions.BankProfitRead] as const
 
@@ -47,6 +48,12 @@ function ProfitActuariesPage() {
 
       {list.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
       {list.isError && <p className="text-danger">Greška pri učitavanju liste aktuara.</p>}
+
+      {rows.length > 0 && (
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-soft">
+          <ActuaryProfitBarChart rows={rows} />
+        </section>
+      )}
 
       <Table>
         <THead>

@@ -90,6 +90,10 @@ function resetBackend(): { ok: true } {
       // /api/v1/orders?status=pending expecting only their own row;
       // skip the historical done-order (Profit Banke) fixture.
       SEED_ORDERS: '0',
+      // The c4 profit spec asserts the minimal known leaderboard
+      // fixture (agent/supervisor totals + reconciling counts); the
+      // spread-out "Kretanje profita" demo series would skew both.
+      SEED_PROFIT_DEMO: '0',
     },
   })
   return { ok: true }

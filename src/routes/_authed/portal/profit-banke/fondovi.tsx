@@ -11,6 +11,7 @@ import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table
 import { Button } from '@/components/ui/button'
 import { InvestFundDialog } from '@/components/funds/InvestFundDialog'
 import { WithdrawFundDialog } from '@/components/funds/WithdrawFundDialog'
+import { BankFundProfitChart } from '@/components/profit/BankFundProfitChart'
 import type { v1BankFundPosition } from '@/lib/api/generated/models/v1BankFundPosition'
 import type { v1Fund } from '@/lib/api/generated/models/v1Fund'
 import type { v1FundPosition } from '@/lib/api/generated/models/v1FundPosition'
@@ -73,6 +74,12 @@ function ProfitFundsPage() {
 
       {list.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
       {list.isError && <p className="text-danger">Greška pri učitavanju pozicija.</p>}
+
+      {rows.length > 0 && (
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-soft">
+          <BankFundProfitChart rows={rows} />
+        </section>
+      )}
 
       <Table>
         <THead>
