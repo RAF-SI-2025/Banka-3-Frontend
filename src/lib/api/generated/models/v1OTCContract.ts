@@ -17,6 +17,12 @@ export type v1OTCContract = {
     sellerId?: string;
     sellerKind?: bankaTradingV1UserKind;
     sellerAccountId?: string;
+    /**
+     * Resolved display name for the seller (mirrors
+     * PublicHoldingItem.seller_display_name). The FE renders this on
+     * "Sklopljeni ugovori"; it fell back to the raw UUID before this.
+     */
+    sellerDisplayName?: string;
     quantity?: number;
     strikePrice?: string;
     premiumPaid?: string;

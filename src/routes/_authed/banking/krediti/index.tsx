@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listLoans, listLoanRequests, type LoanRequest } from '@/lib/api/loans'
 import { useAuthStore } from '@/lib/auth/store'
 import { keys } from '@/lib/query-keys'
-import { formatMoney, formatDate, currencyLabel } from '@/lib/format'
+import { formatMoney, formatDate, formatRate, currencyLabel } from '@/lib/format'
 import {
   loanTypeLabel,
   loanStatusLabel,
@@ -73,7 +73,7 @@ function ClientLoans() {
                   <TD className="font-mono text-xs">{l.loanNumber}</TD>
                   <TD>{loanTypeLabel[l.loanType!]}</TD>
                   <TD className="text-xs">
-                    {interestTypeLabel[l.interestType!]} · {l.effectiveRate}%
+                    {interestTypeLabel[l.interestType!]} · {formatRate(l.effectiveRate)}%
                   </TD>
                   <TD className="text-right">{formatMoney(l.principal, currencyLabel(l.currency!))}</TD>
                   <TD className="text-right">{formatMoney(l.remainingPrincipal, currencyLabel(l.currency!))}</TD>

@@ -61,9 +61,8 @@ function ActuariesIndex() {
       <Table>
         <THead>
           <TR>
-            <TH>Email</TH>
             <TH>Ime i prezime</TH>
-            <TH>Pozicija</TH>
+            <TH>Email</TH>
             <TH>Tip</TH>
             <TH className="text-right">Dnevni limit (RSD)</TH>
             <TH className="text-right">Iskorišćeno (RSD)</TH>
@@ -72,7 +71,7 @@ function ActuariesIndex() {
         </THead>
         <TBody>
           {rows.length === 0 ? (
-            <EmptyRow colSpan={7}>{list.isFetching ? 'Učitavanje…' : 'Nema aktuara.'}</EmptyRow>
+            <EmptyRow colSpan={6}>{list.isFetching ? 'Učitavanje…' : 'Nema aktuara.'}</EmptyRow>
           ) : (
             rows.map((a, i) => {
               const id = a.employeeId ?? ''
@@ -83,11 +82,10 @@ function ActuariesIndex() {
                   key={id}
                   onClick={() => navigate({ to: '/portal/aktuari/$employeeId', params: { employeeId: id } })}
                 >
-                  <TD data-cy={`actuary-row-${id}`}>{emp?.email ?? <span className="text-muted-foreground">—</span>}</TD>
-                  <TD>
+                  <TD data-cy={`actuary-row-${id}`}>
                     {emp ? `${emp.firstName} ${emp.lastName}` : <span className="text-muted-foreground">—</span>}
                   </TD>
-                  <TD>{emp?.position ?? <span className="text-muted-foreground">—</span>}</TD>
+                  <TD>{emp?.email ?? <span className="text-muted-foreground">—</span>}</TD>
                   <TD>
                     <Badge tone={isSupervisor ? 'blue' : 'neutral'}>
                       {a.type ? actuaryTypeLabel[a.type] : '—'}

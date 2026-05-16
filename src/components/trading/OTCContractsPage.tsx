@@ -142,7 +142,7 @@ export function OTCContractsPage() {
                       <TD className="text-right">{formatMoney(c.strikePrice, c.currency)}</TD>
                       <TD className="text-right">{formatMoney(c.premiumPaid, c.currency)}</TD>
                       <TD>{formatDate(c.settlementDate)}</TD>
-                      <TD>{c.sellerId === userId ? 'ja' : c.sellerId?.slice(0, 8)}</TD>
+                      <TD>{c.sellerId === userId ? 'ja' : (c.sellerDisplayName || c.sellerId?.slice(0, 8))}</TD>
                       <TD className={`text-right ${profit !== null && profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {profit === null ? '—' : formatMoney(profit.toFixed(2), c.currency)}
                       </TD>
