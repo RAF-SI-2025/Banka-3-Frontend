@@ -24,3 +24,6 @@ cypress/downloads
 
 # tsc -b incremental cache
 *.tsbuildinfo
+
+# Go toolchain cache (leaks in when backend tooling runs from a parent dir)
+.go/
