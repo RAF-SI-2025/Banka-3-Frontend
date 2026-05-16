@@ -11,6 +11,10 @@ export const Route = createFileRoute('/_authed/portal/fondovi/$fundId')({
         Permissions.Admin,
         Permissions.FundsReadSupervisor,
         Permissions.FundsManageSupervisor,
+        // Profit Banke (spec p.76) links each fund row here; a
+        // supervisor holding only bank.profit.read must reach the
+        // detail view rather than dead-ending back on /portal.
+        Permissions.BankProfitRead,
       ])
     ) {
       throw redirect({ to: '/portal' })

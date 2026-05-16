@@ -26,23 +26,28 @@ interface Props {
   open: boolean
   fund: v1Fund | null
   onClose: () => void
-  defaultOnBehalfBank?: boolean
 }
 
-// Spec p.71-75. Clients invest from their own accounts; supervisors
-// can additionally invest "u ime banke" (BANK_AS_CLIENT sentinel + a
-// bank-side source account). Amount is in RSD — the fund's accounting
-// unit (ClientFundTransaction.Iznos / minimumContribution are RSD).
-// When the source account is FX the server converts RSD → that
-// currency for the debit (commission on top for clients), so the fund
+// Spec p.71-76. Clients invest from their own accounts. A supervisor
+// always invests "u ime banke" (spec p.74 — "Uplata novca u fond u
+// ime banke uz biranje računa banke"): there is no supervisor
+// personal-investment path, so the actor is derived from the
+// permission, not a toggle. On-behalf-bank uses the BANK_AS_CLIENT
+// sentinel + a bank-side forex_book source account, commission-free
+// (Napomena 4). Amount is in RSD — the fund's accounting unit
+// (ClientFundTransaction.Iznos / minimumContribution are RSD). When
+// the source account is FX the server converts RSD → that currency
+// for the debit (commission on top for clients only), so the fund
 // always receives the full committed RSD. Mirrors WithdrawFundDialog.
-export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = false }: Props) {
+export function InvestFundDialog({ open, fund, onClose }: Props) {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const userId = useAuthStore((s) => s.userId) ?? ''
   const canActAsBank = has(perms, Permissions.FundsManageSupervisor)
+  // Supervisors (funds.manage.supervisor) always act in the bank's
+  // name; clients always invest personally. No user-facing toggle.
+  const onBehalfBank = canActAsBank
 
-  const [onBehalfBank, setOnBehalfBank] = useState(false)
   const [sourceAccountId, setSourceAccountId] = useState('')
   const [amount, setAmount] = useState('')
   const [showVerify, setShowVerify] = useState(false)
@@ -50,13 +55,12 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
 
   useEffect(() => {
     if (open) {
-      setOnBehalfBank(canActAsBank && defaultOnBehalfBank)
       setSourceAccountId('')
       setAmount('')
       setShowVerify(false)
       setErr(null)
     }
-  }, [open, canActAsBank, defaultOnBehalfBank])
+  }, [open])
 
   const ownerForList = onBehalfBank ? FOREX_BOOK_OWNER_ID : userId
   const accounts = useQuery({
@@ -74,9 +78,6 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
   })
 
   const eligible = useMemo(() => accounts.data?.accounts ?? [], [accounts.data])
-  useEffect(() => {
-    setSourceAccountId('')
-  }, [onBehalfBank])
   useEffect(() => {
     if (!sourceAccountId && eligible.length > 0 && eligible[0].id) {
       setSourceAccountId(eligible[0].id)
@@ -150,19 +151,12 @@ export function InvestFundDialog({ open, fund, onClose, defaultOnBehalfBank = fa
             <div className="rounded-md bg-primary-soft p-3 text-primary-soft-foreground">
               <div className="font-medium">{fund.name}</div>
               <div className="text-xs">Min. uplata: {formatMoney(fund.minimumContribution, 'RSD')}</div>
+              {onBehalfBank && (
+                <div className="text-xs" data-cy="fund-invest-on-behalf-bank-note">
+                  Uplata se vrši u ime banke sa bankinog računa (bez provizije).
+                </div>
+              )}
             </div>
-
-            {canActAsBank && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  data-cy="fund-invest-on-behalf-bank"
-                  checked={onBehalfBank}
-                  onChange={(e) => setOnBehalfBank(e.target.checked)}
-                />
-                <span>Investiraj u ime banke</span>
-              </label>
-            )}
 
             <div>
               <Label htmlFor="fund-invest-source">Izvorni račun</Label>

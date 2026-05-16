@@ -17,9 +17,11 @@
 //   runs tax cron, state_tax credit matches reported totalRsd.
 //
 // Drives the FE for fund CRUD + invest/withdraw dialogs; uses the
-// gateway directly for fund-actor BUY (the FE doesn't expose that
-// path — see FundDetail's "Prodaj" button which is SELL-only — and
-// for price overrides + numeric invariants.
+// gateway directly for fund-actor BUY: the FE does expose that path
+// now (FundDetail's "Kupi hartiju za fond" → FundBuyDialog, covered
+// by c4-funds-scenarios S40b), but this E2E needs the order id for
+// the settlement poll and the dialog doesn't surface it. Also drives
+// the gateway for price overrides + numeric invariants.
 
 const ADMIN_EMAIL = 'admin@banka.local'
 const ADMIN_PASSWORD = 'Admin123!'
@@ -271,9 +273,9 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
 
     // ───────────── DEO 2: supervisor invests on behalf of bank ─────────────
     cy.get('[data-cy="fund-invest"]').click()
-    cy.contains('Uplata u fond', { timeout: 10000 }).should('be.visible')
-    cy.get('[data-cy="fund-invest-on-behalf-bank"]').check()
-    cy.contains('Uplata u fond (u ime banke)').should('be.visible')
+    // No on-behalf-bank checkbox anymore — a supervisor always invests
+    // in the bank's name (spec p.74); the dialog title reflects it.
+    cy.contains('Uplata u fond (u ime banke)', { timeout: 10000 }).should('be.visible')
     // The picker lists every forex_book account under the bank sentinel
     // (one per currency); pin RSD explicitly so the SAGA doesn't have
     // to FX-hop. The select stays disabled until the accounts query
@@ -331,10 +333,12 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
 
     // ───────────── DEO 4: supervisor places fund-actor BUY ─────────────
     // Fund needs holdings before the illiquid withdraw can liquidate.
-    // The FE has no fund-actor BUY UI (only fund-actor SELL on existing
-    // holdings via FundSellHoldingDialog), so we drive the order
-    // through the gateway directly. Fund's bank account is the
-    // settlement counterparty (orders book holdings to the fund).
+    // The FE does expose a fund-actor BUY UI now (FundBuyDialog,
+    // covered by c4-funds-scenarios S40b); here we drive the order
+    // through the gateway directly because this E2E needs the order
+    // id for the settlement poll below and the dialog doesn't surface
+    // it. Fund's bank account is the settlement counterparty (orders
+    // book holdings to the fund).
     cy.get<string>('@supTok').then((supTok) => {
       cy.get<string>('@fundId').then((fundId) => {
         cy.request({

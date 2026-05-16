@@ -637,6 +637,60 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
     )
   })
 
+  it('S40b — supervizor kupuje hartiju za fond preko UI ("Kupi za fond")', () => {
+    // spec p.75 "Dodatak za: portal Hartije od vrednosti" case 2 —
+    // the buy-for-fund flow now has a UI entry point on the fund
+    // detail page (FundBuyDialog), not just the raw gateway call.
+    alphaFund().then((alpha) =>
+      setupNisListing().then((nisId) =>
+        gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) =>
+          gatewayLogin(SUP_EMAIL, SUP_PASSWORD).then((supTok) =>
+            findRsdAccount(adminTok, FOREX_BOOK_OWNER_ID, 'ACCOUNT_KIND_FOREX_BOOK').then((bankRsdId) =>
+              // Give the fund liquidity so the server-side
+              // "dovoljno sredstava" check (spec p.75) passes.
+              investFund(supTok, alpha.id, '30000', bankRsdId, { onBehalfBank: true }).then(() => {
+                clearAuth()
+                loginViaUi(SUP_EMAIL, SUP_PASSWORD)
+                cy.visit(`/portal/fondovi/${alpha.id}`)
+                cy.contains('[data-cy="fund-detail-name"]', 'Alpha Fond', {
+                  timeout: 15000,
+                }).should('be.visible')
+
+                cy.get('[data-cy="fund-buy"]').click()
+                cy.contains('Kupovina hartije za fond', { timeout: 10000 }).should('be.visible')
+                cy.get('[data-cy="fund-buy-security"]', { timeout: 15000 }).should(
+                  'not.be.disabled',
+                )
+                // The picker is now a searchable combobox: type the
+                // ticker to filter, then click the matching option.
+                cy.get('[data-cy="fund-buy-security"]').type(NIS_TICKER)
+                cy.get(`[data-cy="fund-buy-security-option-${nisId}"]`, {
+                  timeout: 10000,
+                }).click()
+                cy.get('[data-cy="fund-buy-qty"]').type('25')
+                cy.get('[data-cy="fund-buy-confirm"]').click()
+                // Dialog closes on success.
+                cy.contains('Kupovina hartije za fond').should('not.exist')
+
+                // The fund-actor order was created with onBehalfOfFundId.
+                cy.request({
+                  url: `/api/v1/orders?securityId=${nisId}`,
+                  headers: { Authorization: `Bearer ${supTok}` },
+                }).then((r) => {
+                  const orders = (r.body.orders ?? []) as Array<{ onBehalfOfFundId?: string }>
+                  expect(
+                    orders.some((o) => o.onBehalfOfFundId === alpha.id),
+                    'fund-actor BUY created from the UI',
+                  ).to.eq(true)
+                })
+              }),
+            ),
+          ),
+        ),
+      ),
+    )
+  })
+
   it('S41 — supervizor BUY za banku (bez onBehalfOfFundId): zero FX commission', () => {
     setupNisListing().then((nisId) =>
       gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) =>

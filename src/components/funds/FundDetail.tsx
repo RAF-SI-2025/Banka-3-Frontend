@@ -13,6 +13,7 @@ import { formatDate, formatMoney } from '@/lib/format'
 import { InvestFundDialog } from './InvestFundDialog'
 import { WithdrawFundDialog } from './WithdrawFundDialog'
 import { FundSellHoldingDialog } from './FundSellHoldingDialog'
+import { FundBuyDialog } from './FundBuyDialog'
 import { FundPerformanceChart } from './FundPerformanceChart'
 import type { v1FundHolding } from '@/lib/api/generated/models/v1FundHolding'
 
@@ -41,6 +42,7 @@ export function FundDetail({ fundId }: Props) {
 
   const [investOpen, setInvestOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const [buyOpen, setBuyOpen] = useState(false)
   const [sellHolding, setSellHolding] = useState<v1FundHolding | null>(null)
   const [pendingToast, setPendingToast] = useState<string | null>(null)
 
@@ -69,7 +71,7 @@ export function FundDetail({ fundId }: Props) {
         </div>
         <div className="flex gap-2">
           <Button variant="primary" onClick={() => setInvestOpen(true)} data-cy="fund-invest">
-            {canManage ? 'Uplata / U ime banke' : 'Uplata'}
+            {canManage ? 'Uplata u ime banke' : 'Uplata'}
           </Button>
           <Button variant="ghost" onClick={() => setWithdrawOpen(true)} data-cy="fund-withdraw">
             Povlačenje
@@ -142,8 +144,19 @@ export function FundDetail({ fundId }: Props) {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Hartije u fondu</CardTitle>
+          {canManage && (
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              data-cy="fund-buy"
+              onClick={() => setBuyOpen(true)}
+            >
+              Kupi hartiju za fond
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
@@ -202,14 +215,12 @@ export function FundDetail({ fundId }: Props) {
       <InvestFundDialog
         open={investOpen}
         fund={fund}
-        defaultOnBehalfBank={canManage}
         onClose={() => setInvestOpen(false)}
       />
       <WithdrawFundDialog
         open={withdrawOpen}
         fund={fund}
         position={position ?? null}
-        defaultOnBehalfBank={canManage}
         onClose={() => setWithdrawOpen(false)}
         onPending={() =>
           setPendingToast('Likvidacija u toku — sredstva stižu uskoro.')
@@ -221,6 +232,7 @@ export function FundDetail({ fundId }: Props) {
         holding={sellHolding}
         onClose={() => setSellHolding(null)}
       />
+      <FundBuyDialog open={buyOpen} fund={fund} onClose={() => setBuyOpen(false)} />
     </main>
   )
 }

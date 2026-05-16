@@ -108,14 +108,12 @@ function ProfitFundsPage() {
       <InvestFundDialog
         open={pending?.action === 'invest' && Boolean(fund)}
         fund={fund}
-        defaultOnBehalfBank
         onClose={() => setPending(null)}
       />
       <WithdrawFundDialog
         open={pending?.action === 'withdraw' && Boolean(fund)}
         fund={fund}
         position={pending?.position ?? null}
-        defaultOnBehalfBank
         onClose={() => setPending(null)}
         onPending={() =>
           setPendingToast('Likvidacija u toku — sredstva stižu uskoro.')

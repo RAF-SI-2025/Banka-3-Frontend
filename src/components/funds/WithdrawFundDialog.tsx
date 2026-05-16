@@ -29,27 +29,30 @@ interface Props {
   position: v1FundPosition | null
   onClose: () => void
   onPending?: () => void
-  defaultOnBehalfBank?: boolean
 }
 
-// Spec p.75. Amount is in RSD (server-side accounting unit). When
+// Spec p.75-76. Amount is in RSD (server-side accounting unit). When
 // the fund lacks liquidity the server falls into the illiquid path
-// (auto-liquidation) and returns pending=true; we surface that as
-// a toast.
+// (auto-liquidation) and returns pending=true; we surface that as a
+// toast. A supervisor always withdraws "u ime banke" (Napomena 4 —
+// the bank's position, no conversion commission); a client always
+// withdraws from their own position. The actor is derived from the
+// permission, not a user-facing toggle (mirrors InvestFundDialog).
 export function WithdrawFundDialog({
   open,
   fund,
   position,
   onClose,
   onPending,
-  defaultOnBehalfBank = false,
 }: Props) {
   const qc = useQueryClient()
   const perms = useAuthStore((s) => s.permissions)
   const userId = useAuthStore((s) => s.userId) ?? ''
   const canActAsBank = has(perms, Permissions.FundsManageSupervisor)
+  // Supervisors (funds.manage.supervisor) always act in the bank's
+  // name; clients always withdraw from their own position.
+  const onBehalfBank = canActAsBank
 
-  const [onBehalfBank, setOnBehalfBank] = useState(false)
   const [destAccountId, setDestAccountId] = useState('')
   const [amount, setAmount] = useState('')
   const [withdrawAll, setWithdrawAll] = useState(false)
@@ -58,14 +61,13 @@ export function WithdrawFundDialog({
 
   useEffect(() => {
     if (open) {
-      setOnBehalfBank(canActAsBank && defaultOnBehalfBank)
       setDestAccountId('')
       setAmount('')
       setWithdrawAll(false)
       setShowVerify(false)
       setErr(null)
     }
-  }, [open, canActAsBank, defaultOnBehalfBank])
+  }, [open])
 
   const ownerForList = onBehalfBank ? FOREX_BOOK_OWNER_ID : userId
   const accounts = useQuery({
@@ -82,9 +84,6 @@ export function WithdrawFundDialog({
     enabled: open && Boolean(ownerForList),
   })
   const eligible = useMemo(() => accounts.data?.accounts ?? [], [accounts.data])
-  useEffect(() => {
-    setDestAccountId('')
-  }, [onBehalfBank])
   useEffect(() => {
     if (!destAccountId && eligible.length > 0 && eligible[0].id) {
       setDestAccountId(eligible[0].id)
@@ -184,19 +183,12 @@ export function WithdrawFundDialog({
                   {effectivePosition.units ?? '0'} jedinica)
                 </div>
               )}
+              {onBehalfBank && (
+                <div className="text-xs" data-cy="fund-withdraw-on-behalf-bank-note">
+                  Povlačenje se vrši u ime banke na bankin račun (bez provizije).
+                </div>
+              )}
             </div>
-
-            {canActAsBank && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  data-cy="fund-withdraw-on-behalf-bank"
-                  checked={onBehalfBank}
-                  onChange={(e) => setOnBehalfBank(e.target.checked)}
-                />
-                <span>Povuci u ime banke</span>
-              </label>
-            )}
 
             <div>
               <Label htmlFor="fund-withdraw-dest">Odredišni račun</Label>
