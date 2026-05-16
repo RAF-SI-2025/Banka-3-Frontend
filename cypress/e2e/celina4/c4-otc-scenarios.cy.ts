@@ -18,6 +18,12 @@ const BUYER_EMAIL = 'klijent2@banka.local'
 const BUYER_PASSWORD = 'Klijent123!'
 const SUP_EMAIL = 'supervizor@banka.local'
 const SUP_PASSWORD = 'Supervizor123!'
+const AKTUAR_EMAIL = 'aktuar@banka.local'
+const AKTUAR_PASSWORD = 'Aktuar123!'
+// Spec p.67 "Za supervizore" renders the bank as Owner (BANK_NAME env,
+// default "Banka 3"); the backend resolves seller_display_name to this
+// for every employee-kind (actuary) discovery row.
+const BANK_NAME = 'Banka 3'
 
 const TICKER = 'AAPL'
 const LISTING_PRICE_PRE = 190
@@ -133,6 +139,21 @@ function setPublicCount(token: string, holdingId: string, count: number) {
   })
 }
 
+// seedActuaryPublicHolding plants an actuary (employee-kind) public
+// holding directly. Actuaries acquire stock by trading "u ime banke" —
+// a full order/fill flow — but the discovery-board scenarios (S16) only
+// need the row to exist with public_count>0. The discovery query never
+// dereferences account_id, so a random uuid satisfies the NOT NULL.
+function seedActuaryPublicHolding(employeeId: string, securityId: string, qty: number) {
+  return cy.pgSql(
+    `INSERT INTO "trading".portfolio_holdings
+       (user_id, user_kind, security_id, account_id, quantity,
+        weighted_avg_price, public_count, reserved_count)
+     VALUES ('${employeeId}', 'employee', '${securityId}', gen_random_uuid(),
+        ${qty}, '100.0000', ${qty}, 0)`,
+  )
+}
+
 function requestVerification(token: string, kind: string) {
   return cy
     .request({
@@ -155,8 +176,11 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
     cy.resetBackend()
   })
 
-  it('S14 — klijent sa permisijom za trgovinu vidi OTC portal i listu javno objavljenih akcija', () => {
-    // Seller publishes 10 AAPL first so the discovery board has a row.
+  it('S14 — klijent vidi akcije koje su drugi klijenti stavili u javni režim (ne aktuara)', () => {
+    // A client (SELLER) publishes 10 AAPL and an actuary publishes too.
+    // Spec p.67 / Scenario 14: the client board shows the client offer
+    // with the *seller's* name as Owner and must NOT leak the actuary
+    // (bank-owned) row — that one belongs only on the supervisor board.
     gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) => {
       findSecurity(adminTok, TICKER).then(({ securityId, exchangeMic }) =>
         pinListing(adminTok, securityId, exchangeMic, LISTING_PRICE_PRE),
@@ -167,12 +191,31 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
         setPublicCount(sellerTok, h.id, PUBLIC_QTY),
       )
     })
+    gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) => {
+      findSecurity(adminTok, TICKER).then(({ securityId }) =>
+        gatewayLogin(AKTUAR_EMAIL, AKTUAR_PASSWORD)
+          .then((aktTok) => meUserID(aktTok))
+          .then((aktId) => seedActuaryPublicHolding(aktId, securityId, PUBLIC_QTY)),
+      )
+    })
 
     clearAuth()
     loginViaUi(BUYER_EMAIL, BUYER_PASSWORD)
     cy.visit('/banking/otc')
     cy.contains('h1', 'OTC trgovina', { timeout: 15000 }).should('be.visible')
-    cy.contains('tr', TICKER, { timeout: 15000 }).should('be.visible')
+    // The seller's client row is present with a non-empty *person*
+    // Owner (not the bank).
+    cy.contains('[data-cy^="otc-row-"]', TICKER, { timeout: 15000 })
+      .find('[data-cy^="otc-owner-"]')
+      .invoke('text')
+      .should((t) => {
+        expect(t.trim()).to.not.eq('')
+        expect(t).to.not.contain(BANK_NAME)
+      })
+    // No actuary/bank-owned row leaks onto the client board.
+    cy.get('[data-cy^="otc-owner-"]').each(($c) => {
+      expect($c.text()).to.not.contain(BANK_NAME)
+    })
   })
 
   it('S15 — klijent bez trading.client permisije ne pristupa OTC portalu (redirect na /banking)', () => {
@@ -196,14 +239,43 @@ describe('Celina 4 — OTC pristup i prikaz (S14-S16)', () => {
       })
   })
 
-  it('S16 — supervizor sa otc.trade.supervisor vidi portal i može da napravi ponudu', () => {
+  it('S16 — supervizor vidi ponude aktuara (ne klijenata) i može da napravi ponudu', () => {
+    // Same setup as S14: a client publishes AAPL and an actuary (agent,
+    // employee-kind) publishes AAPL. Scenario 16: the supervisor board
+    // shows the actuary row with the *bank* as Owner (spec p.67
+    // "Za supervizore"), must NOT show the client row, and the
+    // "Napravi ponudu" action must be available.
+    gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) => {
+      findSecurity(adminTok, TICKER).then(({ securityId, exchangeMic }) =>
+        pinListing(adminTok, securityId, exchangeMic, LISTING_PRICE_PRE),
+      )
+    })
+    gatewayLogin(SELLER_EMAIL, SELLER_PASSWORD).then((sellerTok) => {
+      listSellerHolding(sellerTok, TICKER).then((h) =>
+        setPublicCount(sellerTok, h.id, PUBLIC_QTY),
+      )
+    })
+    gatewayLogin(ADMIN_EMAIL, ADMIN_PASSWORD).then((adminTok) => {
+      findSecurity(adminTok, TICKER).then(({ securityId }) =>
+        gatewayLogin(AKTUAR_EMAIL, AKTUAR_PASSWORD)
+          .then((aktTok) => meUserID(aktTok))
+          .then((aktId) => seedActuaryPublicHolding(aktId, securityId, PUBLIC_QTY)),
+      )
+    })
+
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/otc')
     cy.contains('h1', 'OTC trgovina', { timeout: 15000 }).should('be.visible')
-    // Supervisor's discovery board may be empty in the seed (no actuary
-    // publishes); the route render succeeds either way.
-    cy.contains('Filter').should('be.visible')
+    // vidi ponude aktuara (ne klijenata): at least one row, and every
+    // Owner cell is the bank — the client's public row is filtered out.
+    cy.get('[data-cy^="otc-owner-"]', { timeout: 15000 })
+      .should('have.length.greaterThan', 0)
+      .each(($c) => {
+        expect($c.text().trim()).to.eq(BANK_NAME)
+      })
+    // …i može da napravi ponudu za pregovor.
+    cy.get('[data-cy^="otc-make-offer-"]').first().should('not.be.disabled')
   })
 })
 

@@ -22,5 +22,6 @@ export type v1PublicHoldingItem = {
     reservedCount?: number;
     currentPrice?: string;
     currency?: bankaTradingV1Currency;
+    lastUpdated?: string;
 };
 
