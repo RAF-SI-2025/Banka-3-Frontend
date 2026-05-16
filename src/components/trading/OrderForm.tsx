@@ -501,7 +501,7 @@ function LimitUtilization({
       <div className="flex items-baseline justify-between">
         <span className="text-xs uppercase tracking-wide text-muted-foreground">Dnevni limit (agent)</span>
         <span className="font-mono text-xs">
-          {isLoading ? '…' : `${used.toFixed(2)} / ${daily.toFixed(2)} RSD`}
+          {isLoading ? '…' : `${formatMoney(used)} / ${formatMoney(daily, 'RSD')}`}
         </span>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -510,7 +510,7 @@ function LimitUtilization({
       </div>
       {rsdEquivalent !== null && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Ovaj nalog: ~{rsdEquivalent.toFixed(2)} RSD · projektovano iskorišćeno: {projected.toFixed(2)} RSD
+          Ovaj nalog: ~{formatMoney(rsdEquivalent, 'RSD')} · projektovano iskorišćeno: {formatMoney(projected, 'RSD')}
         </p>
       )}
     </div>
