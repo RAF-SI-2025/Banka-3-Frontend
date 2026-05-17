@@ -1,0 +1,28 @@
+.env
+.envrc.local
+*.local
+
+# Go build artifacts
+/bin/
+/dist/
+*.test
+*.out
+coverage.*
+# Ad-hoc binaries from `go build ./cmd/<x>` inside a service dir. The
+# canonical build is `task build` → /bin/, but it's easy to drop a
+# stray binary at the service root while iterating.
+/services/*/seed
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Nix
+/result
+/.direnv/
+
+# Local Go workspace (GOPATH set by flake shellHook)
+/.go/
+**/.go/

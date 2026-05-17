@@ -1,0 +1,26 @@
+node_modules
+dist
+dist-ssr
+.vite
+.env
+.env.local
+.env.*.local
+
+
+# TanStack Router generates this on dev start
+src/routeTree.gen.ts
+
+# cypress
+cypress/screenshots
+cypress/videos
+cypress/downloads
+
+# editor / OS
+.DS_Store
+.idea
+.vscode
+*.local
+*.log
+
+# tsc -b incremental cache
+*.tsbuildinfo
