@@ -1,11 +1,19 @@
 import { useEffect } from 'react'
 import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/lib/auth/store'
+import { restoreSession } from '@/lib/auth/use-auth'
 
 export const Route = createFileRoute('/_authed')({
-  beforeLoad: () => {
-    const { accessToken } = useAuthStore.getState()
-    if (!accessToken) throw redirect({ to: '/login' })
+  // Await the cookie-based session restore before deciding. The store
+  // is sessionStorage-backed (empty after a fresh load / closed tab),
+  // so a synchronous accessToken check here redirected to /login
+  // before the refresh-cookie bootstrap could run — a valid session
+  // looked dead on reload (S35). restoreSession() is memoised, so this
+  // shares the one /auth/refresh the root bootstrap already performs.
+  beforeLoad: async () => {
+    if (!(await restoreSession())) {
+      throw redirect({ to: '/login' })
+    }
   },
   component: AuthedShell,
 })

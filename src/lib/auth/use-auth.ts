@@ -13,48 +13,71 @@ interface MeBody {
   client?: { id: string; permissions: string[]; firstName?: string; lastName?: string }
 }
 
-/**
- * useBootstrapAuth tries to restore a session on app start: ask the
- * gateway to refresh (cookie-only) and, on success, hydrate the store.
- * Returns true once the bootstrap attempt has finished (success or
- * failure) so route guards can avoid flashing the login screen.
- */
-export function useBootstrapAuth(): boolean {
-  const [ready, setReady] = useState(false)
-  const setLogin = useAuthStore((s) => s.setLogin)
-  const clear = useAuthStore((s) => s.clear)
+// One in-flight restore per page load. Both the __root bootstrap and
+// the /_authed route guard call restoreSession(); memoising the promise
+// means a single /auth/refresh round-trip serves all callers and — the
+// load-bearing part — the guard can *await* the same restore the
+// bootstrap does instead of racing it (S35: a valid refresh-cookie
+// session was bounced to /login on reload because the synchronous
+// guard ran before the useEffect bootstrap).
+let restorePromise: Promise<boolean> | null = null
 
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
+/**
+ * restoreSession ensures the auth store reflects the current session.
+ *
+ * No-op (true) if an access token is already in the store. Otherwise
+ * it asks the gateway to refresh using the httpOnly cookie (JS can't
+ * read it) and hydrates identity from /auth/me on success. The
+ * cookie-refresh runs at most once per page load (concurrent callers
+ * share it); the up-front accessToken check means logging back in
+ * within the same tab works without a reload.
+ */
+export async function restoreSession(): Promise<boolean> {
+  if (useAuthStore.getState().accessToken) return true
+  if (!restorePromise) {
+    restorePromise = (async () => {
       try {
         const { data } = await api.post<RefreshBody>('/v1/auth/refresh')
         const me = await api.get<MeBody>('/v1/auth/me', {
           headers: { Authorization: `Bearer ${data.accessToken}` },
         })
-        if (cancelled) return
         const perms = jwtDecodePermissions(data.accessToken) ?? []
         const principal = me.data.employee ?? me.data.client
-        const userId = principal?.id ?? ''
-        const userKind: 'employee' | 'client' = me.data.employee ? 'employee' : 'client'
-        setLogin({
+        useAuthStore.getState().setLogin({
           accessToken: data.accessToken,
-          userId,
-          userKind,
+          userId: principal?.id ?? '',
+          userKind: me.data.employee ? 'employee' : 'client',
           permissions: perms,
           firstName: principal?.firstName,
           lastName: principal?.lastName,
         })
+        return true
       } catch {
-        if (!cancelled) clear()
-      } finally {
-        if (!cancelled) setReady(true)
+        useAuthStore.getState().clear()
+        return false
       }
     })()
+  }
+  return restorePromise
+}
+
+/**
+ * useBootstrapAuth tries to restore a session on app start and returns
+ * true once the attempt has finished (success or failure) so the root
+ * layout can hold the first paint and avoid flashing the login screen.
+ */
+export function useBootstrapAuth(): boolean {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    restoreSession().finally(() => {
+      if (!cancelled) setReady(true)
+    })
     return () => {
       cancelled = true
     }
-  }, [setLogin, clear])
+  }, [])
 
   return ready
 }
