@@ -7,6 +7,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listAccounts } from '@/lib/api/accounts'
+import { listHoldings } from '@/lib/api/portfolio'
 import { quoteExchange } from '@/lib/api/payments'
 import { placeOrder } from '@/lib/api/orders'
 import { getActuaryInfo } from '@/lib/api/actuaries'
@@ -86,6 +87,30 @@ export function OrderForm({
     queryFn: () => listAccounts({ ownerClientId: ownerForList, kind: kindForList }),
     enabled: Boolean(ownerForList),
   })
+
+  // SELL inventory is keyed by (user, security, account): a holding
+  // can sit on ANY account it was bought through — for actuaries that
+  // is whichever forex_book the BUY used, which is not necessarily the
+  // security-currency one. Filtering the SELL account list by currency
+  // (old behaviour) hid the very account the holding lives on, so the
+  // server's "ne možete prodati više hartija nego što posedujete"
+  // fired for holdings the user genuinely owns. Source the SELL
+  // accounts from the holdings instead. Shares the portfolio cache key
+  // so a fill (which invalidates keys.portfolio.all) refreshes this.
+  const holdings = useQuery({
+    queryKey: keys.portfolio.list(userId ?? ''),
+    queryFn: () => listHoldings(),
+    enabled: Boolean(userId),
+  })
+  const heldAccountIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const h of holdings.data?.holdings ?? []) {
+      if (h.security?.id === securityId && (h.quantity ?? 0) > 0 && h.accountId) {
+        ids.add(h.accountId)
+      }
+    }
+    return ids
+  }, [holdings.data, securityId])
 
   // For commission-cap conversion ($7/$12-eq → listing currency).
   // Skip the round-trip when the listing already trades in USD; the
@@ -170,17 +195,27 @@ export function OrderForm({
     const items = accounts.data?.accounts ?? []
     return items.filter((a) => {
       if (a.status !== v1AccountStatus.ACCOUNT_STATUS_ACTIVE) return false
-      if (side === 'sell') return a.currency === currency
+      // SELL: only accounts that actually hold this security (any
+      // currency) — that is the account the server will check against.
+      if (side === 'sell') return Boolean(a.id) && heldAccountIds.has(a.id as string)
       return true
     })
-  }, [accounts.data, side, currency])
+  }, [accounts.data, side, heldAccountIds])
 
   // Reset accountId when the eligible set changes (e.g. user flips
-  // BUY ↔ SELL and the previously selected account becomes ineligible).
+  // BUY ↔ SELL and the previously selected account becomes ineligible);
+  // and auto-pick when exactly one account is eligible. The latter
+  // matters for the portfolio "Prodaj" deep-link: it carries only
+  // securityId+qty, so without an auto-pick the SELL would submit with
+  // an empty account.
   useEffect(() => {
     const cur = form.getValues('accountId')
-    if (cur && !eligibleAccounts.find((a) => a.id === cur)) {
+    const stillValid = cur && eligibleAccounts.some((a) => a.id === cur)
+    if (cur && !stillValid) {
       form.setValue('accountId', '')
+    }
+    if (!stillValid && eligibleAccounts.length === 1) {
+      form.setValue('accountId', eligibleAccounts[0].id as string, { shouldValidate: true })
     }
   }, [eligibleAccounts, form])
 
@@ -349,7 +384,9 @@ export function OrderForm({
               )}
               {side === 'sell' && eligibleAccounts.length === 0 && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Nemate aktivan račun u valuti hartije ({currencyLabel(currency ?? '')}). Promenite smer ili otvorite račun.
+                  {holdings.isLoading
+                    ? 'Učitavanje pozicija…'
+                    : 'Ne posedujete ovu hartiju ni na jednom računu, pa je nije moguće prodati.'}
                 </p>
               )}
             </div>
