@@ -64,8 +64,9 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
     queryFn: () => getSecurity(listingId),
     // Spec C3-tests S17: listing detail's price/ask/bid refresh on an
     // interval so the order form sees fresh quotes without a manual
-    // page reload.
-    refetchInterval: 30_000,
+    // page reload. Aligned to the portfolio cadence (5s) per the QA
+    // "auto-refresh na Trgovini kao na portfoliju".
+    refetchInterval: 5_000,
   })
 
   const sec = security.data?.security
