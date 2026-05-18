@@ -27,6 +27,11 @@ function PositionDetail() {
   const security = useQuery({
     queryKey: keys.security.detail(securityId),
     queryFn: () => getSecurity(securityId),
+    // Live price + the holding below auto-refresh like the portfolio
+    // index (5s). Without this the per-security page stayed stale
+    // after a sell — the holding still looked unsold until a manual
+    // reload.
+    refetchInterval: 5_000,
   })
 
   const userId = useAuthStore((s) => s.userId) ?? ''
@@ -36,6 +41,7 @@ function PositionDetail() {
     queryKey: keys.portfolio.list(userId),
     queryFn: () => listHoldings(),
     enabled: Boolean(userId),
+    refetchInterval: 5_000,
   })
 
   const sec = security.data?.security
