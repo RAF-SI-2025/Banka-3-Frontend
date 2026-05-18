@@ -25,5 +25,7 @@ export type v1Transaction = {
     initiatorClientId?: string;
     status?: v1TransactionStatus;
     createdAt?: string;
+    fromAccountNumber?: string;
+    toAccountNumber?: string;
 };
 

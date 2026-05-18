@@ -252,14 +252,18 @@ function AccountDetail() {
             <TBody>
               {filteredTx.map((t) => {
                 const outflow = t.fromAccountId === id
-                const counterparty = outflow ? t.toAccountId : t.fromAccountId
+                const counterpartyNumber = outflow ? t.toAccountNumber : t.fromAccountNumber
                 const amount = outflow ? t.fromAmount : t.toAmount
                 return (
                   <TR key={t.id}>
                     <TD className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTime(t.createdAt)}</TD>
                     <TD>{txKindLabel[t.kind!]}</TD>
                     <TD>{outflow ? 'Odliv' : 'Priliv'}</TD>
-                    <TD className="font-mono text-xs">{counterparty || '—'}</TD>
+                    <TD className="font-mono text-xs">
+                      {counterpartyNumber
+                        ? formatAccountNumber(counterpartyNumber)
+                        : t.recipientName || '—'}
+                    </TD>
                     <TD className="text-xs text-foreground">{t.purpose || t.recipientName || '—'}</TD>
                     <TD className={`text-right ${outflow ? 'text-danger' : 'text-success-soft-foreground'}`}>
                       {outflow ? '-' : '+'}
