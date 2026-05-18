@@ -273,7 +273,10 @@ function RowActions({
                   variant="primary"
                   disabled={busy}
                   data-cy="approve-order"
-                  onClick={() => approve.mutate()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    approve.mutate()
+                  }}
                 >
                   Odobri
                 </Button>
@@ -284,7 +287,10 @@ function RowActions({
                 variant="danger"
                 disabled={busy}
                 data-cy="decline-order"
-                onClick={() => decline.mutate()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  decline.mutate()
+                }}
               >
                 Odbij
               </Button>
@@ -297,7 +303,10 @@ function RowActions({
               variant="outline"
               disabled={busy}
               data-cy="cancel-order"
-              onClick={() => cancel.mutate()}
+              onClick={(e) => {
+                e.stopPropagation()
+                cancel.mutate()
+              }}
             >
               Otkaži
             </Button>
