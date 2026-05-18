@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { listActuaries } from '@/lib/api/actuaries'
@@ -10,6 +11,9 @@ import { actuaryTypeLabel } from '@/lib/labels'
 import { formatMoney } from '@/lib/format'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Select } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const GATE = [Permissions.Admin, Permissions.ActuarySupervisor] as const
 
@@ -44,6 +48,25 @@ function ActuariesIndex() {
     })),
   })
 
+  // QA S1: the actuary-management page had no filters. Type comes off
+  // actuary_info; name/email come from the per-row employee fan-out,
+  // so both filters run client-side over the paired rows.
+  const [typeFilter, setTypeFilter] = useState<string>('')
+  const [q, setQ] = useState('')
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    return rows
+      .map((a, i) => ({ a, emp: employeeQs[i]?.data }))
+      .filter(({ a, emp }) => {
+        if (typeFilter && a.type !== typeFilter) return false
+        if (needle) {
+          const hay = `${emp?.firstName ?? ''} ${emp?.lastName ?? ''} ${emp?.email ?? ''}`.toLowerCase()
+          if (!hay.includes(needle)) return false
+        }
+        return true
+      })
+  }, [rows, employeeQs, typeFilter, q])
+
   return (
     <main className="container space-y-6 py-8">
       <header className="flex items-end justify-between">
@@ -54,6 +77,34 @@ function ActuariesIndex() {
           </p>
         </div>
       </header>
+
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Label>Pretraga (ime, prezime, email)</Label>
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="npr. Petar ili petar@banka.local"
+            data-cy="actuary-filter-search"
+          />
+        </div>
+        <div>
+          <Label>Tip</Label>
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            data-cy="actuary-filter-type"
+          >
+            <option value="">Svi</option>
+            <option value={v1ActuaryType.ACTUARY_TYPE_AGENT}>
+              {actuaryTypeLabel[v1ActuaryType.ACTUARY_TYPE_AGENT]}
+            </option>
+            <option value={v1ActuaryType.ACTUARY_TYPE_SUPERVISOR}>
+              {actuaryTypeLabel[v1ActuaryType.ACTUARY_TYPE_SUPERVISOR]}
+            </option>
+          </Select>
+        </div>
+      </div>
 
       {list.isLoading && <p className="text-muted-foreground">Učitavanje…</p>}
       {list.isError && <p className="text-danger">Greška pri učitavanju liste aktuara.</p>}
@@ -70,12 +121,11 @@ function ActuariesIndex() {
           </TR>
         </THead>
         <TBody>
-          {rows.length === 0 ? (
+          {visible.length === 0 ? (
             <EmptyRow colSpan={6}>{list.isFetching ? 'Učitavanje…' : 'Nema aktuara.'}</EmptyRow>
           ) : (
-            rows.map((a, i) => {
+            visible.map(({ a, emp }) => {
               const id = a.employeeId ?? ''
-              const emp = employeeQs[i]?.data
               const isSupervisor = a.type === v1ActuaryType.ACTUARY_TYPE_SUPERVISOR
               return (
                 <TR
