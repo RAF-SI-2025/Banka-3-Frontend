@@ -138,6 +138,12 @@ function waitOrderDone(orderId: string, token: string) {
 describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // Soak-e2e safety: under the persistent-backend harness the seeded
+    // agent's used_limit accumulates across earlier specs and the
+    // DEO 1 assertion below ("used limit shows 0,00") would otherwise
+    // fail. No-op under the regular per-spec-reset suite because
+    // resetBackend already restores actuary_info defaults.
+    cy.resetAgentLimit()
   })
 
   it('supervisor sets limit, agent trades MSFT round-trip, tax runs, limit resets', () => {

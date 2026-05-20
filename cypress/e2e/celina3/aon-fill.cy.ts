@@ -69,25 +69,17 @@ describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', ()
         }),
     )
 
-    // Snapshot pre-order count of trade transactions on the
-    // forex_book USD account — we'll compute the AON fill count as
-    // (after - before) and expect exactly 1. Use the API's `total`
-    // (string) rather than .transactions.length so the assertion
-    // survives the soak-e2e harness where accumulated trades from
-    // earlier specs blow past the pageSize ceiling.
-    cy.get<string>('@forexUsdId').then((acctId) =>
-      cy.get<string>('@agentTok').then((tok) =>
-        cy
-          .request({
-            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=1`,
-            headers: { Authorization: `Bearer ${tok}` },
-          })
-          .then((r) => {
-            const before = Number(r.body.total ?? 0)
-            cy.wrap(before).as('tradeTxBefore')
-          }),
-      ),
-    )
+    // Capture the wall-clock just before placing the order so the
+    // post-completion snapshot can filter to "transactions created at
+    // or after this point". Soak-e2e otherwise picks up trickle-fills
+    // from earlier specs' Market orders that are still settling in
+    // the worker's background ticker, inflating the count and
+    // breaking the "exactly one fill" AON invariant.
+    cy.then(() => {
+      // 1 s slack so the API's >= comparator is strict.
+      const t0 = new Date(Date.now() - 1000).toISOString()
+      cy.wrap(t0).as('aonStartIso')
+    })
 
     cy.get<string>('@agentTok').then((tok) =>
       cy.get<string>('@msftId').then((secId) =>
@@ -136,24 +128,23 @@ describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', ()
       poll(30)
     })
 
-    // Snapshot post bank-transaction count for the USD forex_book
-    // account (each fill writes one `trade`-kind transaction). AON ⇒
-    // single tick, so the delta must be exactly 1. Use the API's
-    // `total` field so the count survives accumulated state in the
-    // soak-e2e harness.
+    // Count only trade transactions created at-or-after the AON's
+    // start timestamp; this excludes background fills on other orders
+    // that may have ticked during our poll under soak-e2e. AON ⇒
+    // exactly one fill, so total must be 1.
     cy.get<string>('@forexUsdId').then((acctId) =>
       cy.get<string>('@agentTok').then((tok) =>
-        cy
-          .request({
-            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=1`,
-            headers: { Authorization: `Bearer ${tok}` },
-          })
-          .then((r) => {
-            const after = Number(r.body.total ?? 0)
-            cy.get<number>('@tradeTxBefore').then((before) => {
-              expect(after - before, 'AON BUY produces exactly one trade transaction').to.eq(1)
+        cy.get<string>('@aonStartIso').then((from) =>
+          cy
+            .request({
+              url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=1&from=${encodeURIComponent(from)}`,
+              headers: { Authorization: `Bearer ${tok}` },
             })
-          }),
+            .then((r) => {
+              const count = Number(r.body.total ?? 0)
+              expect(count, 'AON BUY produces exactly one trade transaction').to.eq(1)
+            }),
+        ),
       ),
     )
   })
