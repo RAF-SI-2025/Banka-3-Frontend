@@ -76,14 +76,26 @@ function AccountDetail() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [minAmount, setMinAmount] = useState('')
   const [maxAmount, setMaxAmount] = useState('')
+  // Spec p.18 "filtriranje po datumu" — YYYY-MM-DD from the native
+  // <input type="date">; converted to T00:00:00Z midnight UTC before
+  // hitting grpc-gateway (proto Timestamp rejects bare YYYY-MM-DD per
+  // [[yyyymmdd-proto-timestamp]]).
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const txArgs = {
+    accountId: id,
+    pageSize: 50,
+    from: fromDate ? `${fromDate}T00:00:00Z` : undefined,
+    to: toDate ? `${toDate}T23:59:59Z` : undefined,
+  }
 
   const account = useQuery({
     queryKey: keys.account.detail(id),
     queryFn: () => getAccount(id),
   })
   const transactions = useQuery({
-    queryKey: keys.transaction.list({ accountId: id }),
-    queryFn: () => listTransactions({ accountId: id, pageSize: 50 }),
+    queryKey: keys.transaction.list(txArgs),
+    queryFn: () => listTransactions(txArgs),
   })
   const cards = useQuery({
     queryKey: keys.card.list({ accountId: id }),
@@ -234,6 +246,14 @@ function AccountDetail() {
           <div>
             <Label className="text-xs">Max iznos</Label>
             <Input inputMode="decimal" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="w-28" />
+          </div>
+          <div>
+            <Label className="text-xs">Od datuma</Label>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-40" />
+          </div>
+          <div>
+            <Label className="text-xs">Do datuma</Label>
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-40" />
           </div>
         </div>
         {transactions.data && filteredTx.length > 0 ? (

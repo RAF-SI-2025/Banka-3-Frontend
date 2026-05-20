@@ -17,6 +17,13 @@ export interface ListTransactionsArgs {
   status?: string
   page?: number
   pageSize?: number
+  // Spec p.18 / p.24 "filtriranje po datumu" — ISO timestamps
+  // (T00:00:00Z midnight UTC); grpc-gateway parses these as
+  // google.protobuf.Timestamp on the backend. Either bound may be
+  // omitted. See [[yyyymmdd-proto-timestamp]] for the date-input
+  // conversion convention.
+  from?: string
+  to?: string
 }
 
 export async function listTransactions(args: ListTransactionsArgs = {}): Promise<v1ListTransactionsResponse> {
