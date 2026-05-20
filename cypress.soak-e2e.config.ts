@@ -97,6 +97,15 @@ function fullReset(): void {
       ...process.env,
       PATH: augmentedPath,
       DATABASE_URL: `postgres://${PG_USER}:banka@localhost:5432/${PG_DB}?sslmode=disable`,
+      // Mirror cypress.config.ts: opt out of OTC + fund demo seeds
+      // that bump klijent's reserved_count / fund position baselines.
+      // Soak-e2e treats accumulated state as the test surface; the
+      // OTC/fund demo data adds non-test state that confuses
+      // cross-round invariants.
+      SEED_FUNDS: '0',
+      SEED_ORDERS: '0',
+      SEED_PROFIT_DEMO: '0',
+      SEED_OTC: '0',
     },
   })
 }

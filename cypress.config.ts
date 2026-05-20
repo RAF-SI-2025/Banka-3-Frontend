@@ -94,6 +94,11 @@ function resetBackend(): { ok: true } {
       // fixture (agent/supervisor totals + reconciling counts); the
       // spread-out "Kretanje profita" demo series would skew both.
       SEED_PROFIT_DEMO: '0',
+      // OTC demo threads bump klijent's AAPL reserved_count by +3
+      // (thread 1) and CL by +2 (thread 4). The c4 soak + several
+      // c4 acceptance specs assume zero-reserved baselines; opt out
+      // here so each cypress reset starts from a clean OTC table.
+      SEED_OTC: '0',
     },
   })
   return { ok: true }
