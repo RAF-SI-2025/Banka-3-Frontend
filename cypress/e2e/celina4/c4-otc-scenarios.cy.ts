@@ -306,8 +306,20 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
    // failing silently on a 200.00 vs 200.0000 expect), which locks
    // the seller's reserved_count and breaks later tests in the same
    // describe. beforeEach gives each it() a clean slate.
+   //
+   // Seed (seedOTC in services/user/cmd/seed/main.go ~L1639) also
+   // bumps klijent's AAPL holding reserved_count by +3 to back the
+   // seeded OTC thread-1 fixture. S21 + S22 want the full 10 shares
+   // free; zero the reservation after every reset. The orphaned
+   // thread-1 offer becomes inconsistent for the duration of this
+   // describe, but no test here looks at thread-1.
   beforeEach(() => {
     cy.resetBackend()
+    cy.pgSql(`UPDATE "trading".portfolio_holdings h
+                 SET reserved_count = 0
+                FROM "trading".securities s
+               WHERE s.id = h.security_id
+                 AND s.ticker = 'AAPL' AND s.type = 'stock'`)
   })
 
   // Shared fixtures captured in beforeEach so each test has tokens.
@@ -502,6 +514,9 @@ describe('Celina 4 — OTC pregovaranje (S17-S22)', () => {
       // Seller publishes 10 AAPL, accepts a contract for 10. The 11th
       // share offer creation hits the publish ceiling (FE-observable:
       // accept returns 4xx with Serbian message).
+      //
+      // (beforeEach already zeroed klijent's AAPL reserved_count to
+      // shake off the seed's thread-1 fixture +3 bump.)
       setPublicCount(f.sellerTok, f.sellerHolding.id, PUBLIC_QTY)
       mintBuyerUsd(f.adminTok, f.buyerId, 50000)
       findUsdAccount(f.adminTok, f.buyerId).then((buyerUsdId) => {
