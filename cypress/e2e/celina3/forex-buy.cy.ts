@@ -32,7 +32,11 @@ describe('Celina 3 (live) — agent kupuje ForexPair', () => {
     // Pick the USD-side book; the bank's per-currency forex_book is the
     // only legal source account for an actuary-side forex order.
     cy.get('#order-form').within(() => {
-      cy.get('#of-qty').clear().type('1')
+      // Spec p.7 (E2E doc): forex minimum lot = 10. Anything below is
+      // rejected with "Nalog ispod minimalne veličine lota" before
+      // the order ever reaches the catalog — see backend
+      // service.forexMinLot enforced in CreateOrder.
+      cy.get('#of-qty').clear().type('10')
       cy.get('#of-acct').find('option').contains('USD').then((opt) => {
         cy.get('#of-acct').select(opt.attr('value') as string)
       })
