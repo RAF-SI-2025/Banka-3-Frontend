@@ -185,10 +185,11 @@ export default defineConfig({
     viewportWidth: 1440,
     viewportHeight: 900,
     // Vite-dev compiles route bundles lazily; the first cy.visit on a
-    // new route after a docker restart can paint 4-8 s late, which is
-    // longer than cypress's 4 s default. 12 s is enough margin to
-    // absorb the compile without being chatty on real failures.
-    defaultCommandTimeout: 12000,
+    // new route after a docker restart can paint 4-8 s late, and in
+    // sustained headless runs the containerised dev server takes
+    // 20-30 s to repaint cold routes (login form, profit-banke heading).
+    // 30 s absorbs that without being chatty on real failures.
+    defaultCommandTimeout: 30000,
     setupNodeEvents(on) {
       on('task', {
         resetBackend,

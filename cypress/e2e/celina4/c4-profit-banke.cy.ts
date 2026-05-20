@@ -120,13 +120,16 @@ describe('Celina 4 — Portal Profit Banke (S47-S50)', () => {
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/profit-banke/aktuari')
-    cy.contains('h1', 'Profit banke — aktuari', { timeout: 15000 }).should('be.visible')
+    cy.contains('h1', 'Profit banke — aktuari', { timeout: 30000 }).should('be.visible')
     // The page renders the table even when empty (seed has no realized
     // sells by actuaries on cold start); the FE shows "Nema podataka."
     // or one or more rows depending on prior tests. We just confirm
-    // the header + table shell.
-    cy.contains('Ime i prezime').should('be.visible')
-    cy.contains('Profit (RSD)').should('be.visible')
+    // the header + the spec p.76 column set the FE actually renders:
+    // "Aktuar", "Broj realizovanih prodaja", "Profit (RSD)" (the page
+    // intentionally folds ime/prezime into a single "Aktuar" cell).
+    cy.contains('th', 'Aktuar').should('be.visible')
+    cy.contains('th', 'Broj realizovanih prodaja').should('be.visible')
+    cy.contains('th', 'Profit (RSD)').should('be.visible')
   })
 
   it('S48 — agent (bez bank.profit.read) ne pristupa portalu Profit Banke', () => {
@@ -140,8 +143,10 @@ describe('Celina 4 — Portal Profit Banke (S47-S50)', () => {
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/profit-banke/fondovi')
-    cy.contains('h1', 'Profit banke — pozicije u fondovima', { timeout: 15000 }).should('be.visible')
-    cy.contains('Alpha Fond', { timeout: 15000 }).should('be.visible')
+    cy.contains('h1', 'Profit banke — pozicije u fondovima', { timeout: 30000 }).should('be.visible')
+    // Anchor to a <td> so the assertion doesn't accidentally pick up the
+// document <title>, which TanStack Router updates with the fund name.
+cy.contains('td', 'Alpha Fond', { timeout: 30000 }).should('be.visible')
     // Manager column shows the supervizor's display name (seed-planted
     // "Supervizor Test" or similar).
     cy.contains('Udeo (%)').should('be.visible')
@@ -152,7 +157,9 @@ describe('Celina 4 — Portal Profit Banke (S47-S50)', () => {
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/profit-banke/fondovi')
-    cy.contains('Alpha Fond', { timeout: 15000 }).should('be.visible')
+    // Anchor to a <td> so the assertion doesn't accidentally pick up the
+// document <title>, which TanStack Router updates with the fund name.
+cy.contains('td', 'Alpha Fond', { timeout: 30000 }).should('be.visible')
     cy.get('[data-cy^="bank-fund-invest-"]', { timeout: 15000 }).first().click()
     cy.contains('Uplata u fond (u ime banke)', { timeout: 10000 }).should('be.visible')
     cy.get('[data-cy="fund-invest-source"]', { timeout: 15000 }).should('not.be.disabled')
@@ -172,7 +179,9 @@ describe('Celina 4 — Portal Profit Banke (S47-S50)', () => {
     clearAuth()
     loginViaUi(SUP_EMAIL, SUP_PASSWORD)
     cy.visit('/portal/profit-banke/fondovi')
-    cy.contains('Alpha Fond', { timeout: 15000 }).should('be.visible')
+    // Anchor to a <td> so the assertion doesn't accidentally pick up the
+// document <title>, which TanStack Router updates with the fund name.
+cy.contains('td', 'Alpha Fond', { timeout: 30000 }).should('be.visible')
     cy.get('[data-cy^="bank-fund-withdraw-"]', { timeout: 15000 }).first().click()
     cy.contains('Povlačenje iz fonda (u ime banke)', { timeout: 10000 }).should('be.visible')
     cy.get('[data-cy="fund-withdraw-dest"]', { timeout: 15000 }).should('not.be.disabled')

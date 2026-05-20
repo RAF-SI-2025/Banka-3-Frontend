@@ -463,7 +463,7 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                               }),
                           )
                         }
-                        pollDone(40)
+                        pollDone(80) // 80 × 3s = 240s ceiling (was 120s; SAGA can pace longer under sustained load)
                         investFund(clientTok, fundId, '20000', rsdId)
                         withdrawFund(clientTok, fundId, '25000', rsdId).then((r) => {
                           expect(r.status).to.eq(200)

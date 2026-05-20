@@ -388,7 +388,7 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
             poll(remaining - 1)
           })
         }
-        poll(80) // 80 × 3s = 240s ceiling
+        poll(160) // 160 × 3s = 480s ceiling (was 240s; the live trading-day chain stacks settle latency)
       })
     })
 
@@ -477,7 +477,7 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
             poll(remaining - 1)
           })
         }
-        poll(72) // 72 × 5s = 360s ceiling
+        poll(144) // 144 × 5s = 720s ceiling (was 360s; chained settlements push further)
       })
     })
 

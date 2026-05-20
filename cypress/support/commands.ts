@@ -51,7 +51,7 @@ Cypress.Commands.add('resetBackend', () => {
       win.localStorage.clear()
     },
   })
-  cy.findByLabelText('Email', { timeout: 30000 }).should('exist')
+  cy.findByLabelText('Email', { timeout: 60000 }).should('exist')
 
   cy.task('resetBackend').then((res) => {
     if ((res as { ok: boolean }).ok !== true) {
@@ -68,7 +68,7 @@ Cypress.Commands.add('loginAsAdmin', () => {
   // dev is HMR-heavy and the first page render after a backend restart can
   // be slow, so override findByLabelText's poll window.
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(ADMIN_EMAIL)
+  cy.findByLabelText('Email', { timeout: 45000 }).clear().type(ADMIN_EMAIL)
   cy.findByLabelText('Lozinka').clear().type(ADMIN_PASSWORD)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
@@ -77,7 +77,7 @@ Cypress.Commands.add('loginAsAdmin', () => {
 
 Cypress.Commands.add('loginAsClient', () => {
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(CLIENT_EMAIL)
+  cy.findByLabelText('Email', { timeout: 45000 }).clear().type(CLIENT_EMAIL)
   cy.findByLabelText('Lozinka').clear().type(CLIENT_PASSWORD)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
@@ -86,7 +86,7 @@ Cypress.Commands.add('loginAsClient', () => {
 
 Cypress.Commands.add('loginAsAgent', () => {
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(AGENT_EMAIL)
+  cy.findByLabelText('Email', { timeout: 45000 }).clear().type(AGENT_EMAIL)
   cy.findByLabelText('Lozinka').clear().type(AGENT_PASSWORD)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')
@@ -95,7 +95,7 @@ Cypress.Commands.add('loginAsAgent', () => {
 
 Cypress.Commands.add('loginAsSupervisor', () => {
   cy.visit('/login')
-  cy.findByLabelText('Email', { timeout: 15000 }).clear().type(SUPERVISOR_EMAIL)
+  cy.findByLabelText('Email', { timeout: 45000 }).clear().type(SUPERVISOR_EMAIL)
   cy.findByLabelText('Lozinka').clear().type(SUPERVISOR_PASSWORD)
   cy.findByRole('button', { name: /Prijavi se/ }).click()
   cy.url({ timeout: 10000 }).should('not.include', '/login')

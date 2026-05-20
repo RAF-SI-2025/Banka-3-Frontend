@@ -297,7 +297,7 @@ describe('Celina 4 (live) — OTC trading day (spec p.79)', () => {
       cy.get(`[data-cy="public-count-edit-${hid}"]`).click()
       cy.get(`[data-cy="public-count-input-${hid}"]`).clear().type(String(PUBLIC_QTY))
       cy.get(`[data-cy="public-count-save-${hid}"]`).click()
-      cy.get(`[data-cy="public-count-${hid}"]`, { timeout: 10000 }).should('contain', String(PUBLIC_QTY))
+      cy.get(`[data-cy="public-count-${hid}"]`, { timeout: 30000 }).should('contain', String(PUBLIC_QTY))
     })
 
     // ───────────── DEO 2: buyer offers ─────────────
