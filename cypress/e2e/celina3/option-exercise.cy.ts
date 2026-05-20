@@ -48,11 +48,15 @@ describe('Celina 3 (live) — agent iskorišćava ITM CALL', () => {
     // Same snapshot for the underlying AAPL stock row, if it exists.
     // The :not() filter excludes the option row. The row may not be
     // present yet (first exercise of the run); default to 0.
+    //
+    // The stocks table columns are (Ticker, Količina, Avg cena, …) so
+    // qty is at td.eq(1) — NOT eq(3) (which would land on the price
+    // cell "190,50" and parse as 19050 after stripping non-digits).
     cy.get('body').then(($body) => {
       const $row = $body
         .find('tr:contains("AAPL")')
         .filter((_, el) => !el.textContent?.includes('AAPL-C-') && !el.textContent?.includes('AAPL-P-'))
-      const qty = $row.length ? parseInt($row.find('td').eq(3).text().replace(/\D/g, ''), 10) || 0 : 0
+      const qty = $row.length ? parseInt($row.find('td').eq(1).text().replace(/\D/g, ''), 10) || 0 : 0
       cy.wrap(qty).as('underlyingQtyBefore')
     })
 
@@ -82,13 +86,14 @@ describe('Celina 3 (live) — agent iskorišćava ITM CALL', () => {
     })
 
     // Underlying delivered to the agent's portfolio: +100 shares
-    // (one contract of size 100 at strike 190). Spec p.61.d.
+    // (one contract of size 100 at strike 190). Spec p.61.d. Stocks
+    // table's Količina sits at td.eq(1) — see snapshot above.
     cy.get<number>('@underlyingQtyBefore').then((before) => {
       cy.contains('tr', 'AAPL')
         .filter(':not(:contains(AAPL-C-190)):not(:contains(AAPL-P-))')
         .first()
         .find('td')
-        .eq(3)
+        .eq(1)
         .should((td) => {
           const after = parseInt(td.text().replace(/\D/g, ''), 10)
           expect(after, `underlying qty ${before} → ${after}`).to.eq(before + 100)

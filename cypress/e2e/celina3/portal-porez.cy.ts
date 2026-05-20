@@ -22,7 +22,8 @@ describe('Celina 3 — portal porez (supervisor)', () => {
     // number with a non-zero whole part.
     cy.contains('tr', 'Test Klijent', { timeout: 10000 })
       .should('be.visible')
-      .and('match', /[1-9][\d.]*,\d{2}/)
+      .invoke('text')
+      .should('match', /[1-9][\d.]*,\d{2}/)
   })
 
   it('runs the tax job through the confirm dialog and shows the summary', () => {
@@ -37,6 +38,7 @@ describe('Celina 3 — portal porez (supervisor)', () => {
     // depending on how many specs ran before. Just verify the toast
     // rendered + named "korisnika" (i.e. the run executed at all).
     cy.get('[data-cy="run-tax-result"]', { timeout: 15000 })
+      .invoke('text')
       .should('match', /\d+ korisnika/)
   })
 
@@ -51,8 +53,9 @@ describe('Celina 3 — portal porez (supervisor)', () => {
     // unpaid; the spec-conformance goal here is "the detail page
     // renders and the loss row reports 0 tax", not absolute amounts).
     cy.get('[data-cy="standings-unpaid"]', { timeout: 10000 })
+      .invoke('text')
       .should('match', /\d[\d.]*,\d{2}/)
-    cy.get('[data-cy="standings-paid-ytd"]').should('match', /\d[\d.]*,\d{2}/)
+    cy.get('[data-cy="standings-paid-ytd"]').invoke('text').should('match', /\d[\d.]*,\d{2}/)
 
     // Two seeded P&L rows: gain (positive tax) + loss (0 tax).
     cy.contains('tr', 'MSFT').should('be.visible')
