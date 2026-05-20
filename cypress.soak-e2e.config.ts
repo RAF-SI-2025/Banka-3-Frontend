@@ -114,6 +114,25 @@ function oneShotReset(): { ok: true; reset: boolean } {
   return { ok: true, reset: true }
 }
 
+// pgSql mirrors cypress.config.ts's task so specs that use
+// cy.resetAgentLimit / cy.clearExchangeOverride / etc. work in the
+// soak-e2e harness too. Returns rows as raw psql -A -t text
+// (pipe-separated columns, newline-separated rows).
+function pgSql({ sql }: { sql: string }): unknown {
+  const out = dockerExec(POSTGRES_CONTAINER, [
+    'psql',
+    '-U',
+    PG_USER,
+    '-d',
+    PG_DB,
+    '-A',
+    '-t',
+    '-c',
+    sql,
+  ])
+  return out.replace(/\n+$/, '')
+}
+
 function latestLink({ to, marker }: { to: string; marker: string }): string {
   const logs = execFileSync('docker', ['logs', '--tail', '500', USER_CONTAINER], {
     encoding: 'utf8',
@@ -140,6 +159,7 @@ export default defineConfig({
       on('task', {
         resetBackend: oneShotReset,
         latestLink,
+        pgSql,
       })
     },
     // One retry in headless mode absorbs vite's cold-start lazy-bundling
