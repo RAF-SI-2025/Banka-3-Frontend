@@ -71,16 +71,19 @@ describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', ()
 
     // Snapshot pre-order count of trade transactions on the
     // forex_book USD account — we'll compute the AON fill count as
-    // (after - before) and expect exactly 1.
+    // (after - before) and expect exactly 1. Use the API's `total`
+    // (string) rather than .transactions.length so the assertion
+    // survives the soak-e2e harness where accumulated trades from
+    // earlier specs blow past the pageSize ceiling.
     cy.get<string>('@forexUsdId').then((acctId) =>
       cy.get<string>('@agentTok').then((tok) =>
         cy
           .request({
-            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=50`,
+            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=1`,
             headers: { Authorization: `Bearer ${tok}` },
           })
           .then((r) => {
-            const before = (r.body.transactions ?? r.body.items ?? []).length as number
+            const before = Number(r.body.total ?? 0)
             cy.wrap(before).as('tradeTxBefore')
           }),
       ),
@@ -133,21 +136,20 @@ describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', ()
       poll(30)
     })
 
-    // Snapshot pre+post bank-transaction count for the USD forex_book
+    // Snapshot post bank-transaction count for the USD forex_book
     // account (each fill writes one `trade`-kind transaction). AON ⇒
-    // single tick, so the delta must be exactly 1. (No /executions
-    // endpoint is exposed; we go through bank.ListTransactions which
-    // is filterable by op_kind.) Pre-snap is captured at the very top
-    // of the test before any fill could have landed.
+    // single tick, so the delta must be exactly 1. Use the API's
+    // `total` field so the count survives accumulated state in the
+    // soak-e2e harness.
     cy.get<string>('@forexUsdId').then((acctId) =>
       cy.get<string>('@agentTok').then((tok) =>
         cy
           .request({
-            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=50`,
+            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=1`,
             headers: { Authorization: `Bearer ${tok}` },
           })
           .then((r) => {
-            const after = (r.body.transactions ?? r.body.items ?? []).length as number
+            const after = Number(r.body.total ?? 0)
             cy.get<number>('@tradeTxBefore').then((before) => {
               expect(after - before, 'AON BUY produces exactly one trade transaction').to.eq(1)
             })

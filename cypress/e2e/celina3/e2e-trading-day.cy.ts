@@ -530,6 +530,21 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
     cy.visit('/portal/porez')
     cy.contains('h1', 'Porez na kapitalni dobitak', { timeout: 15000 }).should('be.visible')
 
+    // Snapshot Test Klijent's unpaid BEFORE the scoped run so DEO 11's
+    // "scoping worked" check is a delta-zero invariant rather than a
+    // "still greater than zero" absolute — under soak-e2e the seed-
+    // planted client unpaid may have already been zeroed by an earlier
+    // portal-porez run, in which case asserting it's still positive
+    // would fail for reasons unrelated to scoping.
+    cy.get('body')
+      .invoke('text')
+      .then((page) => {
+        // Default to NaN when the row isn't on this page; the DEO 11
+        // delta check then short-circuits.
+        const m = page.match(/Test Klijent[\s\S]{0,400}?([0-9.]+,\d{2})/)
+        cy.wrap(m ? Number(m[1].replace(/\./g, '').replace(',', '.')) : NaN).as('clientUnpaidBefore')
+      })
+
     // The agent's row appears with a positive RSD-denominated
     // outstanding balance (5 × $19.80 ≈ $99 ≈ 9974 RSD; tax = 15%
     // ≈ 1496 RSD). Display labels the agent by full name.
@@ -595,16 +610,25 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
             expect(n, 'agent paid-YTD > 0 post-run').to.be.greaterThan(0)
           })
       })
-    cy.contains('Test Klijent', { timeout: 10000 })
-      .parents('tr')
-      .within(() => {
-        cy.get('[data-cy="cell-unpaid"]')
-          .invoke('text')
-          .then((t) => {
-            const n = Number(t.replace(/\./g, '').replace(',', '.'))
-            expect(n, "client's seed unpaid debt untouched").to.be.greaterThan(0)
-          })
-      })
+    // Scoping invariant: the per-user run touched Marko, not Test
+    // Klijent. Snapshot taken just before DEO 10 — assert delta=0.
+    // When the client wasn't on the board pre-run (soak-e2e pre-tax)
+    // we accept "still not on the board" or any value, since the
+    // scoping correctness has already been proven by the state-tax
+    // delta in DEO 10 (which equals agent unpaid exactly).
+    cy.get<number>('@clientUnpaidBefore').then((before) => {
+      if (!Number.isFinite(before)) return
+      cy.contains('Test Klijent', { timeout: 10000 })
+        .parents('tr')
+        .within(() => {
+          cy.get('[data-cy="cell-unpaid"]')
+            .invoke('text')
+            .then((t) => {
+              const after = Number(t.replace(/\./g, '').replace(',', '.'))
+              expect(after, "client's unpaid untouched by agent-scoped run").to.equal(before)
+            })
+        })
+    })
 
     // ───────────── DEO 12 ─────────────
     // Automatski reset usedLimit-a — call the cron RPC directly
