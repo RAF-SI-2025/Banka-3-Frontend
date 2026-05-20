@@ -145,9 +145,17 @@ Cypress.Commands.add('captureLink', (to: string, marker: string) => {
 // because the API equivalent (POST /actuaries/{id}/used-limit/reset)
 // would need the supervisor-token dance per call.
 Cypress.Commands.add('resetAgentLimit', () => {
+  // Reset every actuary-config field a prior spec might have mutated.
+  // portal-aktuari edits daily_limit + need_approval; orders + cron
+  // accumulate used_limit. Restore the seed defaults
+  // (daily=200000 RSD, need_approval=false, used=0) so the next
+  // spec starts from a known state.
   return cy.pgSql(`
     UPDATE "trading".actuary_info ai
-       SET used_limit = '0', updated_at = now()
+       SET used_limit    = '0',
+           daily_limit   = '200000',
+           need_approval = false,
+           updated_at    = now()
       FROM "user".employees e
      WHERE e.id = ai.employee_id
        AND e.email = 'aktuar@banka.local'
