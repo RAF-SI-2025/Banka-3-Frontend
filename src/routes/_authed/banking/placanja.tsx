@@ -52,7 +52,12 @@ const schema = z.object({
   }),
   amount: z.string().regex(/^[0-9]+(\.[0-9]{1,2})?$/, 'Iznos mora biti broj'),
   recipientName: z.string().min(1, 'Naziv primaoca je obavezan'),
-  paymentCode: z.string().min(1, 'Šifra plaćanja je obavezna'),
+  // Spec p.21: "Šifra plaćanja - default je 289. Prva cifra je uvek 1
+  // ili 2." Three digits, first 1 or 2 — defaults to 289 in the form
+  // initial values below.
+  paymentCode: z
+    .string()
+    .regex(/^[12]\d{2}$/, 'Šifra plaćanja mora biti 3 cifre i počinjati sa 1 ili 2'),
   referenceNumber: z.string().optional(),
   purpose: z.string().min(1, 'Svrha je obavezna'),
   saveRecipient: z.boolean().optional(),
