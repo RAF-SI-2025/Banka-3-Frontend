@@ -149,7 +149,7 @@ Cypress.Commands.add('resetAgentLimit', () => {
     UPDATE "trading".actuary_info ai
        SET used_limit = '0', updated_at = now()
       FROM "user".employees e
-     WHERE e.id = ai.user_id
+     WHERE e.id = ai.employee_id
        AND e.email = 'aktuar@banka.local'
   `) as unknown as Cypress.Chainable<void>
 })
