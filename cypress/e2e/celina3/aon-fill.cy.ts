@@ -1,0 +1,155 @@
+/// <reference types="cypress" />
+
+// spec/C3-tests.pdf — Scenario 61: AON order - uspešno izvršavanje
+// kada je puna količina dostupna
+//
+//   Given aktuar kreira AON BUY order za 10 akcija
+//   And   na tržištu je dostupno 10 ili više akcija
+//   When  sistem izvrši order
+//   Then  order se izvršava u celosti odjednom
+//   And   kreira se jedna transakcija za celokupnu količinu
+//
+// Spec p.55-56 ("AON forces whole-order fill on the first ready tick,
+// no random sub-quantity") — verified by transaction count: an AON
+// Market BUY that satisfies its price condition fills as exactly ONE
+// `trade`-kind bank transaction, not the 1..n partial-fill chunker
+// fragmentation non-AON orders see. We use qty=3 (instead of the
+// spec's 10) so the RSD-equivalent stays under the actuary's seeded
+// 200k RSD daily limit (10 MSFT ~ 530k RSD ≫ limit ⇒ would route to
+// Pending and never fill without a supervisor). The single-transaction
+// AON invariant holds regardless of quantity.
+
+const FOREX_BOOK_OWNER_ID = '00000000-0000-0000-0000-000000000020'
+const AGENT_EMAIL = 'aktuar@banka.local'
+const AGENT_PASSWORD = 'Aktuar123!'
+
+function gatewayLogin(email: string, password: string): Cypress.Chainable<string> {
+  return cy
+    .request({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      body: { email, password },
+    })
+    .then((r) => r.body.accessToken as string)
+}
+
+describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', () => {
+  beforeEach(() => cy.resetBackend())
+
+  it('AON Market BUY fires as exactly one trade transaction (no partial-fill fragmentation)', () => {
+    gatewayLogin(AGENT_EMAIL, AGENT_PASSWORD).as('agentTok')
+
+    cy.get<string>('@agentTok').then((tok) =>
+      cy
+        .request({
+          url: '/api/v1/listings?pageSize=100',
+          headers: { Authorization: `Bearer ${tok}` },
+        })
+        .then((r) => {
+          const msft = (r.body.items ?? []).find(
+            (x: { security?: { ticker?: string } }) => x.security?.ticker === 'MSFT',
+          )!
+          cy.wrap(msft.security.id as string).as('msftId')
+        }),
+    )
+    cy.get<string>('@agentTok').then((tok) =>
+      cy
+        .request({
+          url: `/api/v1/accounts?ownerClientId=${FOREX_BOOK_OWNER_ID}&kind=ACCOUNT_KIND_FOREX_BOOK`,
+          headers: { Authorization: `Bearer ${tok}` },
+        })
+        .then((r) => {
+          const usd = (r.body.accounts ?? []).find(
+            (a: { currency?: string }) => a.currency === 'CURRENCY_USD',
+          )!
+          cy.wrap(usd.id as string).as('forexUsdId')
+        }),
+    )
+
+    // Snapshot pre-order count of trade transactions on the
+    // forex_book USD account — we'll compute the AON fill count as
+    // (after - before) and expect exactly 1.
+    cy.get<string>('@forexUsdId').then((acctId) =>
+      cy.get<string>('@agentTok').then((tok) =>
+        cy
+          .request({
+            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=50`,
+            headers: { Authorization: `Bearer ${tok}` },
+          })
+          .then((r) => {
+            const before = (r.body.transactions ?? r.body.items ?? []).length as number
+            cy.wrap(before).as('tradeTxBefore')
+          }),
+      ),
+    )
+
+    cy.get<string>('@agentTok').then((tok) =>
+      cy.get<string>('@msftId').then((secId) =>
+        cy.get<string>('@forexUsdId').then((acctId) =>
+          cy
+            .request({
+              method: 'POST',
+              url: '/api/v1/orders',
+              headers: { Authorization: `Bearer ${tok}` },
+              body: {
+                securityId: secId,
+                accountId: acctId,
+                direction: 'DIRECTION_BUY',
+                orderType: 'ORDER_TYPE_MARKET',
+                quantity: 3,
+                allOrNone: true,
+              },
+            })
+            .then((r) => {
+              expect(r.status).to.eq(200)
+              expect(r.body.order.allOrNone).to.eq(true)
+              cy.wrap(r.body.order.id as string).as('orderId')
+            }),
+        ),
+      ),
+    )
+
+    // Poll for done. AON forces whole-order on first ready tick;
+    // worker ticks every 10 s. 30 × 3 s = 90 s ceiling.
+    cy.get<string>('@orderId').then((orderId) => {
+      function poll(remaining: number): void {
+        if (remaining <= 0) throw new Error('AON BUY did not fill')
+        cy.get<string>('@agentTok').then((tok) =>
+          cy
+            .request({
+              url: `/api/v1/orders/${orderId}`,
+              headers: { Authorization: `Bearer ${tok}` },
+            })
+            .then((or) => {
+              if (or.body.isDone === true) return
+              cy.wait(3000)
+              poll(remaining - 1)
+            }),
+        )
+      }
+      poll(30)
+    })
+
+    // Snapshot pre+post bank-transaction count for the USD forex_book
+    // account (each fill writes one `trade`-kind transaction). AON ⇒
+    // single tick, so the delta must be exactly 1. (No /executions
+    // endpoint is exposed; we go through bank.ListTransactions which
+    // is filterable by op_kind.) Pre-snap is captured at the very top
+    // of the test before any fill could have landed.
+    cy.get<string>('@forexUsdId').then((acctId) =>
+      cy.get<string>('@agentTok').then((tok) =>
+        cy
+          .request({
+            url: `/api/v1/transactions?accountId=${acctId}&opKind=trade&pageSize=50`,
+            headers: { Authorization: `Bearer ${tok}` },
+          })
+          .then((r) => {
+            const after = (r.body.transactions ?? r.body.items ?? []).length as number
+            cy.get<number>('@tradeTxBefore').then((before) => {
+              expect(after - before, 'AON BUY produces exactly one trade transaction').to.eq(1)
+            })
+          }),
+      ),
+    )
+  })
+})
