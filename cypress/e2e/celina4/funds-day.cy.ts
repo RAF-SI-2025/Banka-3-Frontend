@@ -217,7 +217,7 @@ describe('Celina 4 (live) — investment funds day (spec p.71-76)', () => {
           method: 'PATCH',
           url: `/api/v1/exchanges/${exchangeMic}/override`,
           headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
-          body: { overrideState: 'open' },
+          body: { state: 'open' },
         })
       })
       stateTaxRSDBalance(adminTok).then((b) => cy.wrap(b).as('stateTaxBefore'))

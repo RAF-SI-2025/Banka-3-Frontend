@@ -207,6 +207,15 @@ function stateTaxRSDBalance(adminTok: string): Cypress.Chainable<number> {
 describe('Celina 4 (live) — OTC trading day (spec p.79)', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // Seed (seedOTC) bumps klijent's AAPL holding reserved_count by +3
+    // to back the seeded OTC thread-1 fixture. otc-day wants the full
+    // 10 publishable so PublicCountEditor's max = quantity - reserved
+    // doesn't reject 'Najviše 7'. Same pattern as c4-otc-scenarios.
+    cy.pgSql(`UPDATE "trading".portfolio_holdings h
+                 SET reserved_count = 0
+                FROM "trading".securities s
+               WHERE s.id = h.security_id
+                 AND s.ticker = 'AAPL' AND s.type = 'stock'`)
   })
 
   it('seller publishes → buyer offers → seller counters → buyer accepts → buyer exercises → tax cron', () => {

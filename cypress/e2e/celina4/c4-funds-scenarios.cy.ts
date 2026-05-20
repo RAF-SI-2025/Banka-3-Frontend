@@ -244,7 +244,7 @@ describe('Celina 4 — Investicioni fondovi: pristup i prikaz (S29-S32)', () => 
                           method: 'PATCH',
                           url: '/api/v1/exchanges/XBEL/override',
                           headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
-                          body: { overrideState: 'open' },
+                          body: { state: 'open' },
                         }),
                       )
                       .then(() =>
@@ -410,7 +410,7 @@ describe('Celina 4 — Ulaganje i povlačenje (S33-S37)', () => {
                               method: 'PATCH',
                               url: '/api/v1/exchanges/XBEL/override',
                               headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
-                              body: { overrideState: 'open' },
+                              body: { state: 'open' },
                             }),
                           )
                           .then(() =>
@@ -581,7 +581,7 @@ describe('Celina 4 — Kupovina hartija za fond (S40-S42)', () => {
                 method: 'PATCH',
                 url: '/api/v1/exchanges/XBEL/override',
                 headers: { Authorization: `Bearer ${adminTok}`, 'Idempotency-Key': crypto.randomUUID() },
-                body: { overrideState: 'open' },
+                body: { state: 'open' },
               }),
             )
             .then(() => id)

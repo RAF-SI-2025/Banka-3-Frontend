@@ -140,7 +140,7 @@ Cypress.Commands.add('overrideMarket', (token: string, mic: string, state: strin
     method: 'PATCH',
     url: `${GW}/exchanges/${mic}/override`,
     headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': crypto.randomUUID() },
-    body: { overrideState: state },
+    body: { state: state },
   })
 })
 
