@@ -32,6 +32,14 @@ declare global {
       captureLink(to: string, marker: string): Chainable<string>
       /** Run arbitrary SQL against the test Postgres. Returns rows as raw psql -A -t text (pipe-separated columns, newline-separated rows). */
       pgSql(sql: string): Chainable<string>
+      /**
+       * Advance the QA clock by `offset` (any time.ParseDuration
+       * string, e.g. "24h", "-30m"). Admin-only at the BE; the
+       * fixture pins an admin login + writes to Redis via the
+       * gateway debug endpoint. Other services pick the offset up
+       * within ~5 s (pkg/clock RefreshInterval).
+       */
+      setClockOffset(offset: string): Chainable<{ offset: string; now: string }>
     }
   }
 }
@@ -113,6 +121,32 @@ Cypress.Commands.add('captureLink', (to: string, marker: string) => {
     }
     return cy.wrap(link as string)
   })
+})
+
+// Advance the QA clock by `offset` via the gateway debug endpoint.
+// Admin-only; logs in inline. Other services pick up the new offset
+// within ~5 s (pkg/clock RefreshInterval) — specs that need an
+// immediate observation can cy.wait(6000) after this.
+Cypress.Commands.add('setClockOffset', (offset: string) => {
+  return cy
+    .request({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    })
+    .then((login) => {
+      const tok = login.body.accessToken as string
+      return cy.request({
+        method: 'POST',
+        url: '/api/v1/_debug/clock',
+        headers: { Authorization: `Bearer ${tok}`, 'Idempotency-Key': crypto.randomUUID() },
+        body: { offset },
+      })
+    })
+    .then((r) => {
+      expect(r.status, 'setClockOffset accepted').to.eq(200)
+      return cy.wrap(r.body as { offset: string; now: string })
+    })
 })
 
 export {}
