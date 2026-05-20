@@ -474,8 +474,15 @@ describe('Celina 3 (live) — kompletan radni dan na berzi (C3-E2E.pdf)', () => 
     // don't pin that; DEO 10 cross-checks it via the state-tax delta.
     cy.get<string>('@supervisorTok').then((supTok) => {
       cy.get<string>('@agentId').then((agentId) => {
+        // Filter by `from` to ignore the seed's Profit-Banke leaderboard
+        // fixture (qty 20 + 10 + 5 = 35, realized_at ~430 days ago).
+        // Without this clip, sum(quantity) = 35 (seeded) + 5 (test SELL)
+        // = 40 instead of the expected SELL_QTY=5. Anchor 1h back to
+        // safely include this run's SELL while excluding the historical
+        // fixture (proto Timestamp needs T-suffixed UTC ISO).
+        const from = new Date(Date.now() - 60 * 60 * 1000).toISOString()
         cy.request({
-          url: `/api/v1/tax/realized?userId=${agentId}&userKind=USER_KIND_EMPLOYEE`,
+          url: `/api/v1/tax/realized?userId=${agentId}&userKind=USER_KIND_EMPLOYEE&from=${encodeURIComponent(from)}`,
           headers: { Authorization: `Bearer ${supTok}` },
         }).then((r) => {
           const rows = (r.body.rows ?? []) as {
