@@ -53,7 +53,14 @@ function forexBookUSD(token: string): Cypress.Chainable<ForexBookUSD> {
 }
 
 describe('Celina 3 — Provizija Limit ordera (S40)', () => {
-  beforeEach(() => cy.resetBackend())
+  beforeEach(() => {
+    cy.resetBackend()
+    // soak-e2e: resetBackend is a no-op past spec #1, so the
+    // agent.usedLimit accumulated by earlier specs can push this
+    // ~530k-RSD-notional limit BUY to PENDING — derail the
+    // commission assertion below.
+    cy.resetAgentLimit()
+  })
 
   it('Limit BUY provizija = min(24% × notional, $12) — cap charged to bank USD forex_book', () => {
     gatewayLogin(AGENT_EMAIL, AGENT_PASSWORD).as('agentTok')

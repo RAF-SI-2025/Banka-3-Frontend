@@ -27,7 +27,10 @@ function gatewayLogin(email: string, password: string): Cypress.Chainable<string
 }
 
 describe('Celina 3 — AON oznaka se čuva uz order (S66)', () => {
-  beforeEach(() => cy.resetBackend())
+  beforeEach(() => {
+    cy.resetBackend()
+    cy.resetAgentLimit() // soak-e2e safety
+  })
 
   it('AON toggle survives confirm — order row carries allOrNone=true', () => {
     cy.loginAsAgent()

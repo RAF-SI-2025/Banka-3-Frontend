@@ -29,6 +29,11 @@ function selectActuaryUsdAccount() {
 describe('Celina 3 — portal trading (agent limit panel)', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // Normalize agent.used_limit. In the soak-e2e harness resetBackend
+    // is a no-op past spec #1, so accumulated agent trades push
+    // usedLimit past 200k and the qty=1 "stays under cap" assertion
+    // below flips to needing approval. Idempotent in cypress:run too.
+    cy.resetAgentLimit()
     cy.loginAsAgent()
   })
 

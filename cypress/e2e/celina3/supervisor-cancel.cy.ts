@@ -15,6 +15,12 @@ const AAPL_TICKER = 'AAPL'
 describe('Celina 3 (live) — supervizor otkazuje agent-ov nalog', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // Normalize-state preamble for soak-e2e. resetBackend is a no-op
+    // past spec #1 there, so the agent.used_limit accumulated by
+    // earlier specs pushes a fresh qty=1 order to PENDING instead
+    // of APPROVED — the "approved" filter then has no AAPL row and
+    // the cancel-order data-cy lookup fails.
+    cy.resetAgentLimit()
   })
 
   it('agent places limit order; supervisor cancels it', () => {

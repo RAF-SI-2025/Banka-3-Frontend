@@ -14,6 +14,12 @@
 describe('Celina 3 — portal berze (admin)', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // Normalize-state preamble: in the soak-e2e harness resetBackend
+    // is a no-op after spec #1, so prior specs (exchange-halt, etc.)
+    // may have left XNYS forced-closed. The "Forsiraj zatvoreno"
+    // button is disabled in that state so the click below silently
+    // fails. Clear via API first; idempotent.
+    cy.clearExchangeOverride('XNYS')
   })
 
   it('lists exchanges and reflects override flips', () => {

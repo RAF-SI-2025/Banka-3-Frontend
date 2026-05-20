@@ -34,7 +34,10 @@ function gatewayLogin(email: string, password: string): Cypress.Chainable<string
 }
 
 describe('Celina 3 — AON uspešno izvršavanje u jednoj transakciji (S61)', () => {
-  beforeEach(() => cy.resetBackend())
+  beforeEach(() => {
+    cy.resetBackend()
+    cy.resetAgentLimit() // soak-e2e safety
+  })
 
   it('AON Market BUY fires as exactly one trade transaction (no partial-fill fragmentation)', () => {
     gatewayLogin(AGENT_EMAIL, AGENT_PASSWORD).as('agentTok')

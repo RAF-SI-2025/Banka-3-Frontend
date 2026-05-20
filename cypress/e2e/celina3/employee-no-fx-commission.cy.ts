@@ -52,7 +52,10 @@ function forexBookByCurrency(token: string, currency: string): Cypress.Chainable
 }
 
 describe('Celina 3 — Zaposleni konverzija bez provizije (S44)', () => {
-  beforeEach(() => cy.resetBackend())
+  beforeEach(() => {
+    cy.resetBackend()
+    cy.resetAgentLimit() // soak-e2e safety
+  })
 
   it('actuary BUYs USD security with EUR forex_book account — cross-currency settle succeeds', () => {
     gatewayLogin(AGENT_EMAIL, AGENT_PASSWORD).as('agentTok')

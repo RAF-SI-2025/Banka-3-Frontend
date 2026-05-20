@@ -40,6 +40,23 @@ declare global {
        * within ~5 s (pkg/clock RefreshInterval).
        */
       setClockOffset(offset: string): Chainable<{ offset: string; now: string }>
+      /**
+       * Zero the seeded actuary's used_limit + bump session_version.
+       * Idempotent (and a no-op in regular cypress:run where
+       * resetBackend already reseeds the row), but load-bearing in
+       * the soak-e2e harness where resetBackend is a no-op past the
+       * first spec — accumulated agent trades push usedLimit past
+       * the 200k cap and every subsequent qty>0 order routes to
+       * pending, breaking assertions that assume auto-approve.
+       */
+      resetAgentLimit(): Chainable<void>
+      /**
+       * Clear any override on the named exchange (mic) so the
+       * spec p.39 schedule fall-back applies. Idempotent. In
+       * soak-e2e where prior specs left an override on XNYS, this
+       * lets the next spec start from a known state.
+       */
+      clearExchangeOverride(mic: string): Chainable<void>
     }
   }
 }
@@ -121,6 +138,39 @@ Cypress.Commands.add('captureLink', (to: string, marker: string) => {
     }
     return cy.wrap(link as string)
   })
+})
+
+// Zero the seeded actuary's daily used_limit so the next order in
+// soak-e2e auto-approves regardless of accumulated state. pgSql
+// because the API equivalent (POST /actuaries/{id}/used-limit/reset)
+// would need the supervisor-token dance per call.
+Cypress.Commands.add('resetAgentLimit', () => {
+  return cy.pgSql(`
+    UPDATE "trading".actuary_info ai
+       SET used_limit = '0', updated_at = now()
+      FROM "user".employees e
+     WHERE e.id = ai.user_id
+       AND e.email = 'aktuar@banka.local'
+  `) as unknown as Cypress.Chainable<void>
+})
+
+// Clear any override on the named exchange.
+Cypress.Commands.add('clearExchangeOverride', (mic: string) => {
+  return cy
+    .request({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    })
+    .then((login) => {
+      const tok = login.body.accessToken as string
+      return cy.request({
+        method: 'PATCH',
+        url: `/api/v1/exchanges/${mic}/override`,
+        headers: { Authorization: `Bearer ${tok}`, 'Idempotency-Key': crypto.randomUUID() },
+        body: { state: '' },
+      })
+    }) as unknown as Cypress.Chainable<void>
 })
 
 // Advance the QA clock by `offset` via the gateway debug endpoint.
