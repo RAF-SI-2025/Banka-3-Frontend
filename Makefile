@@ -47,6 +47,10 @@ dev: ## Run vite dev server (foregrounded; Ctrl-C to stop)
 dev-bg: ## Run vite dev server detached
 	$(COMPOSE) up -d
 
+.PHONY: preview-bg
+preview-bg: ## Build + run vite preview (production bundle on :5173 for cypress)
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.preview.yml up -d --force-recreate
+
 .PHONY: down
 down: ## Stop the dev server
 	$(COMPOSE) down
