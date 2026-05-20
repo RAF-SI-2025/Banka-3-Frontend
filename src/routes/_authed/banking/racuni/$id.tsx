@@ -183,7 +183,7 @@ function AccountDetail() {
               Promena naziva računa
             </Button>
           )}
-          <Button variant="secondary" onClick={() => navigate({ to: '/banking/placanja' })}>
+          <Button variant="secondary" onClick={() => navigate({ to: '/banking/placanja', search: { recipientId: undefined } })}>
             Novo plaćanje
           </Button>
           {isOwner && (

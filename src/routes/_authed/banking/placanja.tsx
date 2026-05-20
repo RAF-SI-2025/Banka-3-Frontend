@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -28,8 +28,16 @@ import type { v1CreatePaymentRequest } from '@/lib/api/generated/models/v1Create
 import { v1TransactionStatus } from '@/lib/api/generated/models/v1TransactionStatus'
 import { v1TransactionKind } from '@/lib/api/generated/models/v1TransactionKind'
 
+// Spec p.22 "Brzo plaćanje" — home-page shortcuts deep-link here with
+// `?recipientId=<uuid>`. We don't validate the UUID shape here; if it
+// doesn't match any saved recipient the home-page tile wouldn't have
+// produced it. An unknown id is silently ignored — the form opens
+// empty rather than throwing for a stale bookmark.
 export const Route = createFileRoute('/_authed/banking/placanja')({
   component: NewPayment,
+  validateSearch: (search: Record<string, unknown>) => ({
+    recipientId: typeof search.recipientId === 'string' ? search.recipientId : undefined,
+  }),
 })
 
 // Map the validator's stable error code to a Serbian message at the
@@ -68,6 +76,7 @@ type FormValues = z.infer<typeof schema>
 
 function NewPayment() {
   const navigate = useNavigate()
+  const { recipientId: deepLinkRecipientId } = Route.useSearch()
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
   const [pending, setPending] = useState<v1CreatePaymentRequest | null>(null)
@@ -123,6 +132,18 @@ function NewPayment() {
       form.setValue('toAccountNumber', r.accountNumber ?? '')
     }
   }
+
+  // Apply the home-page "Brzo plaćanje" deep link once the recipients
+  // query resolves. We can't fire applyTemplate before the list lands
+  // (the lookup would miss). Re-running is harmless — applyTemplate is
+  // idempotent for the same id — but the empty-deps guard keeps a
+  // second tab-back from clobbering user edits.
+  const recipientsLoaded = recipients.isSuccess
+  useEffect(() => {
+    if (!deepLinkRecipientId || !recipientsLoaded) return
+    applyTemplate(deepLinkRecipientId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkRecipientId, recipientsLoaded])
 
   const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju plaćanja.') : null
 
