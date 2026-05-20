@@ -42,10 +42,17 @@ export interface ListingDetailProps {
   initialQuantity?: number
 }
 
+// Spec p.59: graf treba "dan, nedelja, mesec, godina, 5 godina i od
+// početka poslovanja" — six period buttons. "Sve" approxes "od
+// početka" with a 25-year ceiling (no listing has more history than
+// that and the BE clamps to whatever rows exist).
 const RANGES: { label: string; days: number }[] = [
-  { label: '30D', days: 30 },
-  { label: '90D', days: 90 },
+  { label: '1D', days: 1 },
+  { label: '1N', days: 7 },
+  { label: '1M', days: 30 },
   { label: '1G', days: 365 },
+  { label: '5G', days: 365 * 5 },
+  { label: 'Sve', days: 365 * 25 },
 ]
 
 function isoNDaysAgo(n: number): string {

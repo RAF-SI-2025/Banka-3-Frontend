@@ -16,6 +16,7 @@ import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table
 import { Badge } from '@/components/ui/badge'
 import { Dialog } from '@/components/ui/dialog'
 import { ErrorBanner } from '@/components/ui/error'
+import { printPorezBoard } from '@/lib/print/porez-export'
 
 const GATE = [Permissions.Admin, Permissions.ActuarySupervisor] as const
 
@@ -70,9 +71,19 @@ function TaxBoard() {
             Pregled neuplaćenog poreza po korisniku (15% od realizovanog dobitka u RSD).
           </p>
         </div>
-        <Button data-cy="run-tax" onClick={() => setConfirmRun(true)} disabled={run.isPending}>
-          {run.isPending ? 'Obračun…' : 'Pokreni obračun'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            data-cy="export-pdf"
+            onClick={() => printPorezBoard(board.data?.positions ?? [])}
+            disabled={!board.data}
+          >
+            Izvezi u PDF
+          </Button>
+          <Button data-cy="run-tax" onClick={() => setConfirmRun(true)} disabled={run.isPending}>
+            {run.isPending ? 'Obračun…' : 'Pokreni obračun'}
+          </Button>
+        </div>
       </header>
 
       {error && <ErrorBanner>{error}</ErrorBanner>}

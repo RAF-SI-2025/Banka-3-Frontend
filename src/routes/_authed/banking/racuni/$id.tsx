@@ -10,6 +10,7 @@ import {
   updateAccountName,
 } from '@/lib/api/accounts'
 import { listTransactions } from '@/lib/api/payments'
+import { printTransactionReceipt } from '@/lib/print/transaction-receipt'
 import { listCards } from '@/lib/api/cards'
 import { getCompany } from '@/lib/api/companies'
 import { getClient } from '@/lib/api/clients'
@@ -267,6 +268,7 @@ function AccountDetail() {
                 <TH>Svrha</TH>
                 <TH className="text-right">Iznos</TH>
                 <TH>Status</TH>
+                <TH></TH>
               </TR>
             </THead>
             <TBody>
@@ -301,6 +303,17 @@ function AccountDetail() {
                       >
                         {txStatusLabel[t.status!]}
                       </Badge>
+                    </TD>
+                    <TD className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => printTransactionReceipt(t, id)}
+                        data-cy={`print-receipt-${t.id}`}
+                      >
+                        Štampaj
+                      </Button>
                     </TD>
                   </TR>
                 )
