@@ -97,3 +97,11 @@ cypress-open: ## Cypress GUI (host-only)
 .PHONY: cypress-soak
 cypress-soak: ## Persistent-backend soak suite (host-only)
 	npm run cypress:soak
+
+.PHONY: cypress-interbank
+cypress-interbank: ## Celina 5 cross-bank suite — needs both Banka 3 stacks up (`make interbank-up` in backend)
+	npm run cypress:interbank
+
+.PHONY: cypress-interbank-open
+cypress-interbank-open: ## Celina 5 cross-bank suite in cypress GUI
+	npm run cypress:interbank:open
