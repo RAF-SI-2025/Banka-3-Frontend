@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,6 +46,7 @@ type Values = z.infer<typeof schema>
 function EditEmployeePage() {
   const { id } = Route.useParams()
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const userPerms = useAuthStore((s) => s.permissions)
   const currentUserId = useAuthStore((s) => s.userId)
   const canGrant = has(userPerms, Permissions.PermissionGrant)
@@ -77,7 +78,7 @@ function EditEmployeePage() {
   const [perms, setPerms] = useState<string[]>([])
 
   useEffect(() => {
-    if (q.data) {
+    if (q.data && !form.formState.isDirty) {
       form.reset({
         email: q.data.email,
         firstName: q.data.firstName,
@@ -101,7 +102,13 @@ function EditEmployeePage() {
 
   const update = useMutation({
     mutationFn: (input: UpdateEmployeeInput) => updateEmployee(id, input),
-    onSuccess: onUpdated,
+    onSuccess: (e) => {
+      onUpdated(e)
+      // Return to the list so the user sees their save reflected.
+      // The list query was already invalidated above, so the navigated-
+      // to page refetches before render.
+      navigate({ to: '/portal/employees' })
+    },
   })
   const setActive = useMutation({
     mutationFn: (active: boolean) => setEmployeeActive(id, active),

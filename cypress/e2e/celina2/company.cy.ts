@@ -82,7 +82,7 @@ describe('Celina 2 — firme i ovlašćena lica', () => {
       expect(req.body.name).to.eq('ACME doo')
       expect(req.body.registryId).to.eq('12345678')
       expect(req.body.taxId).to.eq('123456789')
-      expect(req.body.activityCode).to.eq('6201')
+      expect(req.body.activityCode).to.eq('62.01')
       expect(req.body.address).to.eq('Knez Mihailova 1')
       expect(req.body.ownerClientId).to.eq('cli-1')
       req.reply({
@@ -104,7 +104,7 @@ describe('Celina 2 — firme i ovlašćena lica', () => {
     cy.get('input[name="name"]').type('ACME doo')
     cy.get('input[name="registryId"]').type('12345678')
     cy.get('input[name="taxId"]').type('123456789')
-    cy.get('input[name="activityCode"]').type('6201')
+    cy.get('input[name="activityCode"]').type('62.01')
     cy.get('input[name="address"]').type('Knez Mihailova 1')
     cy.get('select[name="ownerClientId"]').select('cli-1')
     cy.findByRole('button', { name: /Kreiraj firmu/ }).click()
