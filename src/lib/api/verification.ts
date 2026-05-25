@@ -13,6 +13,8 @@ export type VerificationKind =
   | 'otc_exercise'
   | 'fund_invest'
   | 'fund_withdraw'
+  | 'external_otc_accept'
+  | 'external_otc_exercise'
 
 // VerificationProof is what the dialog hands back to the caller. The
 // caller passes it on to the gated mutation (payments, transfers,

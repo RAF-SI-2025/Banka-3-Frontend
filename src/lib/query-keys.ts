@@ -99,6 +99,13 @@ export const keys = {
     contracts: (args: object) => ['otc', 'contracts', args] as const,
     contract: (id: string) => ['otc', 'contract', id] as const,
   },
+  externalOtc: {
+    all: ['external-otc'] as const,
+    discovery: (args: object) => ['external-otc', 'discovery', args] as const,
+    threads: (args: object) => ['external-otc', 'threads', args] as const,
+    thread: (id: string) => ['external-otc', 'thread', id] as const,
+    contracts: (args: object) => ['external-otc', 'contracts', args] as const,
+  },
   funds: {
     all: ['funds'] as const,
     list: (args: object) => ['funds', 'list', args] as const,

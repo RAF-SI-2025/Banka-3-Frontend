@@ -598,6 +598,13 @@ export class TradingServiceService {
         to,
     }: {
         listingId: string,
+        /**
+         * Plain YYYY-MM-DD strings (the FE binds these from its date range
+         * picker / isoNDaysAgo). A google.protobuf.Timestamp here cannot be
+         * bound from a bare date query param through grpc-gateway — the
+         * whole request 400s ("cannot parse … as RFC3339") so the price
+         * history chart never received data. Empty means unbounded.
+         */
         from?: string,
         to?: string,
     }): CancelablePromise<v1GetListingDailyHistoryResponse | rpcStatus> {
@@ -1205,7 +1212,11 @@ export class TradingServiceService {
         minVolume?: string,
         maxVolume?: string,
         /**
-         * For futures/options: settlement-date range.
+         * For futures/options: settlement-date range. Plain YYYY-MM-DD
+         * strings (the FE binds these straight from <input type="date">);
+         * a google.protobuf.Timestamp here can't be bound from a bare date
+         * query param through grpc-gateway, which silently dropped the
+         * filter. Empty string means unbounded.
          */
         minSettlement?: string,
         maxSettlement?: string,

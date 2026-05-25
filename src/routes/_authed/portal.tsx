@@ -72,6 +72,21 @@ function PortalLayout() {
       hidden: !has(perms, Permissions.OTCTradeSupervisor),
     },
     {
+      to: '/portal/otc/eksterno',
+      label: 'Eksterni OTC',
+      hidden: !has(perms, Permissions.OTCTradeSupervisor),
+    },
+    {
+      to: '/portal/otc/eksterno-ponude',
+      label: '↳ Eksterne ponude',
+      hidden: !has(perms, Permissions.OTCTradeSupervisor),
+    },
+    {
+      to: '/portal/otc/eksterno-ugovori',
+      label: '↳ Eksterni ugovori',
+      hidden: !has(perms, Permissions.OTCTradeSupervisor),
+    },
+    {
       to: '/portal/fondovi',
       label: 'Fondovi',
       hidden: !hasAny(perms, [

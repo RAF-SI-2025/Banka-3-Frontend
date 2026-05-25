@@ -3,6 +3,12 @@
 /* tslint:disable */
 /* eslint-disable */
 export type TradingServiceWithdrawFromFundBody = {
+    /**
+     * Empty when `withdraw_all` is set — the server then ignores this and
+     * redeems the full position. IGNORE_IF_ZERO_VALUE so an unset amount
+     * skips the pattern; a present-but-malformed amount is still caught,
+     * and an empty amount without withdraw_all is rejected by the handler.
+     */
     amountRsd?: string;
     /**
      * Destination account. Same rules as InvestInFundRequest.

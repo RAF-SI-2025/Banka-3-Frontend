@@ -25,6 +25,13 @@ export type v1Transaction = {
     initiatorClientId?: string;
     status?: v1TransactionStatus;
     createdAt?: string;
+    /**
+     * The 18-digit account numbers behind from/to_account_id, resolved
+     * server-side. The FE renders these in the "Drugi račun" column — a
+     * client can't (and mustn't be able to) resolve a counterparty
+     * account UUID it doesn't own. Empty when the leg's account isn't a
+     * locally-held bank account (e.g. a future c5 inter-bank peer).
+     */
     fromAccountNumber?: string;
     toAccountNumber?: string;
 };

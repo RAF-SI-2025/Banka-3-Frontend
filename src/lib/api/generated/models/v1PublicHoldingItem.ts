@@ -22,6 +22,10 @@ export type v1PublicHoldingItem = {
     reservedCount?: number;
     currentPrice?: string;
     currency?: bankaTradingV1Currency;
+    /**
+     * last_updated is the holding's updated_at — spec p.67 OTC portal
+     * "Last updated" column.
+     */
     lastUpdated?: string;
 };
 

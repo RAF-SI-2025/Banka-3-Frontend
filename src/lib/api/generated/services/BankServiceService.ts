@@ -668,6 +668,8 @@ export class BankServiceService {
         status,
         page,
         pageSize,
+        from,
+        to,
     }: {
         /**
          * account_id filters to legs that touch this account on either side.
@@ -682,6 +684,13 @@ export class BankServiceService {
         status?: string,
         page?: number,
         pageSize?: number,
+        /**
+         * Spec p.18 / p.24: "filtriranje po datumu" on Pregled računa +
+         * Pregled plaćanja. Both bounds inclusive against
+         * transactions.created_at; either may be omitted.
+         */
+        from?: string,
+        to?: string,
     }): CancelablePromise<v1ListTransactionsResponse | rpcStatus> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -692,6 +701,8 @@ export class BankServiceService {
                 'status': status,
                 'page': page,
                 'pageSize': pageSize,
+                'from': from,
+                'to': to,
             },
         });
     }
