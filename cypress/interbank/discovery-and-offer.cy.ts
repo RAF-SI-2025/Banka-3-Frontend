@@ -80,13 +80,7 @@ describe('celina 5 — cross-bank communication (Banka 3 ↔ Banka 3)', () => {
     })
   })
 
-  // TODO(c5-partner-receive): bank 2's resolveSellerAccountNumber
-  // hits a second GetAccount that returns NotFound when bank 1
-  // drives the outbound CreateOffer. The same payload works when
-  // POSTed directly to bank 2's /bank/api/v1/otc/external-offers, so
-  // the failure is somewhere between trading.ReceiveExternalOTCOffer
-  // and bank.GetAccount on the partner side. Re-enable once fixed.
-  it.skip('offer creation lands a mirror on both banks', () => {
+  it('offer creation lands a mirror on both banks', () => {
     cy.bankLogin('bank1', CLIENT_BANK1.email, CLIENT_BANK1.password).then((tok1) => {
       // 1. Find one of bank 2's advertised holdings.
       cy.bankRequest(
@@ -154,9 +148,7 @@ describe('celina 5 — cross-bank communication (Banka 3 ↔ Banka 3)', () => {
     })
   })
 
-  // TODO(c5-partner-receive): depends on offer creation succeeding;
-  // unskip together with the test above.
-  it.skip('withdraw on bank 1 propagates to bank 2 (best-effort)', () => {
+  it('withdraw on bank 1 propagates to bank 2 (best-effort)', () => {
     cy.bankLogin('bank1', CLIENT_BANK1.email, CLIENT_BANK1.password).then((tok1) => {
       // Set up: create an offer first.
       cy.bankRequest(
