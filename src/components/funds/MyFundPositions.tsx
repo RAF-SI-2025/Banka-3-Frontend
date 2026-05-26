@@ -49,7 +49,8 @@ function ManagedFunds({ basePath }: Props) {
   const q = useQuery({
     queryKey: keys.funds.list({ manager: userId, ctx: 'moji-fondovi' }),
     queryFn: () => listFunds({ managerUserId: userId, status: 'active' }),
-    refetchInterval: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
   })
   const rows = q.data?.funds ?? []
   const to = fundDetailNav(basePath)
@@ -106,7 +107,8 @@ function ClientPositions({ basePath }: Props) {
   const q = useQuery({
     queryKey: keys.funds.positions({ clientId: 'self' }),
     queryFn: () => listFundPositions({ status: 'active' }),
-    refetchInterval: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
   })
   const rows = q.data?.positions ?? []
   const to = fundDetailNav(basePath)

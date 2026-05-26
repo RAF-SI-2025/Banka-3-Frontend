@@ -50,7 +50,8 @@ export function FundsDiscovery({ basePath }: Props) {
   const q = useQuery({
     queryKey: keys.funds.list(args),
     queryFn: () => listFunds(args),
-    refetchInterval: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
   })
 
   const rows = q.data?.funds ?? []

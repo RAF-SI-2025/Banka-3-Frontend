@@ -32,7 +32,8 @@ export function FundDetail({ fundId }: Props) {
   const fundQ = useQuery({
     queryKey: keys.funds.detail(fundId),
     queryFn: () => getFund(fundId),
-    refetchInterval: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
   })
   const perfQ = useQuery({
     queryKey: keys.funds.performance(fundId, 365),
