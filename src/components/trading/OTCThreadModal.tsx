@@ -197,40 +197,19 @@ export function OTCThreadModal({
             </section>
 
             {waitingOnMe && (
-              <section className="rounded-md border border-border p-3">
-                <h3 className="mb-2 text-sm font-semibold">Kontraponuda</h3>
-                <form className="space-y-3" onSubmit={submitCounter}>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="otc-counter-qty">Količina</Label>
-                      <Input id="otc-counter-qty" type="number" min={1} step={1} value={qty} onChange={(e) => setQty(e.target.value)} data-cy="otc-counter-qty" />
+              <>
+                <section className="rounded-md border border-border p-3">
+                  <h3 className="mb-1 text-sm font-semibold">Prihvati ponudu druge strane</h3>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Prihvatanjem se sklapa ugovor sa ovim uslovima — vrednosti ispod u kontraponudi se ne koriste.
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm tabular-nums">
+                      {latest.quantity} × {formatMoney(latest.pricePerUnit, latest.currency)}{' '}
+                      <span className="text-muted-foreground">
+                        · premium {formatMoney(latest.premium, latest.currency)} · izvršenje {formatDate(latest.settlementDate)}
+                      </span>
                     </div>
-                    <div>
-                      <Label htmlFor="otc-counter-ppu">Cena po komadu</Label>
-                      <Input id="otc-counter-ppu" type="number" min="0" step="0.01" value={pricePerUnit} onChange={(e) => setPricePerUnit(e.target.value)} data-cy="otc-counter-ppu" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="otc-counter-premium">Premium</Label>
-                      <Input id="otc-counter-premium" type="number" min="0" step="0.01" value={premium} onChange={(e) => setPremium(e.target.value)} data-cy="otc-counter-premium" />
-                    </div>
-                    <div>
-                      <Label htmlFor="otc-counter-settlement">Datum izvršenja</Label>
-                      <Input id="otc-counter-settlement" type="date" value={settlementDate} onChange={(e) => setSettlementDate(e.target.value)} data-cy="otc-counter-settlement" />
-                    </div>
-                  </div>
-                  {err && <ErrorBanner>{err}</ErrorBanner>}
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="danger"
-                      onClick={() => withdraw.mutate()}
-                      disabled={withdraw.isPending}
-                      data-cy="otc-withdraw"
-                    >
-                      Odustani
-                    </Button>
                     <Button
                       type="button"
                       variant="primary"
@@ -240,12 +219,53 @@ export function OTCThreadModal({
                     >
                       Prihvati
                     </Button>
-                    <Button type="submit" variant="secondary" disabled={counter.isPending} data-cy="otc-counter-submit">
-                      Pošalji kontraponudu
-                    </Button>
                   </div>
-                </form>
-              </section>
+                </section>
+
+                <section className="rounded-md border border-border p-3">
+                  <h3 className="mb-1 text-sm font-semibold">Pošalji kontraponudu</h3>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Izmeni vrednosti i pošalji — druga strana može ponovo da odgovori.
+                  </p>
+                  <form className="space-y-3" onSubmit={submitCounter}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="otc-counter-qty">Količina</Label>
+                        <Input id="otc-counter-qty" type="number" min={1} step={1} value={qty} onChange={(e) => setQty(e.target.value)} data-cy="otc-counter-qty" />
+                      </div>
+                      <div>
+                        <Label htmlFor="otc-counter-ppu">Cena po komadu</Label>
+                        <Input id="otc-counter-ppu" type="number" min="0" step="0.01" value={pricePerUnit} onChange={(e) => setPricePerUnit(e.target.value)} data-cy="otc-counter-ppu" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="otc-counter-premium">Premium</Label>
+                        <Input id="otc-counter-premium" type="number" min="0" step="0.01" value={premium} onChange={(e) => setPremium(e.target.value)} data-cy="otc-counter-premium" />
+                      </div>
+                      <div>
+                        <Label htmlFor="otc-counter-settlement">Datum izvršenja</Label>
+                        <Input id="otc-counter-settlement" type="date" value={settlementDate} onChange={(e) => setSettlementDate(e.target.value)} data-cy="otc-counter-settlement" />
+                      </div>
+                    </div>
+                    {err && <ErrorBanner>{err}</ErrorBanner>}
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => withdraw.mutate()}
+                        disabled={withdraw.isPending}
+                        data-cy="otc-withdraw"
+                      >
+                        Odustani
+                      </Button>
+                      <Button type="submit" variant="primary" disabled={counter.isPending} data-cy="otc-counter-submit">
+                        Pošalji kontraponudu
+                      </Button>
+                    </div>
+                  </form>
+                </section>
+              </>
             )}
 
             {!waitingOnMe && latest.status === v1OTCStatus.OTC_STATUS_OPEN && (
