@@ -1,0 +1,28 @@
+# Compose override that swaps the frontend service from `vite dev` to a
+# built-bundle `vite preview` server on the same host port.
+#
+# Why exists: the dev server compiles route bundles on demand. Under a
+# long sequential Cypress run (the soak-e2e suite, 35 specs back-to-
+# back, ~16 min) Vite's lazy bundler reaches a state where the SPA
+# `<div id="root" />` stops mounting within the spec's per-step paint
+# budget — even on a freshly-bounced container, even at 30-45 s
+# timeouts. The production bundle has no on-demand compile, so paint
+# is deterministic.
+#
+# Trade-off: no HMR, code edits need a rebuild. Use this for cypress
+# runs only; keep `make dev-bg` for interactive development.
+#
+# Usage:
+#   make down            # stop the dev container if running
+#   make preview-bg      # build + serve dist/ on :5173 (~10-20 s build)
+#   make cypress-run     # or cypress-soak / cypress-soak-e2e
+#
+# After the cypress run finishes, `make down` + `make dev-bg` returns
+# you to dev mode.
+
+services:
+  frontend:
+    # The dev image already has node_modules baked in. Build emits
+    # to /app/dist/ (bind-mounted from the host); preview serves it.
+    # --host 0.0.0.0 so the published port (5173) on the host hits it.
+    command: bash -lc "npm run build && npm run preview -- --host 0.0.0.0 --port 5173"

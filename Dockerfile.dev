@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1.7
+#
+# Dev/CI image for Banka-3-Frontend. Hosts everything except cypress:
+# vite dev server, vitest, eslint, tsc, openapi-typescript-codegen for
+# `npm run api:gen`. Cypress stays on the host because its configs
+# `docker exec` directly into the backend containers and shell out to
+# the backend `seed.sh` — pulling that into a container needs the
+# docker socket + repo plumbing and is intentionally out of scope.
+
+FROM node:20-alpine
+
+RUN apk add --no-cache bash git
+
+ARG UID=1000
+ARG GID=1000
+
+# node:20-alpine already ships a `node` user at uid/gid 1000. Reuse
+# it when host matches; otherwise create a new user matching the host
+# UID/GID so files the container writes back into the bind-mounted
+# repo (dist/, src/lib/api/generated/, tsbuildinfo files) are owned
+# by the developer, not root.
+RUN set -ex; \
+    if ! getent passwd ${UID} >/dev/null; then \
+        if ! getent group ${GID} >/dev/null; then addgroup -g ${GID} appgrp; fi; \
+        GROUP=$(getent group ${GID} | cut -d: -f1); \
+        adduser -u ${UID} -G "$GROUP" -D app; \
+    fi
+
+WORKDIR /app
+RUN chown ${UID}:${GID} /app
+
+USER ${UID}:${GID}
+
+# Pre-install dependencies into the image so the named docker volume
+# mounted at /app/node_modules (see docker-compose.yml) is populated
+# on first creation. Both `compose up` and `compose run --rm` then
+# share the same install. `npm ci` only — never `npm install` — so
+# the lockfile isn't rewritten by the alpine/musl-libc runtime
+# (npm rewrites the libc fields of optional binary deps on first
+# install, which is harmless inside the image but would dirty the
+# host-side lockfile if it ran with the source bind-mounted).
+# Package.json edits → `make image` to rebuild.
+COPY --chown=${UID}:${GID} package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,16 +1,38 @@
+name: banka-frontend
+
+# Single image, two access patterns:
+#   - `docker compose up frontend` runs `npm install` + `vite dev`
+#     long-lived, exposing the dev server on host :5173.
+#   - `docker compose run --rm frontend npm <script>` runs any one-shot
+#     script (lint/typecheck/test/build/api:gen) in an ephemeral
+#     container that mounts the same source tree.
+#
+# `extra_hosts: host.docker.internal:host-gateway` lets the container
+# reach the backend gateway (host :8080) on Linux Docker 20.10+; on
+# Docker Desktop it's a built-in. The vite dev proxy (`vite.config.ts`)
+# reads VITE_BACKEND_URL to point /api/* requests at it.
 services:
   frontend:
-    container_name: frontend
+    image: banka-frontend
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    volumes:
+      - .:/app
+      # Named volume shared between `compose up` and `compose run --rm`
+      # so one-shot commands (lint/typecheck/test/build) see the same
+      # node_modules the dev server uses. Bootstraps from the image's
+      # pre-installed /app/node_modules on first creation.
+      - frontend-node-modules:/app/node_modules
     environment:
-      APP_API_BASE_URL: ${APP_API_BASE_URL:-/api}
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://host.docker.internal:8080}
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
-    networks: [banka]
+      - "${FRONTEND_DEV_PORT:-5173}:5173"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-networks:
-  banka:
-    name: banka-net
-    external: true
+volumes:
+  frontend-node-modules:
