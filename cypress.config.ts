@@ -187,6 +187,10 @@ export default defineConfig({
     baseUrl: process.env.CYPRESS_BASE_URL ?? 'http://localhost:5173',
     specPattern: 'cypress/e2e/**/*.cy.ts',
     supportFile: 'cypress/support/e2e.ts',
+    // Adds the "Run N specs" button in `cypress open`, which runs the
+    // currently-filtered spec list back-to-back in one persistent
+    // browser window (no per-spec browser relaunch like `run --headed`).
+    experimentalRunAllSpecs: true,
     viewportWidth: 1440,
     viewportHeight: 900,
     // Vite-dev compiles route bundles lazily; the first cy.visit on a
