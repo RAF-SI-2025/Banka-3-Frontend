@@ -43,3 +43,21 @@ Cypress remains host-driven (`make cypress-run`, `make cypress-open`,
 `docker exec` directly into the backend containers and shell out to
 the backend `seed.sh`, which doesn't translate cleanly into a
 container.
+
+## Cluster deployment
+
+The prod `Dockerfile` (multi-stage node-build → nginx-unprivileged
+serving `dist/`) is built by `.github/workflows/build.yml` and pushed
+to `registry.urosevicvuk.dev/raf-banka3/frontend:<tag>` on `main` /
+`rewrite` / `v*` tags.
+
+The Kubernetes manifests that pin and expose this image live in
+[Banka-3-Infrastructure] — the SPA is served at
+`https://banka.raf-project.com` with `/api/*` reverse-proxied to the
+gateway in the same namespace. `VITE_API_BASE` defaults to `/api`, so
+production builds need no env override.
+
+For local development this repo is unchanged — `make dev` still spins
+the vite dev server against a docker-compose backend.
+
+[Banka-3-Infrastructure]: https://github.com/RAF-SI-2025/Banka-3-Infrastructure
