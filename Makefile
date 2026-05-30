@@ -9,7 +9,7 @@
 # configs `docker exec` into backend containers + shell out to the
 # backend `seed.sh`); see README.
 
-SHELL          := /bin/bash
+SHELL          := bash
 .SHELLFLAGS    := -eu -o pipefail -c
 .DEFAULT_GOAL  := help
 

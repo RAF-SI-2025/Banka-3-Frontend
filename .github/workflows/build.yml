@@ -1,0 +1,66 @@
+name: build-and-push
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.urosevicvuk.dev
+  PROJECT: raf-banka3
+  IMAGE: frontend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      - name: Compute tags
+        id: tags
+        run: |
+          base="${{ env.REGISTRY }}/${{ env.PROJECT }}/${{ env.IMAGE }}"
+          tags="$base:${{ github.sha }}"
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            tags="$tags"$'\n'"$base:main"
+          fi
+          if [[ "${{ github.ref }}" == "refs/heads/rewrite" ]]; then
+            tags="$tags"$'\n'"$base:rewrite"
+          fi
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            tags="$tags"$'\n'"$base:${GITHUB_REF#refs/tags/}"
+            tags="$tags"$'\n'"$base:latest"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Build + push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha,scope=${{ env.IMAGE }}
+          cache-to:   type=gha,scope=${{ env.IMAGE }},mode=max
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image with cosign
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          cosign sign --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --yes \
+            "${{ env.REGISTRY }}/${{ env.PROJECT }}/${{ env.IMAGE }}@${{ steps.build.outputs.digest }}"
