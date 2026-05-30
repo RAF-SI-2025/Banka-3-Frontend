@@ -34,3 +34,16 @@ jobs:
         # config). VITE_API_BASE defaults to /api (same-origin); no env
         # needed for a CI build.
         run: npm run build
+
+      # Catches Dockerfile drift before the post-merge build.yml tries to
+      # push. No push, no sign — purely a "would the image build" gate.
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Docker build (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          cache-from: type=gha,scope=frontend
+          cache-to:   type=gha,scope=frontend,mode=max
