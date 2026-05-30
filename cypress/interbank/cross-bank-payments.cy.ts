@@ -117,7 +117,7 @@ describe('celina 5 — cross-bank payments 2PC primitive', () => {
             expect(commitResp.status, JSON.stringify(commitResp.body)).to.eq(200)
             const commit = commitResp.body as CommitResp
             expect(commit.status).to.eq('committed')
-            expect(commit.op_id, 'commit returned an op_id').to.be.a('string').and.not.empty
+            expect(commit.op_id, 'commit returned an op_id').to.be.a('string').and.to.have.length.greaterThan(0)
 
             readBalance(acct.id).then((balAfter) => {
               expect(balAfter - balBefore).to.be.closeTo(42.5, 0.0001)

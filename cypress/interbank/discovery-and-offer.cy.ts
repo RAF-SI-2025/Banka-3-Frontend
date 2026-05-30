@@ -37,7 +37,6 @@ interface ThreadMirror {
 }
 
 interface CreateOfferResp { localMirror?: ThreadMirror }
-interface ListThreadsResp { threads?: ThreadMirror[] }
 
 const CLIENT_BANK1 = { email: 'klijent@banka.local', password: 'Klijent123!' }
 const CLIENT_BANK2 = { email: 'klijent@banka.local', password: 'Klijent123!' }
@@ -59,7 +58,7 @@ describe('celina 5 — cross-bank communication (Banka 3 ↔ Banka 3)', () => {
         expect(items.length, 'partner advertised at least one holding').to.be.greaterThan(0)
         items.forEach((it) => {
           expect(it.bankCode, 'every row comes from bank 334').to.eq('334')
-          expect(it.securityTicker, 'ticker populated').to.be.a('string').and.not.empty
+          expect(it.securityTicker, 'ticker populated').to.be.a('string').and.to.have.length.greaterThan(0)
         })
       })
     })
@@ -129,7 +128,7 @@ describe('celina 5 — cross-bank communication (Banka 3 ↔ Banka 3)', () => {
           ).then((createResp) => {
             expect(createResp.status, JSON.stringify(createResp.body)).to.eq(200)
             const mirror = (createResp.body as CreateOfferResp).localMirror
-            expect(mirror?.id, 'bank 1 local mirror minted').to.be.a('string').and.not.empty
+            expect(mirror?.id, 'bank 1 local mirror minted').to.be.a('string').and.to.have.length.greaterThan(0)
             expect(mirror?.direction).to.eq('EXTERNAL_OTC_DIRECTION_OUTGOING')
 
             // 4. The partner's row exists too — query bank 2 DB directly.
@@ -138,7 +137,7 @@ describe('celina 5 — cross-bank communication (Banka 3 ↔ Banka 3)', () => {
               `select id, direction, status from "trading".external_otc_threads where remote_bank_code = '333'`,
             ).then((rows) => {
               expect(rows.length, 'bank 2 has a mirror thread').to.be.greaterThan(0)
-              const [_id, direction, status] = rows[0]!
+              const [, direction, status] = rows[0]!
               expect(direction).to.eq('incoming')
               expect(status).to.eq('open')
             })

@@ -12,7 +12,6 @@
 // and the persisted order row returned by GET /orders/{id} has
 // allOrNone=true.
 
-const FOREX_BOOK_OWNER_ID = '00000000-0000-0000-0000-000000000020'
 const AGENT_EMAIL = 'aktuar@banka.local'
 const AGENT_PASSWORD = 'Aktuar123!'
 
