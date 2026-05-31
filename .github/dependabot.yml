@@ -1,0 +1,75 @@
+# Dependabot keeps dependencies current automatically so security fixes
+# don't sit unpatched between manual sweeps. Every update lands as a PR
+# gated by ci.yml (lint / typecheck / unit / build / docker-build) —
+# breakage shows up red before merge, so we get currency without betting
+# on bleeding-edge majors.
+#
+# Strategy: patch + minor bumps are GROUPED into one PR per ecosystem per
+# week (low noise); MAJOR bumps come as separate PRs for manual review,
+# since that's where behavioral breaks (React, Vite, TanStack, ...) live.
+#
+# Scope: this covers the three dependency surfaces — npm packages, the
+# Docker base-image tags, and the pinned GitHub Actions. It does NOT bump:
+#   - OS packages *inside* the runtime image (libxml2, openssl, ...) —
+#     Dependabot only sees the FROM tag, not the apk layer; `apk upgrade`
+#     in the Dockerfile handles those.
+#   - the `node-version` string in ci.yml — it's a workflow input, not a
+#     tracked manifest; keep it in sync with the Dockerfile build stage by
+#     hand when the docker bump lands.
+version: 2
+updates:
+  # npm: package.json / package-lock.json at the repo root (React 19,
+  # Vite, TanStack Router/Query, RHF + Zod, Tailwind, the shadcn deps,
+  # Vitest/Cypress, ...). Minor/patch grouped; majors split out because a
+  # React/Vite/TanStack major is where the breaking changes live.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Belgrade
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "npm"]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Docker base images in Dockerfile (node build stage + nginx runtime)
+  # and Dockerfile.dev. Keeps the pinned FROM tags current so a new
+  # stable/LTS arrives as a reviewable PR. OS-layer apk packages are NOT
+  # covered here — `apk upgrade` in the Dockerfile owns those.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Belgrade
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore(docker)"
+    groups:
+      docker:
+        patterns: ["*"]
+
+  # Pinned action versions (actions/checkout@v4, actions/setup-node@v4,
+  # docker/setup-buildx-action@v3, docker/login-action@v3,
+  # docker/build-push-action@v6, sigstore/cosign-installer@v3, ...).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Belgrade
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "ci"]
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns: ["*"]
