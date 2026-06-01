@@ -19,7 +19,13 @@ RUN npm ci
 COPY . .
 # Default VITE_API_BASE is /api (same-origin via HTTPRoute), so no
 # build-arg needed. Override by passing --build-arg VITE_API_BASE=...
-ARG VITE_API_BASE
+# The default has to live here (not just in the TS client's `??`
+# fallback) because vite materializes ARG into import.meta.env as the
+# empty string when ARG has no default — and `??` only catches
+# null/undefined, not "", so an empty build-arg silently produces a
+# bundle that POSTs to /v1/... instead of /api/v1/... → 405 from
+# the frontend nginx.
+ARG VITE_API_BASE=/api
 ENV VITE_API_BASE=${VITE_API_BASE}
 RUN npm run build
 

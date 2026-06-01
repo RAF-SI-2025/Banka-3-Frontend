@@ -1,7 +1,10 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/lib/auth/store'
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? '/api'
+// `||` rather than `??` so an empty-string build arg (vite materializes
+// an undefined Dockerfile ARG into "") still falls back instead of
+// producing baseURL="" that skips the /api HTTPRoute prefix.
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) || '/api'
 
 let refreshInFlight: Promise<string | null> | null = null
 
