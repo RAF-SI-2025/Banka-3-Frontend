@@ -636,37 +636,37 @@ describe(`c4 ${TAG} soak — concurrent, faulted, replayed, negative`, () => {
     })
   })
 
-  // ────────────────────── W4: transient retry & recovery ─────────────────
-  it('W4: transient fail parks in running, recovery worker resumes', () => {
+  // ────────────────────── W4: transient error rolls back ─────────────────
+  it('W4: transient forward error rolls the exercise back to compensated', () => {
     withCtx((c) => {
       pinListing(c.adminTok, c.aaplSecurityId, c.aaplMic, 180)
       openContract(c, 1, 180, 4).then((oc) => {
         pinListing(c.adminTok, c.aaplSecurityId, c.aaplMic, 240)
 
-        // Transient flavour parks the saga in `running` with
-        // next_attempt_at set; the recovery worker (running on a
-        // fresh ctx with no directive) drives it to completion.
+        // The exercise saga is registered with CompensateOnTransient, so
+        // a transient forward error does NOT park for a forward retry —
+        // it rolls straight back to `compensated` (SAGA_test.pdf
+        // SG-09/SG-10: "any error after log write → Compensating"). The
+        // reservation drains and the contract stays ACTIVE.
         exerciseRaw(c, oc.contractId, {
           'X-Saga-Force-Fail': 'transfer_strike',
           'X-Saga-Force-Fail-Kind': 'transient',
         }).then((r) => {
-          // Caller-visible response can be either a 5xx (saga parks
-          // before sending the response) OR a 2xx (if the trading
-          // service surfaces only terminal failures); accept both.
-          expect(r.status, 'transient: response code observed').to.be.oneOf([200, 202, 500, 503])
+          expect(r.status, 'transient: rejected non-2xx').to.not.eq(200)
         })
 
-        // Recovery worker must drain within 60s.
+        // No leftover running/compensating rows (the rollback is
+        // synchronous on the foreground call).
         awaitNoRunningSagas('W4 transient', 60)
         cy.psql(
           `select status from "trading".saga_executions
              where state->>'contract_id' = '${oc.contractId}'
              order by updated_at desc limit 1`,
         ).then((rows) => {
-          expect(String(rows[0]?.status ?? ''), 'W4 transient: saga completed via recovery').to.eq('completed')
+          expect(String(rows[0]?.status ?? ''), 'W4 transient: saga rolled back').to.eq('compensated')
         })
         cy.psql(`select status from "trading".otc_contracts where id = '${oc.contractId}'`).then((rows) => {
-          expect(String(rows[0]?.status ?? ''), 'W4 transient: contract EXERCISED').to.match(/EXERCISED|exercised/)
+          expect(String(rows[0]?.status ?? ''), 'W4 transient: contract NOT exercised').to.not.match(/EXERCISED|exercised/)
         })
       })
       assertCleanLeakState('W4')
