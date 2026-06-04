@@ -337,9 +337,11 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         exercise(f, contractId).then((r) => {
           expect(r.status, 'exercise rejected with non-2xx').to.not.be.oneOf([200])
           expect(r.body.message ?? '', 'Serbian failure message').to.match(/sredstava|saga|reservation/i)
-          // Saga row must be `failed` (step 0 fail → no compensations to run).
+          // F1 fails before any side effect, so there is nothing to
+          // compensate — the saga rolls straight to the clean
+          // `compensated` terminal (SAGA_test.pdf SG-03 / SG-09).
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
         })
       })
@@ -351,11 +353,11 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
       activeContract(f).then((contractId) => {
         exercise(f, contractId, { 'X-Saga-Force-Fail': 'verify_seller_shares' }).then((r) => {
           expect(r.status, 'exercise rejected').to.not.eq(200)
-          // Saga ends in `failed` after compensating step 0
+          // Saga ends `compensated` after rolling back step 0
           // (reserve_buyer_strike). Buyer balance restored (premium only
           // gone — the premium was debited at accept, not at exercise).
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
           findUsdAccount(f.tokens.admin, f.buyerId).then((acc) => {
             // Buyer paid only the premium at accept time; the reserve+release
@@ -373,13 +375,13 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
   it('S4 — fault-inject transfer_shares fail: steps 3+2+1 compensated in reverse', () => {
     // Covers spec S4 (ownership transfer fails) AND S8 (partial
     // ownership) — both collapse to the same FE-observable state:
-    // status=failed and compensation runs.
+    // status=compensated and compensation runs.
     fixtures().then((f) => {
       activeContract(f).then((contractId) => {
         exercise(f, contractId, { 'X-Saga-Force-Fail': 'transfer_shares' }).then((r) => {
           expect(r.status, 'exercise rejected').to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
           // Seller balance also restored — transfer_strike compensation
           // releases the funds it committed back to the buyer.
@@ -394,37 +396,30 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
     })
   })
 
-  it('S5 — transient retry: first attempt parks the saga, recovery worker completes it', () => {
+  it('S5 — transient forward error rolls the exercise back to compensated', () => {
+    // The exercise saga is registered with CompensateOnTransient, so a
+    // transient infra error on a forward step does NOT park for a
+    // forward retry — it rolls straight back (SAGA_test.pdf SG-09/SG-10:
+    // "Running → Compensating on any error after log write"). A transient
+    // fault at step 2 compensates step 1 and ends `compensated`, with the
+    // buyer's exercise reservation released.
     fixtures().then((f) => {
       activeContract(f).then((contractId) => {
-        // Inject a transient fault at the second step. runForward returns
-        // a 5xx + parks the row in `running` with NextAttemptAt bumped.
         exercise(f, contractId, {
           'X-Saga-Force-Fail': 'verify_seller_shares',
           'X-Saga-Force-Fail-Kind': 'transient',
         }).then((r) => {
-          expect(r.status, 'first attempt 5xx (parked for recovery)').to.not.eq(200)
+          expect(r.status, 'exercise rejected').to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('running')
+            expect(s).to.eq('compensated')
+          })
+          findUsdAccount(f.tokens.admin, f.buyerId).then((acc) => {
+            expect(acc.balance, 'buyer reservation released on rollback').to.be.closeTo(
+              BUYER_USD_OPENING - PREMIUM,
+              0.01,
+            )
           })
         })
-        // Backdate NextAttemptAt so the recovery worker scan picks it
-        // up immediately. The recovery context has no force-fail directive,
-        // so the second pass runs normally.
-        cy.pgSql(
-          `UPDATE "trading".saga_executions SET next_attempt_at = now() - interval '1 minute' WHERE state->>'contract_id' = '${contractId}'`,
-        )
-        // Trading service's recovery worker ticks every
-        // SAGA_RECOVERY_TICK (default 30s); allow up to 60s.
-        function poll(remaining: number): void {
-          if (remaining <= 0) throw new Error('recovery worker did not complete the saga')
-          sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            if (s === 'completed') return
-            cy.wait(3000)
-            poll(remaining - 1)
-          })
-        }
-        poll(25)
       })
     })
   })
@@ -435,7 +430,7 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         exercise(f, contractId, { 'X-Saga-Force-Fail': 'transfer_strike' }).then((r) => {
           expect(r.status).to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
           findUsdAccount(f.tokens.admin, f.buyerId).then((acc) => {
             expect(acc.balance, 'buyer balance fully restored').to.be.closeTo(
@@ -454,7 +449,7 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         exercise(f, contractId, { 'X-Saga-Force-Fail': 'finalize' }).then((r) => {
           expect(r.status).to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
           // Seller's holding back to 10, buyer has none.
           listSellerHolding(f.tokens.seller, TICKER).then((h) => {
@@ -482,12 +477,10 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
           'X-Saga-Force-Compensate-Fail': 'reserve_buyer_strike',
         }).then((r) => {
           expect(r.status).to.not.eq(200)
-          // After exhausting compensation retries the row flips to
-          // failed; until then it's `compensating`. The first call
-          // returns the compensation error immediately because the
-          // synthetic error from the directive is permanent
-          // (FailedPrecondition), so runCompensations bails to
-          // status=failed without retries.
+          // A compensate fault with no Times budget is permanent: the
+          // saga gives up the rollback and ends in the genuinely-stuck
+          // `failed` terminal (SAGA_test.pdf I5). A Times>0 budget would
+          // instead retry to `compensated` (that path is SG-08).
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
             expect(s).to.be.oneOf(['failed', 'compensating'])
           })
@@ -525,11 +518,12 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
 
   it.skip('S11 — process restart resume (deployment-level, not FE-testable)', () => {
     // Covered by saga.go DueForRecovery + the orchestrator's resume-from-
-    // current_step semantics. To exercise it from cypress we'd need to
-    // `docker restart banka-trading-1` mid-saga, which races the
-    // recovery worker's first tick against the test's polling window.
-    // The mechanism is the same one S5 exercises (transient-park →
-    // recovery worker picks up).
+    // current_step semantics, and asserted directly in the backend at
+    // services/trading/internal/saga/saga_sg_test.go (TestSG11 —
+    // forward-resume + compensating-resume from a persisted mid-flight
+    // log). Driving it from cypress would need a `docker kill` mid-saga,
+    // which races the recovery worker's first tick against the test's
+    // polling window.
   })
 
   it('S12 — buyer account inactive mid-flight: SAGA fails, funds locked but accounted', () => {
@@ -545,10 +539,10 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         exercise(f, contractId).then((r) => {
           expect(r.status).to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            // Either reserve step fails (status=failed, no compensation
-            // needed because step 0 never completed) or transfer step
-            // fails (status=failed after compensating step 0).
-            expect(s).to.eq('failed')
+            // Either the reserve step fails (nothing to compensate) or the
+            // transfer step fails (compensates step 0) — both roll back
+            // cleanly to `compensated`.
+            expect(s).to.eq('compensated')
           })
         })
       })
@@ -564,7 +558,7 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
         exercise(f, contractId).then((r) => {
           expect(r.status).to.not.eq(200)
           sagaRowStatus(f.tokens.admin, contractId).then((s) => {
-            expect(s).to.eq('failed')
+            expect(s).to.eq('compensated')
           })
           // Seller's AAPL holding intact (compensation restored it if
           // the saga got past transfer_shares; or it was never decremented).
