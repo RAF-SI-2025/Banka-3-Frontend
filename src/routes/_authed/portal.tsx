@@ -130,6 +130,21 @@ function PortalLayout() {
       label: '↳ Pozicije u fondovima',
       hidden: !hasAny(perms, [Permissions.Admin, Permissions.BankProfitRead]),
     },
+    {
+      to: '/portal/medjubankarske',
+      label: 'Međubankarske transakcije',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
+    },
+    {
+      to: '/portal/medjubankarske/komunikacija',
+      label: '↳ Komunikacija',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
+    },
+    {
+      to: '/portal/medjubankarske/blokade',
+      label: '↳ Blokirane banke',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
+    },
   ]
 
   return (

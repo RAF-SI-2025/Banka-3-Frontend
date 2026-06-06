@@ -166,4 +166,10 @@ export const keys = {
     all: ['audit'] as const,
     list: (args: object) => ['audit', 'list', args] as const,
   },
+  interbank: {
+    all: ['interbank'] as const,
+    transactions: (args: object) => ['interbank', 'transactions', args] as const,
+    auditLog: (args: object) => ['interbank', 'auditLog', args] as const,
+    blacklist: (activeOnly: boolean) => ['interbank', 'blacklist', activeOnly] as const,
+  },
 } as const
