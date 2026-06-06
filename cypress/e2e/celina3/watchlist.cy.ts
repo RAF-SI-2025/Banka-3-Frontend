@@ -12,9 +12,13 @@
 // resetBackend truncates trading.* incl. any watchlist rows, so each
 // test starts with no lists.
 
-function openSecurityDetail(ticker: string) {
+// The catalog defaults to the "Akcije" (stock) tab; futures/forex/options
+// live under their own tabs and the search box filters within the active
+// tab. Pass the security type so we land on the right tab before searching.
+function openSecurityDetail(ticker: string, tab: string = 'SECURITY_TYPE_STOCK') {
   cy.visit('/banking/trgovina')
   cy.contains('h1', 'Trgovina', { timeout: 15000 }).should('be.visible')
+  cy.get(`[data-cy="tab-${tab}"]`, { timeout: 10000 }).click()
   cy.get('[data-cy="filter-search"]').type(ticker)
   cy.contains('tr', ticker, { timeout: 10000 }).click()
   cy.url({ timeout: 10000 }).should('match', /\/banking\/trgovina\/[0-9a-f-]+/)
@@ -94,7 +98,7 @@ describe('Celina 3 — liste za praćenje (S35-S39)', () => {
     })
 
     // Add the future (CL) to the same list via its detail page.
-    openSecurityDetail('CL')
+    openSecurityDetail('CL', 'SECURITY_TYPE_FUTURE')
     cy.get('[data-cy="watchlist-add-card"]').within(() => {
       // The list now exists, so the default (non-creating) control is shown.
       cy.get('[data-cy="watchlist-select"]').find('option').contains('Mešovito').then((opt) => {

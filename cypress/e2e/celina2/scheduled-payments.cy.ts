@@ -16,6 +16,25 @@
 
 const VALID_TO = '160005412345678905'
 
+// The schedule endpoint validates the recipient account exists (it's an
+// intra-bank payment), unlike the canned immediate-payment spec which
+// mocks the call. Plant a real RSD recipient so the create succeeds.
+// Owner = klijent2, created_by = bootstrap admin, resolved by sub-select.
+function plantRecipientAccount() {
+  cy.pgSql(`
+    insert into "bank".accounts
+      (number, name, owner_client_id, created_by_employee_id,
+       kind, subtype, currency, status,
+       balance, available_balance, maintenance_fee, daily_limit, monthly_limit)
+    select '${VALID_TO}', 'Stanar Komšija',
+           (select id from "user".clients where email='klijent2@banka.local'),
+           (select id from "user".employees where email='admin@banka.local'),
+           'personal_checking_rsd', 'standard', 'RSD', 'active',
+           0, 0, 0, 120000, 1000000
+    on conflict (number) do nothing
+  `)
+}
+
 // A YYYY-MM-DD value a few days out, computed from the browser clock so
 // the spec stays valid regardless of run date.
 function futureDate(days: number): string {
@@ -40,6 +59,7 @@ function fillPaymentBase() {
 describe('Celina 2 — zakazivanje plaćanja (live backend)', () => {
   beforeEach(() => {
     cy.resetBackend()
+    plantRecipientAccount()
     cy.loginAsClient()
   })
 
@@ -72,9 +92,13 @@ describe('Celina 2 — zakazivanje plaćanja (live backend)', () => {
       .should('be.visible')
       .and('contain.text', 'Zakazano')
 
-    // Cancel it → row disappears from the list.
+    // Cancel it → the row stays (history is kept) but its status flips to
+    // "Otkazano" and the Otkaži button disappears.
     cy.contains('tr', 'Stanar Komšija').findByRole('button', { name: /Otkaži/ }).click()
-    cy.contains('tr', 'Stanar Komšija', { timeout: 10000 }).should('not.exist')
+    cy.contains('tr', 'Stanar Komšija', { timeout: 10000 })
+      .should('contain.text', 'Otkazano')
+      .findByRole('button', { name: /Otkaži/ })
+      .should('not.exist')
   })
 
   it('odbija datum u prošlosti pre nego što otvori verifikaciju', () => {
