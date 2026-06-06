@@ -162,6 +162,10 @@ export const keys = {
     all: ['recurringOrder'] as const,
     list: () => ['recurringOrder', 'list'] as const,
   },
+  scheduledInterbank: {
+    all: ['scheduledInterbank'] as const,
+    list: () => ['scheduledInterbank', 'list'] as const,
+  },
   audit: {
     all: ['audit'] as const,
     list: (args: object) => ['audit', 'list', args] as const,
