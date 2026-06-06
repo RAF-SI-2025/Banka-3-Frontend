@@ -34,6 +34,7 @@ function BankingLayout() {
     { to: '/banking/otc', label: 'OTC', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/ponude', label: '↳ Aktivne ponude', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/ugovori', label: '↳ Sklopljeni ugovori', hidden: !has(perms, Permissions.TradingClient) },
+    { to: '/banking/otc/istorija', label: '↳ Istorija pregovora', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/eksterno', label: 'Eksterni OTC', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/eksterno-ponude', label: '↳ Eksterne ponude', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/eksterno-ugovori', label: '↳ Eksterni ugovori', hidden: !has(perms, Permissions.TradingClient) },

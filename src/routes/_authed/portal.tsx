@@ -82,6 +82,11 @@ function PortalLayout() {
       hidden: !has(perms, Permissions.OTCTradeSupervisor),
     },
     {
+      to: '/portal/otc/istorija',
+      label: '↳ Istorija pregovora',
+      hidden: !has(perms, Permissions.OTCTradeSupervisor),
+    },
+    {
       to: '/portal/otc/eksterno',
       label: 'Eksterni OTC',
       hidden: !has(perms, Permissions.OTCTradeSupervisor),
