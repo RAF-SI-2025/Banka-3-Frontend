@@ -30,12 +30,14 @@ export function ExerciseOptionDialog({ open, onClose, holding }: ExerciseOptionD
   const qc = useQueryClient()
   const sec = holding.security
   const maxQty = holding.quantity ?? 0
-  const [qty, setQty] = useState<string>('1')
+  // Default to the full held position; the user can dial it down to a
+  // partial quantity (min 1) for a partial exercise (spec p.61.d).
+  const [qty, setQty] = useState<string>(String(maxQty || 1))
 
   // Reset qty whenever the dialog opens against a new holding.
   useEffect(() => {
-    if (open) setQty('1')
-  }, [open, holding.id])
+    if (open) setQty(String(maxQty || 1))
+  }, [open, holding.id, maxQty])
 
   // Underlying price for the ITM check. Skip fetch when not open.
   const underlyingId = sec?.underlyingSecurityId
