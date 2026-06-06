@@ -94,6 +94,7 @@ export const keys = {
   otc: {
     all: ['otc'] as const,
     discovery: (args: object) => ['otc', 'discovery', args] as const,
+    suggestions: (args: object) => ['otc', 'suggestions', args] as const,
     threads: (args: object) => ['otc', 'threads', args] as const,
     thread: (id: string) => ['otc', 'thread', id] as const,
     contracts: (args: object) => ['otc', 'contracts', args] as const,
