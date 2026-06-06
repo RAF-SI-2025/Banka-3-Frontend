@@ -140,6 +140,10 @@ export const keys = {
     all: ['watchlist'] as const,
     list: () => ['watchlist', 'list'] as const,
   },
+  recurringOrder: {
+    all: ['recurringOrder'] as const,
+    list: () => ['recurringOrder', 'list'] as const,
+  },
   audit: {
     all: ['audit'] as const,
     list: (args: object) => ['audit', 'list', args] as const,
