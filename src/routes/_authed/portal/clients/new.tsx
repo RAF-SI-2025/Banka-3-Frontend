@@ -21,7 +21,10 @@ const schema = z.object({
   email: z.string().email('Neispravan email'),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD'),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD')
+    .refine((d) => new Date(d) < new Date(), 'Datum rođenja ne sme biti u budućnosti'),
   gender: z.nativeEnum(bankaUserV1Gender),
   phone: z.string().min(6),
   address: z.string().min(1),

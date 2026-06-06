@@ -22,7 +22,10 @@ const schema = z.object({
   username: z.string().min(1, 'Korisničko ime je obavezno'),
   firstName: z.string().min(1, 'Ime je obavezno'),
   lastName: z.string().min(1, 'Prezime je obavezno'),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD'),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD')
+    .refine((d) => new Date(d) < new Date(), 'Datum rođenja ne sme biti u budućnosti'),
   gender: z.enum(['GENDER_MALE', 'GENDER_FEMALE']),
   phone: z.string().regex(/^\+?[0-9]{6,20}$/, 'Telefon: 6–20 cifara, opciono +'),
   address: z.string().min(1, 'Adresa je obavezna'),
