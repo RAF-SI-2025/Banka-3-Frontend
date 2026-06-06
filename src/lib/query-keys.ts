@@ -132,6 +132,10 @@ export const keys = {
     all: ['notification'] as const,
     list: (args: object) => ['notification', 'list', args] as const,
   },
+  priceAlert: {
+    all: ['priceAlert'] as const,
+    list: () => ['priceAlert', 'list'] as const,
+  },
   audit: {
     all: ['audit'] as const,
     list: (args: object) => ['audit', 'list', args] as const,
