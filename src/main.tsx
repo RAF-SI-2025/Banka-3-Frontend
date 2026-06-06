@@ -4,7 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { ThemeProvider } from './lib/theme/provider'
+import { initFaro } from './lib/observability/faro'
 import './styles/globals.css'
+
+// Initialize Faro before anything else so the first navigation /
+// console error / network call is captured. Safe to call when the
+// FARO_URL env is empty — initFaro is a no-op in that case.
+initFaro()
 
 const queryClient = new QueryClient({
   defaultOptions: {
