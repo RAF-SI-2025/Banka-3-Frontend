@@ -17,7 +17,7 @@ import { getSecurity } from '@/lib/api/securities'
 import { useAuthStore } from '@/lib/auth/store'
 import { apiError } from '@/lib/api/error'
 import { keys } from '@/lib/query-keys'
-import { formatDate, formatMoney } from '@/lib/format'
+import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { deviationClass, deviationLevel } from '@/lib/trading/otc-deviation'
 import { v1OTCStatus } from '@/lib/api/generated/models/v1OTCStatus'
 import type { v1OTCOffer } from '@/lib/api/generated/models/v1OTCOffer'
@@ -183,6 +183,7 @@ export function OTCThreadModal({
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>Premium: {formatMoney(it.premium, it.currency)}</span>
                         <span>Izvršenje: {formatDate(it.settlementDate)}</span>
+                        <span>Vreme: {formatDateTime(it.createdAt)}</span>
                         <span>Status: {statusLabel(it.status)}</span>
                       </div>
                     </div>
