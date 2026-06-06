@@ -20,6 +20,12 @@ export type VerificationKind =
 // caller passes it on to the gated mutation (payments, transfers,
 // limit edits, card creation), where the API helper translates it
 // into X-Verification-Id + X-Verification-Code headers.
+//
+// Two shapes:
+//   - code path: the user typed the 6-digit code (code is set).
+//   - quick-approve path (todoSpec S12): the user approved the action
+//     from the mobile app; the dialog proceeds id-only with an empty
+//     code, and proofHeaders attaches X-Verification-Id alone.
 export interface VerificationProof {
   id: string
   code: string
@@ -41,11 +47,31 @@ export async function requestVerification(actionKind: VerificationKind): Promise
   return data
 }
 
+// VerificationStatus mirrors the gateway's GET /verification/{id}/status
+// response (todoSpec S12). The web poll-mode dialog watches for
+// "approved" to auto-proceed id-only, and treats "expired" as terminal.
+export type VerificationStatusValue = 'pending' | 'approved' | 'expired'
+
+export interface VerificationStatus {
+  id: string
+  status: VerificationStatusValue
+}
+
+export async function getVerificationStatus(id: string): Promise<VerificationStatus> {
+  const { data } = await api.get<VerificationStatus>(`/v1/verification/${id}/status`)
+  return data
+}
+
 // proofHeaders maps a verification proof to the headers the gateway
 // middleware expects. Returns an empty object when proof is undefined
-// so call sites can spread unconditionally.
+// so call sites can spread unconditionally. When the proof carries no
+// code (quick-approve, todoSpec S12) only X-Verification-Id is sent —
+// the gateway validates by id against the mobile-approved record.
 export function proofHeaders(proof?: VerificationProof): Record<string, string> {
   if (!proof) return {}
+  if (!proof.code) {
+    return { 'X-Verification-Id': proof.id }
+  }
   return {
     'X-Verification-Id': proof.id,
     'X-Verification-Code': proof.code,
