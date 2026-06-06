@@ -84,6 +84,7 @@ export type { v1CreatePaymentRecipientRequest } from './models/v1CreatePaymentRe
 export type { v1CreatePaymentRequest } from './models/v1CreatePaymentRequest';
 export type { v1CreateTransferRequest } from './models/v1CreateTransferRequest';
 export { v1Direction } from './models/v1Direction';
+export type { v1DividendPayout } from './models/v1DividendPayout';
 export type { v1Employee } from './models/v1Employee';
 export { v1EmploymentStatus } from './models/v1EmploymentStatus';
 export type { v1Exchange } from './models/v1Exchange';
@@ -125,6 +126,7 @@ export type { v1ListBankFundPositionsResponse } from './models/v1ListBankFundPos
 export type { v1ListCardsResponse } from './models/v1ListCardsResponse';
 export type { v1ListClientsResponse } from './models/v1ListClientsResponse';
 export type { v1ListCompaniesResponse } from './models/v1ListCompaniesResponse';
+export type { v1ListDividendPayoutsResponse } from './models/v1ListDividendPayoutsResponse';
 export type { v1ListEmployeesResponse } from './models/v1ListEmployeesResponse';
 export type { v1ListExchangesResponse } from './models/v1ListExchangesResponse';
 export type { v1ListExternalOTCContractsResponse } from './models/v1ListExternalOTCContractsResponse';

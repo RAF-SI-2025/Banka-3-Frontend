@@ -1,12 +1,13 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listHoldings } from '@/lib/api/portfolio'
+import { listDividends } from '@/lib/api/dividends'
 import { getSecurity } from '@/lib/api/securities'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
 import { securityTypeLabel } from '@/lib/labels'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, formatDate } from '@/lib/format'
 import { unrealizedPnL } from '@/lib/trading/pnl'
 import { v1SecurityType } from '@/lib/api/generated/models/v1SecurityType'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,9 +45,17 @@ function PositionDetail() {
     refetchInterval: 5_000,
   })
 
+  // Dividend history for this position (S59) — dates + amounts.
+  const dividends = useQuery({
+    queryKey: keys.dividends.position(userId, securityId),
+    queryFn: () => listDividends({ securityId }),
+    enabled: Boolean(userId),
+  })
+
   const sec = security.data?.security
   const lst = security.data?.listing
   const holding = (holdings.data?.holdings ?? []).find((h) => h.security?.id === securityId)
+  const payouts = dividends.data?.payouts ?? []
 
   const pnl = holding
     ? unrealizedPnL({ quantity: holding.quantity, weightedAvgPrice: holding.weightedAvgPrice, currentPrice: holding.currentPrice, profit: holding.profit })
@@ -105,6 +114,40 @@ function PositionDetail() {
                 </span>
               )}
             </Row>
+          </CardContent>
+        </Card>
+      )}
+
+      {(payouts.length > 0 || dividends.isFetched) && (
+        <Card data-cy="dividend-history">
+          <CardHeader>
+            <CardTitle className="text-base">Isplaćene dividende</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm">
+            {payouts.length === 0 ? (
+              <p className="text-muted-foreground">Za ovu poziciju još nema isplaćenih dividendi.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/40 text-left text-muted-foreground">
+                    <th className="py-1.5 font-medium">Datum</th>
+                    <th className="py-1.5 font-medium">Količina</th>
+                    <th className="py-1.5 text-right font-medium">Iznos</th>
+                    <th className="py-1.5 text-right font-medium">Porez (RSD)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payouts.map((d) => (
+                    <tr key={d.id} className="border-b border-border/40 last:border-0">
+                      <td className="py-1.5">{formatDate(d.paidAt ?? d.createdAt)}</td>
+                      <td className="py-1.5">{d.quantity ?? 0}</td>
+                      <td className="py-1.5 text-right">{formatMoney(d.grossAmount, d.currency)}</td>
+                      <td className="py-1.5 text-right">{formatMoney(d.taxRsd)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       )}

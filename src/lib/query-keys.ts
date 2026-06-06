@@ -90,6 +90,12 @@ export const keys = {
     list: (userId: string, kind?: string) => ['portfolio', 'list', userId, kind ?? ''] as const,
     position: (userId: string, securityId: string) => ['portfolio', 'position', userId, securityId] as const,
   },
+  dividends: {
+    all: ['dividends'] as const,
+    list: (userId: string) => ['dividends', 'list', userId] as const,
+    position: (userId: string, securityId: string) =>
+      ['dividends', 'position', userId, securityId] as const,
+  },
   actuary: {
     all: ['actuary'] as const,
     list: (args: object) => ['actuary', 'list', args] as const,
