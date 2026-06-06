@@ -41,6 +41,11 @@ function PortalLayout() {
       hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),
     },
     {
+      to: '/portal/trgovina/watchlist',
+      label: 'Liste za praćenje',
+      hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),
+    },
+    {
       to: '/portal/portfolio',
       label: 'Portfolio',
       hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),

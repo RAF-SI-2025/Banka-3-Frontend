@@ -26,6 +26,7 @@ import { PriceHistoryChart } from './PriceHistoryChart'
 import { PriceOverrideDialog } from './PriceOverrideDialog'
 import { OrderForm } from './OrderForm'
 import { PriceAlertCard } from './PriceAlertCard'
+import { WatchlistCard } from './WatchlistCard'
 
 // Half-spread used to derive a placeholder Bid/Ask around the option
 // premium for the spec p.59 chain. The system has no options order
@@ -186,6 +187,8 @@ export function ListingDetail({ listingId, basePath, initialDirection, initialQu
           marketState={marketState}
         />
       )}
+
+      {sec?.id && <WatchlistCard securityId={sec.id} />}
 
       {tradable && sec?.id && <PriceAlertCard securityId={sec.id} currency={sec.currency} />}
 

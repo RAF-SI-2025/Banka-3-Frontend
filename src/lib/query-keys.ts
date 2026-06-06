@@ -136,6 +136,10 @@ export const keys = {
     all: ['priceAlert'] as const,
     list: () => ['priceAlert', 'list'] as const,
   },
+  watchlist: {
+    all: ['watchlist'] as const,
+    list: () => ['watchlist', 'list'] as const,
+  },
   audit: {
     all: ['audit'] as const,
     list: (args: object) => ['audit', 'list', args] as const,

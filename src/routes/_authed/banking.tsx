@@ -30,6 +30,7 @@ function BankingLayout() {
     { to: '/banking/portfolio', label: 'Portfolio', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/trgovina', label: 'Trgovina', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/trgovina/nalozi', label: '↳ Moji nalozi', hidden: !has(perms, Permissions.TradingClient) },
+    { to: '/banking/trgovina/watchlist', label: '↳ Liste za praćenje', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc', label: 'OTC', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/ponude', label: '↳ Aktivne ponude', hidden: !has(perms, Permissions.TradingClient) },
     { to: '/banking/otc/ugovori', label: '↳ Sklopljeni ugovori', hidden: !has(perms, Permissions.TradingClient) },
