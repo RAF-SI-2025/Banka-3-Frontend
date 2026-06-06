@@ -95,6 +95,8 @@ function statusLabel(s: v1OTCStatus | undefined): string {
     case v1OTCStatus.OTC_STATUS_SUPERSEDED: return 'zamenjena'
     case v1OTCStatus.OTC_STATUS_ACCEPTED: return 'prihvaćena'
     case v1OTCStatus.OTC_STATUS_WITHDRAWN: return 'povučena'
+    case v1OTCStatus.OTC_STATUS_CANCELLED: return 'otkazana'
+    case v1OTCStatus.OTC_STATUS_REJECTED: return 'odbijena'
     case v1OTCStatus.OTC_STATUS_EXPIRED: return 'istekla'
     default: return '—'
   }

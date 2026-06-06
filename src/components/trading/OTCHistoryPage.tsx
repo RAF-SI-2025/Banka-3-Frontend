@@ -32,6 +32,8 @@ import { OTCThreadModal } from './OTCThreadModal'
 const TERMINAL: v1OTCStatus[] = [
   v1OTCStatus.OTC_STATUS_ACCEPTED,
   v1OTCStatus.OTC_STATUS_WITHDRAWN,
+  v1OTCStatus.OTC_STATUS_CANCELLED,
+  v1OTCStatus.OTC_STATUS_REJECTED,
   v1OTCStatus.OTC_STATUS_EXPIRED,
 ]
 
@@ -120,6 +122,8 @@ export function OTCHistoryPage() {
                 <option value="all">Svi</option>
                 <option value={v1OTCStatus.OTC_STATUS_ACCEPTED}>Prihvaćen</option>
                 <option value={v1OTCStatus.OTC_STATUS_WITHDRAWN}>Povučen</option>
+                <option value={v1OTCStatus.OTC_STATUS_CANCELLED}>Otkazan</option>
+                <option value={v1OTCStatus.OTC_STATUS_REJECTED}>Odbijen</option>
                 <option value={v1OTCStatus.OTC_STATUS_EXPIRED}>Istekao</option>
               </Select>
             </div>
@@ -226,6 +230,8 @@ function statusLabel(s: v1OTCStatus | undefined): string {
     case v1OTCStatus.OTC_STATUS_SUPERSEDED: return 'zamenjena'
     case v1OTCStatus.OTC_STATUS_ACCEPTED: return 'prihvaćena'
     case v1OTCStatus.OTC_STATUS_WITHDRAWN: return 'povučena'
+    case v1OTCStatus.OTC_STATUS_CANCELLED: return 'otkazana'
+    case v1OTCStatus.OTC_STATUS_REJECTED: return 'odbijena'
     case v1OTCStatus.OTC_STATUS_EXPIRED: return 'istekla'
     default: return '—'
   }

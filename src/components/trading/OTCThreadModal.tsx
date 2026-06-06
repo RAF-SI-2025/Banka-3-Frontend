@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label'
 import { ErrorBanner } from '@/components/ui/error'
 import { Badge } from '@/components/ui/badge'
 import {
+  cancelOTCOffer,
   counterOTCOffer,
   getOTCThread,
-  withdrawOTCOffer,
+  rejectOTCOffer,
 } from '@/lib/api/otc'
 import { proofHeaders } from '@/lib/api/verification'
 import { api } from '@/lib/api/client'
@@ -102,8 +103,21 @@ export function OTCThreadModal({
     onError: (e) => setErr(apiError(e, 'Greška')),
   })
 
-  const withdraw = useMutation({
-    mutationFn: () => withdrawOTCOffer(threadId!),
+  // Cancel — the originator (the side that proposed the live iteration)
+  // pulls their own offer (todoSpec C4). Flips it to `cancelled`.
+  const cancel = useMutation({
+    mutationFn: () => cancelOTCOffer(threadId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.otc.all })
+      onClose()
+    },
+    onError: (e) => setErr(apiError(e, 'Greška')),
+  })
+
+  // Reject — the counterparty declines the latest open offer (todoSpec
+  // C4). Flips it to `rejected`.
+  const reject = useMutation({
+    mutationFn: () => rejectOTCOffer(threadId!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.otc.all })
       onClose()
@@ -254,11 +268,11 @@ export function OTCThreadModal({
                       <Button
                         type="button"
                         variant="danger"
-                        onClick={() => withdraw.mutate()}
-                        disabled={withdraw.isPending}
-                        data-cy="otc-withdraw"
+                        onClick={() => reject.mutate()}
+                        disabled={reject.isPending}
+                        data-cy="otc-reject"
                       >
-                        Odustani
+                        Odbij ponudu
                       </Button>
                       <Button type="submit" variant="primary" disabled={counter.isPending} data-cy="otc-counter-submit">
                         Pošalji kontraponudu
@@ -270,23 +284,23 @@ export function OTCThreadModal({
             )}
 
             {!waitingOnMe && latest.status === v1OTCStatus.OTC_STATUS_OPEN && (
-              <p className="text-xs text-muted-foreground">
-                Čeka se odgovor druge strane. Možete povući ponudu.
-              </p>
-            )}
-
-            {latest.status === v1OTCStatus.OTC_STATUS_OPEN && !waitingOnMe && (
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="danger"
-                  onClick={() => withdraw.mutate()}
-                  disabled={withdraw.isPending}
-                  data-cy="otc-withdraw"
-                >
-                  Odustani
-                </Button>
-              </div>
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Čeka se odgovor druge strane. Možete otkazati svoju ponudu.
+                </p>
+                {err && <ErrorBanner>{err}</ErrorBanner>}
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => cancel.mutate()}
+                    disabled={cancel.isPending}
+                    data-cy="otc-cancel"
+                  >
+                    Otkaži ponudu
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -312,6 +326,8 @@ function statusLabel(s: v1OTCStatus | undefined): string {
     case v1OTCStatus.OTC_STATUS_SUPERSEDED: return 'zamenjena'
     case v1OTCStatus.OTC_STATUS_ACCEPTED: return 'prihvaćena'
     case v1OTCStatus.OTC_STATUS_WITHDRAWN: return 'povučena'
+    case v1OTCStatus.OTC_STATUS_CANCELLED: return 'otkazana'
+    case v1OTCStatus.OTC_STATUS_REJECTED: return 'odbijena'
     case v1OTCStatus.OTC_STATUS_EXPIRED: return 'istekla'
     default: return '—'
   }
