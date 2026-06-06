@@ -15,6 +15,7 @@ import { v1EmploymentStatus } from './api/generated/models/v1EmploymentStatus'
 import { v1TransactionKind } from './api/generated/models/v1TransactionKind'
 import { v1TransactionStatus } from './api/generated/models/v1TransactionStatus'
 import { v1ScheduledPaymentStatus } from './api/generated/models/v1ScheduledPaymentStatus'
+import { v1ForexForwardStatus } from './api/generated/models/v1ForexForwardStatus'
 import { v1OrderType } from './api/generated/models/v1OrderType'
 import { v1OrderStatus } from './api/generated/models/v1OrderStatus'
 import { v1Direction } from './api/generated/models/v1Direction'
@@ -173,6 +174,14 @@ export const scheduledPaymentStatusLabel: Record<v1ScheduledPaymentStatus, strin
   [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_COMPLETED]: 'Realizovano',
   [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_FAILED]: 'Neuspešno',
   [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_CANCELLED]: 'Otkazano',
+}
+
+export const forexForwardStatusLabel: Record<v1ForexForwardStatus, string> = {
+  [v1ForexForwardStatus.FOREX_FORWARD_STATUS_UNSPECIFIED]: '—',
+  [v1ForexForwardStatus.FOREX_FORWARD_STATUS_ACTIVE]: 'Aktivan',
+  [v1ForexForwardStatus.FOREX_FORWARD_STATUS_SETTLED]: 'Poravnan',
+  [v1ForexForwardStatus.FOREX_FORWARD_STATUS_CANCELLED]: 'Otkazan',
+  [v1ForexForwardStatus.FOREX_FORWARD_STATUS_FAILED]: 'Neuspešan',
 }
 
 export const orderTypeLabel: Record<v1OrderType, string> = {

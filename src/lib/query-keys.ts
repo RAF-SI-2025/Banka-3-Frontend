@@ -49,6 +49,12 @@ export const keys = {
     all: ['scheduledPayment'] as const,
     list: () => ['scheduledPayment', 'list'] as const,
   },
+  forexForward: {
+    all: ['forexForward'] as const,
+    list: () => ['forexForward', 'list'] as const,
+    quote: (args: object) => ['forexForward', 'quote', args] as const,
+    spreads: () => ['forexForward', 'spreads'] as const,
+  },
   loan: {
     all: ['loan'] as const,
     list: (args: object) => ['loan', 'list', args] as const,

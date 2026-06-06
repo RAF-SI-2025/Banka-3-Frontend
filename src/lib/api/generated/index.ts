@@ -198,6 +198,15 @@ export type { v1RunVariableRateJobResponse } from './models/v1RunVariableRateJob
 export type { v1SchedulePaymentRequest } from './models/v1SchedulePaymentRequest';
 export type { v1ScheduledPayment } from './models/v1ScheduledPayment';
 export { v1ScheduledPaymentStatus } from './models/v1ScheduledPaymentStatus';
+export type { v1CreateForexForwardRequest } from './models/v1CreateForexForwardRequest';
+export type { v1ForexForward } from './models/v1ForexForward';
+export type { v1ForexForwardQuote } from './models/v1ForexForwardQuote';
+export type { v1ForexForwardSpread } from './models/v1ForexForwardSpread';
+export { v1ForexForwardStatus } from './models/v1ForexForwardStatus';
+export type { v1GetForexForwardSpreadsResponse } from './models/v1GetForexForwardSpreadsResponse';
+export type { v1ListForexForwardsResponse } from './models/v1ListForexForwardsResponse';
+export type { v1QuoteForexForwardRequest } from './models/v1QuoteForexForwardRequest';
+export type { v1SetForexForwardSpreadRequest } from './models/v1SetForexForwardSpreadRequest';
 export type { v1Security } from './models/v1Security';
 export { v1SecurityType } from './models/v1SecurityType';
 export type { v1SecurityWithListing } from './models/v1SecurityWithListing';

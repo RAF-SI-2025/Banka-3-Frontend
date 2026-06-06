@@ -14,6 +14,7 @@ import {
   txKindLabel,
   txStatusLabel,
   scheduledPaymentStatusLabel,
+  forexForwardStatusLabel,
   subtypesForKind,
   orderTypeLabel,
   orderStatusLabel,
@@ -23,6 +24,7 @@ import {
   actuaryTypeLabel,
 } from './labels'
 import { v1AccountKind } from './api/generated/models/v1AccountKind'
+import { v1ForexForwardStatus } from './api/generated/models/v1ForexForwardStatus'
 import { v1AccountSubtype } from './api/generated/models/v1AccountSubtype'
 import { v1AccountStatus } from './api/generated/models/v1AccountStatus'
 import { v1CardBrand } from './api/generated/models/v1CardBrand'
@@ -74,6 +76,8 @@ describe('label tables are complete for every enum value', () => {
   it('txStatusLabel', () => expectComplete('txStatusLabel', v1TransactionStatus, txStatusLabel))
   it('scheduledPaymentStatusLabel', () =>
     expectComplete('scheduledPaymentStatusLabel', v1ScheduledPaymentStatus, scheduledPaymentStatusLabel))
+  it('forexForwardStatusLabel', () =>
+    expectComplete('forexForwardStatusLabel', v1ForexForwardStatus, forexForwardStatusLabel))
   it('orderTypeLabel', () => expectComplete('orderTypeLabel', v1OrderType, orderTypeLabel))
   it('orderStatusLabel', () => expectComplete('orderStatusLabel', v1OrderStatus, orderStatusLabel))
   it('directionLabel', () => expectComplete('directionLabel', v1Direction, directionLabel))

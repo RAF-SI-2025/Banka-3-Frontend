@@ -31,6 +31,11 @@ function PortalLayout() {
     { to: '/portal/loans', label: 'Krediti', hidden: !has(perms, Permissions.LoanRead) },
     { to: '/portal/exchange', label: 'Kursna lista', hidden: !has(perms, Permissions.ExchangeWrite) },
     {
+      to: '/portal/terminski-spreadovi',
+      label: 'Terminski — spread',
+      hidden: !has(perms, Permissions.ActuarySupervisor),
+    },
+    {
       to: '/portal/trgovina',
       label: 'Trgovina',
       hidden: !hasAny(perms, [Permissions.Actuary, Permissions.ActuarySupervisor, Permissions.ActuaryAgent, Permissions.Admin]),
