@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
-import { getFund, getFundPerformance, listFunds } from '@/lib/api/funds'
+import {
+  getFund,
+  getFundPerformance,
+  listFunds,
+  listFundDividends,
+  setFundReinvest,
+} from '@/lib/api/funds'
 import { buildAverageSeries } from '@/lib/funds/average'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
@@ -29,6 +35,7 @@ interface Props {
 export function FundDetail({ fundId }: Props) {
   const perms = useAuthStore((s) => s.permissions)
   const canManage = has(perms, Permissions.FundsManageSupervisor)
+  const qc = useQueryClient()
 
   const fundQ = useQuery({
     queryKey: keys.funds.detail(fundId),
@@ -62,6 +69,21 @@ export function FundDetail({ fundId }: Props) {
     })),
   })
 
+  // S71 — per-client dividend distribution history.
+  const dividendsQ = useQuery({
+    queryKey: keys.funds.dividends(fundId),
+    queryFn: () => listFundDividends(fundId),
+    staleTime: 60_000,
+  })
+
+  // S70 — reinvest-dividends toggle (manager-only).
+  const reinvestM = useMutation({
+    mutationFn: (next: boolean) => setFundReinvest(fundId, next),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.funds.detail(fundId) })
+    },
+  })
+
   const [investOpen, setInvestOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [buyOpen, setBuyOpen] = useState(false)
@@ -81,6 +103,7 @@ export function FundDetail({ fundId }: Props) {
 
   const { fund, holdings = [], position } = fundQ.data
   const snapshots = perfQ.data?.snapshots ?? []
+  const dividends = dividendsQ.data?.distributions ?? []
   // Average-of-all-funds overlay (S75): only meaningful with >1 fund and
   // once the universe's histories have loaded.
   const otherSeries = allPerfQ.map((r) => r.data?.snapshots ?? [])
@@ -136,6 +159,29 @@ export function FundDetail({ fundId }: Props) {
             <KV k="Vrednost hartija" v={formatMoney(fund.holdingsValueRsd, 'RSD')} />
             <KV k="Cena jedinice" v={formatMoney(fund.unitPriceRsd, 'RSD')} />
             <KV k="Ukupno jedinica" v={fund.totalUnits ?? '0'} />
+            <div className="flex items-center justify-between gap-4 pt-1">
+              <span className="text-muted-foreground">Reinvestiranje dividendi</span>
+              {canManage ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={fund.reinvestDividends ? 'primary' : 'ghost'}
+                  disabled={reinvestM.isPending}
+                  data-cy="fund-reinvest-toggle"
+                  data-on={fund.reinvestDividends ? 'true' : 'false'}
+                  onClick={() => reinvestM.mutate(!fund.reinvestDividends)}
+                >
+                  {fund.reinvestDividends ? 'Uključeno' : 'Isključeno'}
+                </Button>
+              ) : (
+                <span className="tabular-nums" data-cy="fund-reinvest-state">
+                  {fund.reinvestDividends ? 'Uključeno' : 'Isključeno'}
+                </span>
+              )}
+            </div>
+            {reinvestM.isError && (
+              <ErrorBanner>{apiError(reinvestM.error, 'Promena nije uspela.')}</ErrorBanner>
+            )}
           </CardContent>
         </Card>
 
@@ -235,6 +281,40 @@ export function FundDetail({ fundId }: Props) {
                     </TR>
                   )
                 })
+              )}
+            </TBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Raspodela dividendi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <THead>
+              <TR>
+                <TH>Datum</TH>
+                <TH>Investitor</TH>
+                <TH className="text-right">Udeo (jedinica)</TH>
+                <TH className="text-right">Iznos</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {dividends.length === 0 ? (
+                <EmptyRow colSpan={4}>Fond još nije primio dividendu.</EmptyRow>
+              ) : (
+                dividends.map((d) => (
+                  <TR key={d.id} data-cy={`fund-dividend-${d.id}`}>
+                    <TD>{formatDate(d.createdAt)}</TD>
+                    <TD className="font-mono text-xs">{d.clientId ?? '—'}</TD>
+                    <TD className="text-right tabular-nums">
+                      {d.shareUnits ?? '0'} / {d.fundTotalUnits ?? '0'}
+                    </TD>
+                    <TD className="text-right">{formatMoney(d.amountRsd, 'RSD')}</TD>
+                  </TR>
+                ))
               )}
             </TBody>
           </Table>

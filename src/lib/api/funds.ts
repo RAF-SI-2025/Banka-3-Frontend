@@ -9,6 +9,8 @@ import type { v1CreateFundRequest } from './generated/models/v1CreateFundRequest
 import type { TradingServiceInvestInFundBody } from './generated/models/TradingServiceInvestInFundBody'
 import type { TradingServiceWithdrawFromFundBody } from './generated/models/TradingServiceWithdrawFromFundBody'
 import type { v1FundTransactionResponse } from './generated/models/v1FundTransactionResponse'
+import type { v1ListFundDividendsResponse } from './generated/models/v1ListFundDividendsResponse'
+import type { TradingServiceSetFundReinvestBody } from './generated/models/TradingServiceSetFundReinvestBody'
 
 export interface ListFundsArgs {
   status?: 'active' | 'any' | ''
@@ -88,6 +90,27 @@ export async function withdrawFromFund(
   const { data } = await api.post<v1FundTransactionResponse>(
     `/v1/funds/${encodeURIComponent(id)}/withdraw`,
     body,
+  )
+  return data
+}
+
+// S70 — toggle the fund's dividend-reinvestment flag (manager-only).
+export async function setFundReinvest(
+  id: string,
+  reinvestDividends: boolean,
+): Promise<v1Fund> {
+  const body: TradingServiceSetFundReinvestBody = { reinvestDividends }
+  const { data } = await api.patch<v1Fund>(
+    `/v1/funds/${encodeURIComponent(id)}/reinvest`,
+    body,
+  )
+  return data
+}
+
+// S71 — per-client dividend distribution history for a fund.
+export async function listFundDividends(id: string): Promise<v1ListFundDividendsResponse> {
+  const { data } = await api.get<v1ListFundDividendsResponse>(
+    `/v1/funds/${encodeURIComponent(id)}/dividends`,
   )
   return data
 }
