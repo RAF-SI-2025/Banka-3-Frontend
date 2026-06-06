@@ -13,6 +13,7 @@ import {
   employmentStatusLabel,
   txKindLabel,
   txStatusLabel,
+  scheduledPaymentStatusLabel,
   subtypesForKind,
   orderTypeLabel,
   orderStatusLabel,
@@ -34,6 +35,7 @@ import { v1InterestType } from './api/generated/models/v1InterestType'
 import { v1EmploymentStatus } from './api/generated/models/v1EmploymentStatus'
 import { v1TransactionKind } from './api/generated/models/v1TransactionKind'
 import { v1TransactionStatus } from './api/generated/models/v1TransactionStatus'
+import { v1ScheduledPaymentStatus } from './api/generated/models/v1ScheduledPaymentStatus'
 import { v1OrderType } from './api/generated/models/v1OrderType'
 import { v1OrderStatus } from './api/generated/models/v1OrderStatus'
 import { v1Direction } from './api/generated/models/v1Direction'
@@ -70,6 +72,8 @@ describe('label tables are complete for every enum value', () => {
   it('employmentStatusLabel', () => expectComplete('employmentStatusLabel', v1EmploymentStatus, employmentStatusLabel))
   it('txKindLabel', () => expectComplete('txKindLabel', v1TransactionKind, txKindLabel))
   it('txStatusLabel', () => expectComplete('txStatusLabel', v1TransactionStatus, txStatusLabel))
+  it('scheduledPaymentStatusLabel', () =>
+    expectComplete('scheduledPaymentStatusLabel', v1ScheduledPaymentStatus, scheduledPaymentStatusLabel))
   it('orderTypeLabel', () => expectComplete('orderTypeLabel', v1OrderType, orderTypeLabel))
   it('orderStatusLabel', () => expectComplete('orderStatusLabel', v1OrderStatus, orderStatusLabel))
   it('directionLabel', () => expectComplete('directionLabel', v1Direction, directionLabel))

@@ -6,7 +6,12 @@ import type { v1ListTransactionsResponse } from './generated/models/v1ListTransa
 import type { v1Transaction } from './generated/models/v1Transaction'
 import type { v1QuoteExchangeRequest } from './generated/models/v1QuoteExchangeRequest'
 import type { v1QuoteExchangeResponse } from './generated/models/v1QuoteExchangeResponse'
+import type { v1SchedulePaymentRequest } from './generated/models/v1SchedulePaymentRequest'
+import type { v1ScheduledPayment } from './generated/models/v1ScheduledPayment'
+import type { v1ListScheduledPaymentsResponse } from './generated/models/v1ListScheduledPaymentsResponse'
 import { proofHeaders, type VerificationProof } from './verification'
+
+export type ScheduledPayment = v1ScheduledPayment
 
 export type Transaction = v1Transaction
 export type PaymentResult = v1PaymentResult
@@ -43,5 +48,28 @@ export async function createTransfer(input: v1CreateTransferRequest, proof: Veri
 
 export async function quoteExchange(req: v1QuoteExchangeRequest): Promise<v1QuoteExchangeResponse> {
   const { data } = await api.post<v1QuoteExchangeResponse>('/v1/menjacnica/quote', req)
+  return data
+}
+
+// Scheduled payments — "Zakazivanje plaćanja" (todoSpec C2). Scheduling
+// is verification-gated (same 6-digit dialog as an immediate payment),
+// so it takes a VerificationProof. Listing + cancelling are not gated.
+export async function schedulePayment(
+  input: v1SchedulePaymentRequest,
+  proof: VerificationProof,
+): Promise<ScheduledPayment> {
+  const { data } = await api.post<ScheduledPayment>('/v1/scheduled-payments', input, {
+    headers: proofHeaders(proof),
+  })
+  return data
+}
+
+export async function listScheduledPayments(): Promise<v1ListScheduledPaymentsResponse> {
+  const { data } = await api.get<v1ListScheduledPaymentsResponse>('/v1/scheduled-payments')
+  return data
+}
+
+export async function cancelScheduledPayment(id: string): Promise<ScheduledPayment> {
+  const { data } = await api.delete<ScheduledPayment>(`/v1/scheduled-payments/${id}`)
   return data
 }

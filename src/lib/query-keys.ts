@@ -45,6 +45,10 @@ export const keys = {
     all: ['recipient'] as const,
     list: () => ['recipient', 'list'] as const,
   },
+  scheduledPayment: {
+    all: ['scheduledPayment'] as const,
+    list: () => ['scheduledPayment', 'list'] as const,
+  },
   loan: {
     all: ['loan'] as const,
     list: (args: object) => ['loan', 'list', args] as const,
