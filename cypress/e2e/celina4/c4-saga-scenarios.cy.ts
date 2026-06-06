@@ -306,6 +306,20 @@ describe('Celina 4 — SAGA pattern (live scenarios 1-13)', () => {
     cy.resetBackend()
   })
 
+  // Leave the shared backend in the clean seeded state we started from.
+  // S12/S13 deactivate the buyer/seller USD accounts (and the suite leaves
+  // residual OTC threads + reserved holdings from its last test). The
+  // beforeEach resetBackend keeps each test here clean, but nothing
+  // restores state after the final test — so a persistent-backend run
+  // afterwards (e.g. the c4-aggressive soak, which does NOT reset and
+  // assumes a fresh seed) would inherit a dead account + reserved holdings
+  // and every OTC `accept` would 500. This after() hook makes the suite
+  // ordering-independent by reseeding once on the way out. Uses the
+  // resetBackend task directly (no SPA visit needed for teardown).
+  after(() => {
+    cy.task('resetBackend', {}, { timeout: 120000 })
+  })
+
   it('S1 — happy path: full exercise debits buyer, credits seller, transfers shares', () => {
     fixtures().then((f) => {
       activeContract(f).then((contractId) => {
