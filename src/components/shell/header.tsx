@@ -4,6 +4,7 @@ import { logout } from '@/lib/api/auth'
 import { useAuthStore } from '@/lib/auth/store'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shell/theme-toggle'
+import { NotificationBell } from '@/components/shell/notification-bell'
 
 export function Header({ title, homeTo }: { title: string; homeTo: string }) {
   const navigate = useNavigate()
@@ -42,6 +43,7 @@ export function Header({ title, homeTo }: { title: string; homeTo: string }) {
             <span className="text-muted-foreground">{greeting}</span>
           </div>
         )}
+        <NotificationBell />
         <ThemeToggle />
         <Button variant="ghost" size="sm" onClick={onLogout}>
           <LogOut />

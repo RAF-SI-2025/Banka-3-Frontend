@@ -128,4 +128,8 @@ export const keys = {
     realized: (args: object) => ['tax', 'realized', args] as const,
     runs: ['tax', 'runs'] as const,
   },
+  notification: {
+    all: ['notification'] as const,
+    list: (args: object) => ['notification', 'list', args] as const,
+  },
 } as const
