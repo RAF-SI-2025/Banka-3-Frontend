@@ -41,5 +41,14 @@ export type v1Order = {
      */
     actorKind?: bankaTradingV1UserKind;
     onBehalfOfFundId?: string;
+    /**
+     * todoSpec S30/S31 — per-order execution aggregates over settled
+     * fills: quantity-weighted average execution price, summed paid
+     * commission, and the most recent execution timestamp. Empty/unset
+     * on an order with no settled fills yet.
+     */
+    avgExecutionPrice?: string;
+    totalCommission?: string;
+    lastExecutionAt?: string;
 };
 

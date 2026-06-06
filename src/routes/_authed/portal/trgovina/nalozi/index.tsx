@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect, useNavigate, useSearch } from '@tansta
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { listOrders, approveOrder, declineOrder, cancelOrder } from '@/lib/api/orders'
+import { listOrders, approveOrder, declineOrder, cancelOrder, makeDateBound } from '@/lib/api/orders'
 import { apiError } from '@/lib/api/error'
 import { useSecurityTickers } from '@/lib/trading/useSecurityTickers'
 import { isSettlementPast } from '@/lib/trading/settlement'
@@ -12,11 +12,13 @@ import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, hasAny } from '@/lib/permissions'
 import { v1OrderStatus } from '@/lib/api/generated/models/v1OrderStatus'
 import { v1Direction } from '@/lib/api/generated/models/v1Direction'
+import { v1OrderType } from '@/lib/api/generated/models/v1OrderType'
 import { bankaTradingV1UserKind } from '@/lib/api/generated/models/bankaTradingV1UserKind'
 import { directionLabel, orderStatusLabel, orderTypeLabel } from '@/lib/labels'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatMoney } from '@/lib/format'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Select } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -55,13 +57,22 @@ function PortalNaloziList() {
 
   const [status, setStatus] = useState<string>(search.status ?? '')
   const [direction, setDirection] = useState<string>('')
+  const [orderType, setOrderType] = useState<string>('')
+  const [from, setFrom] = useState<string>('')
+  const [to, setTo] = useState<string>('')
   const [userId, setUserId] = useState<string>(search.userId ?? '')
   const [actor, setActor] = useState<string>('')
 
   // Backend infers user from JWT for non-supervisor callers; passing
-  // userId silently drops there. Same for userKind.
+  // userId silently drops there. Same for userKind. Status (S32), type
+  // (S34) and creation-date range (S33) all filter server-side.
   const args: Parameters<typeof listOrders>[0] = {}
   if (status) args.status = status
+  if (orderType) args.orderType = orderType
+  const fromBound = makeDateBound(from)
+  const toBound = makeDateBound(to, true)
+  if (fromBound) args.from = fromBound
+  if (toBound) args.to = toBound
   if (canSeeAll) {
     if (userId) args.userId = userId
     if (actor === 'client') args.userKind = bankaTradingV1UserKind.USER_KIND_CLIENT
@@ -131,6 +142,24 @@ function PortalNaloziList() {
             <option value={v1Direction.DIRECTION_SELL}>Prodaja</option>
           </Select>
         </div>
+        <div>
+          <Label>Tip</Label>
+          <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} data-cy="filter-type">
+            <option value="">Svi</option>
+            <option value="market">{orderTypeLabel[v1OrderType.ORDER_TYPE_MARKET]}</option>
+            <option value="limit">{orderTypeLabel[v1OrderType.ORDER_TYPE_LIMIT]}</option>
+            <option value="stop">{orderTypeLabel[v1OrderType.ORDER_TYPE_STOP]}</option>
+            <option value="stop_limit">{orderTypeLabel[v1OrderType.ORDER_TYPE_STOP_LIMIT]}</option>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-from">Od datuma</Label>
+          <Input id="filter-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} data-cy="filter-from" />
+        </div>
+        <div>
+          <Label htmlFor="filter-to">Do datuma</Label>
+          <Input id="filter-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} data-cy="filter-to" />
+        </div>
         {canSeeAll && (
           <>
             <ActuaryPicker
@@ -161,6 +190,9 @@ function PortalNaloziList() {
             <TH className="text-right">Količina</TH>
             <TH className="text-right">Veličina ugovora</TH>
             <TH className="text-right">Cena/jed.</TH>
+            <TH className="text-right">Izvršna cena</TH>
+            <TH className="text-right">Provizija</TH>
+            <TH>Datum izvršenja</TH>
             <TH>Smer</TH>
             <TH className="text-right">Preostalo</TH>
             <TH>Status</TH>
@@ -169,7 +201,7 @@ function PortalNaloziList() {
         </THead>
         <TBody>
           {items.length === 0 ? (
-            <EmptyRow colSpan={11}>{orders.isFetching ? 'Učitavanje…' : 'Nema naloga'}</EmptyRow>
+            <EmptyRow colSpan={14}>{orders.isFetching ? 'Učitavanje…' : 'Nema naloga'}</EmptyRow>
           ) : (
             items.map((o) => (
               <RowActions
@@ -209,6 +241,9 @@ function RowActions({
     remainingQuantity?: number
     contractSize?: string
     pricePerUnit?: string
+    avgExecutionPrice?: string
+    totalCommission?: string
+    lastExecutionAt?: string
     status?: v1OrderStatus
     isDone?: boolean
     cancelled?: boolean
@@ -260,6 +295,15 @@ function RowActions({
         <TD className="text-right">{order.quantity ?? '—'}</TD>
         <TD className="text-right" data-cy="order-row-contract-size">{order.contractSize ?? '—'}</TD>
         <TD className="text-right" data-cy="order-row-ppu">{order.pricePerUnit ?? '—'}</TD>
+        <TD className="text-right" data-cy="order-row-exec-price">
+          {order.avgExecutionPrice ? formatMoney(order.avgExecutionPrice) : '—'}
+        </TD>
+        <TD className="text-right" data-cy="order-row-commission">
+          {order.totalCommission ? formatMoney(order.totalCommission) : '—'}
+        </TD>
+        <TD data-cy="order-row-exec-date">
+          {order.lastExecutionAt ? formatDateTime(order.lastExecutionAt) : '—'}
+        </TD>
         <TD>{order.direction ? directionLabel[order.direction] : '—'}</TD>
         <TD className="text-right">{order.remainingQuantity ?? order.quantity ?? '—'}</TD>
         <TD><StatusBadge order={order} /></TD>
@@ -315,7 +359,7 @@ function RowActions({
       </TR>
       {errMsg && (
         <TR>
-          <TD colSpan={11}><ErrorBanner>{errMsg}</ErrorBanner></TD>
+          <TD colSpan={14}><ErrorBanner>{errMsg}</ErrorBanner></TD>
         </TR>
       )}
     </>

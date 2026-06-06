@@ -16,6 +16,12 @@ export interface ListOrdersArgs {
   // clients/agents (server forces own).
   userId?: string
   securityId?: string
+  // todoSpec S34 — "market" | "limit" | "stop" | "stop_limit".
+  orderType?: string
+  // todoSpec S33 — inclusive creation-date range. RFC3339 timestamps
+  // (pin midnight UTC for a bare YYYY-MM-DD; see makeDateBound below).
+  from?: string
+  to?: string
   page?: number
   pageSize?: number
 }
@@ -23,6 +29,15 @@ export interface ListOrdersArgs {
 export async function listOrders(args: ListOrdersArgs = {}): Promise<v1ListOrdersResponse> {
   const { data } = await api.get<v1ListOrdersResponse>('/v1/orders', { params: args })
   return data
+}
+
+// makeDateBound converts a bare YYYY-MM-DD from <input type="date"> into
+// an RFC3339 timestamp grpc-gateway accepts for a google.protobuf.Timestamp
+// query param (a bare date rejects as "invalid Timestamp"). `end=true`
+// pins the inclusive end-of-day so a `to` bound includes that whole day.
+export function makeDateBound(value: string, end = false): string | undefined {
+  if (!value) return undefined
+  return end ? `${value}T23:59:59Z` : `${value}T00:00:00Z`
 }
 
 export async function getOrder(id: string): Promise<v1Order> {
