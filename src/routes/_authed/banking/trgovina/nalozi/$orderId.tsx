@@ -94,10 +94,22 @@ function OrderDetail() {
 
           <Card>
             <CardHeader><CardTitle>Realizacije</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Pojedinačne realizacije nisu dostupne za prikaz.
-              </p>
+            <CardContent className="space-y-2 text-sm">
+              {o.lastExecutionAt ? (
+                <>
+                  <Row label="Prosečna izvršna cena">
+                    <span data-cy="order-exec-price">{formatMoney(o.avgExecutionPrice)}</span>
+                  </Row>
+                  <Row label="Plaćena provizija">
+                    <span data-cy="order-commission">{formatMoney(o.totalCommission)}</span>
+                  </Row>
+                  <Row label="Datum izvršenja">
+                    <span data-cy="order-exec-date">{formatDateTime(o.lastExecutionAt)}</span>
+                  </Row>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Nalog još nije realizovan.</p>
+              )}
             </CardContent>
           </Card>
         </>

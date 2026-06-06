@@ -160,6 +160,15 @@ function PortalOrderDetail() {
               <Row label="Cena po jedinici">{formatMoney(o.pricePerUnit)}</Row>
               <Row label="Limit">{formatMoney(o.limitPrice)}</Row>
               <Row label="Stop">{formatMoney(o.stopPrice)}</Row>
+              <Row label="Prosečna izvršna cena">
+                <span data-cy="order-exec-price">{o.lastExecutionAt ? formatMoney(o.avgExecutionPrice) : '—'}</span>
+              </Row>
+              <Row label="Plaćena provizija">
+                <span data-cy="order-commission">{o.lastExecutionAt ? formatMoney(o.totalCommission) : '—'}</span>
+              </Row>
+              <Row label="Datum izvršenja">
+                <span data-cy="order-exec-date">{o.lastExecutionAt ? formatDateTime(o.lastExecutionAt) : '—'}</span>
+              </Row>
               <Row label="AON">{o.allOrNone ? 'Da' : 'Ne'}</Row>
               <Row label="Margin">{o.margin ? 'Da' : 'Ne'}</Row>
               <Row label="Status">{o.status ? orderStatusLabel[o.status] : '—'}{o.cancelled ? ' (otkazan)' : ''}{o.isDone ? ' (realizovan)' : ''}</Row>
