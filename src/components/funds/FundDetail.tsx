@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ErrorBanner } from '@/components/ui/error'
-import { getFund, getFundPerformance } from '@/lib/api/funds'
+import { getFund, getFundPerformance, listFunds } from '@/lib/api/funds'
+import { buildAverageSeries } from '@/lib/funds/average'
 import { keys } from '@/lib/query-keys'
 import { useAuthStore } from '@/lib/auth/store'
 import { Permissions, has } from '@/lib/permissions'
@@ -41,6 +42,26 @@ export function FundDetail({ fundId }: Props) {
     staleTime: 5 * 60_000,
   })
 
+  // For the S75 comparison line we need every fund's value history. Fetch
+  // the universe, then each fund's performance (the viewed fund's own
+  // query is deduped via the shared performance key).
+  const allFundsQ = useQuery({
+    queryKey: keys.funds.list({ status: 'active', for: 'avg' }),
+    queryFn: () => listFunds({ status: 'active' }),
+    staleTime: 5 * 60_000,
+  })
+  const allFundIds = useMemo(
+    () => (allFundsQ.data?.funds ?? []).map((f) => f.id).filter((id): id is string => Boolean(id)),
+    [allFundsQ.data],
+  )
+  const allPerfQ = useQueries({
+    queries: allFundIds.map((id) => ({
+      queryKey: keys.funds.performance(id, 365),
+      queryFn: () => getFundPerformance(id, 365),
+      staleTime: 5 * 60_000,
+    })),
+  })
+
   const [investOpen, setInvestOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [buyOpen, setBuyOpen] = useState(false)
@@ -60,6 +81,13 @@ export function FundDetail({ fundId }: Props) {
 
   const { fund, holdings = [], position } = fundQ.data
   const snapshots = perfQ.data?.snapshots ?? []
+  // Average-of-all-funds overlay (S75): only meaningful with >1 fund and
+  // once the universe's histories have loaded.
+  const otherSeries = allPerfQ.map((r) => r.data?.snapshots ?? [])
+  const avgSeries =
+    snapshots.length > 0 && allFundIds.length > 1
+      ? buildAverageSeries(snapshots, otherSeries)
+      : undefined
 
   return (
     <main className="container space-y-6 py-8">
@@ -139,7 +167,7 @@ export function FundDetail({ fundId }: Props) {
           {snapshots.length === 0 ? (
             <p className="text-sm text-muted-foreground">Još nema istorije performansa.</p>
           ) : (
-            <FundPerformanceChart rows={snapshots} />
+            <FundPerformanceChart rows={snapshots} avg={avgSeries} />
           )}
         </CardContent>
       </Card>
