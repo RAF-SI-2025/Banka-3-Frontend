@@ -12,6 +12,7 @@ import { securityTypeLabel } from '@/lib/labels'
 import { v1SecurityType } from '@/lib/api/generated/models/v1SecurityType'
 import { bankaTradingV1UserKind } from '@/lib/api/generated/models/bankaTradingV1UserKind'
 import { CreateOTCOfferDialog } from './CreateOTCOfferDialog'
+import { OTCSuggestionsPanel } from './OTCSuggestionsPanel'
 import type { v1PublicHoldingItem } from '@/lib/api/generated/models/v1PublicHoldingItem'
 
 // Shared OTC discovery board. Spec p.67 ("OTC portal"): the layout is
@@ -80,6 +81,8 @@ export function OTCDiscovery() {
           </div>
         </CardContent>
       </Card>
+
+      <OTCSuggestionsPanel onChoose={(it) => setChosen(it)} />
 
       <Card>
         <CardHeader>

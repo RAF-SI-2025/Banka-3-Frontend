@@ -1,5 +1,6 @@
 import { api } from './client'
 import type { v1ListPublicHoldingsResponse } from './generated/models/v1ListPublicHoldingsResponse'
+import type { v1SuggestOTCMatchesResponse } from './generated/models/v1SuggestOTCMatchesResponse'
 import type { v1ListOTCThreadsResponse } from './generated/models/v1ListOTCThreadsResponse'
 import type { v1GetOTCThreadResponse } from './generated/models/v1GetOTCThreadResponse'
 import type { v1ListOTCContractsResponse } from './generated/models/v1ListOTCContractsResponse'
@@ -16,6 +17,27 @@ export interface ListPublicHoldingsArgs {
 
 export async function listPublicHoldings(args: ListPublicHoldingsArgs = {}): Promise<v1ListPublicHoldingsResponse> {
   const { data } = await api.get<v1ListPublicHoldingsResponse>('/v1/otc/discovery', { params: args })
+  return data
+}
+
+export interface SuggestOTCMatchesArgs {
+  securityId: string
+  quantity: number
+  price: string
+  // ±band around price in percent; omit / 0 → backend defaults to 5.
+  tolerancePct?: number
+}
+
+// suggestOTCMatches (todoSpec "OTC matching engine") — read-only: returns
+// public seller holdings for a security whose unit price is within the
+// tolerance band of the buyer's desired price and that can satisfy the
+// requested quantity (fully or partially), cheapest-first.
+export async function suggestOTCMatches(
+  args: SuggestOTCMatchesArgs,
+): Promise<v1SuggestOTCMatchesResponse> {
+  const { data } = await api.get<v1SuggestOTCMatchesResponse>('/v1/otc/suggestions', {
+    params: args,
+  })
   return data
 }
 
