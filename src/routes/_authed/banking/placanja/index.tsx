@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { listAccounts } from '@/lib/api/accounts'
 import { listRecipients } from '@/lib/api/recipients'
-import { createPayment, listTransactions } from '@/lib/api/payments'
+import { createPayment, listTransactions, schedulePayment } from '@/lib/api/payments'
 import { apiError } from '@/lib/api/error'
 import type { VerificationProof } from '@/lib/api/verification'
 import { useAuthStore } from '@/lib/auth/store'
@@ -25,6 +25,7 @@ import { VerificationDialog } from '@/components/verification/verification-dialo
 import { validateAccountNumber, normalizeAccountNumber } from '@/lib/account-number'
 import type { v1Account } from '@/lib/api/generated/models/v1Account'
 import type { v1CreatePaymentRequest } from '@/lib/api/generated/models/v1CreatePaymentRequest'
+import type { v1SchedulePaymentRequest } from '@/lib/api/generated/models/v1SchedulePaymentRequest'
 import { v1TransactionStatus } from '@/lib/api/generated/models/v1TransactionStatus'
 import { v1TransactionKind } from '@/lib/api/generated/models/v1TransactionKind'
 
@@ -33,7 +34,7 @@ import { v1TransactionKind } from '@/lib/api/generated/models/v1TransactionKind'
 // doesn't match any saved recipient the home-page tile wouldn't have
 // produced it. An unknown id is silently ignored — the form opens
 // empty rather than throwing for a stale bookmark.
-export const Route = createFileRoute('/_authed/banking/placanja')({
+export const Route = createFileRoute('/_authed/banking/placanja/')({
   component: NewPayment,
   validateSearch: (search: Record<string, unknown>) => ({
     recipientId: typeof search.recipientId === 'string' ? search.recipientId : undefined,
@@ -70,16 +71,41 @@ const schema = z.object({
   purpose: z.string().min(1, 'Svrha je obavezna'),
   saveRecipient: z.boolean().optional(),
   recipientTemplateId: z.string().optional(),
+  // Zakazivanje plaćanja (todoSpec C2). Empty = plati odmah; a YYYY-MM-DD
+  // value = zakaži za taj datum. The date must be strictly in the future
+  // (the backend re-checks; we guard here for a friendly message).
+  scheduleEnabled: z.boolean().optional(),
+  scheduledDate: z.string().optional(),
+}).superRefine((val, ctx) => {
+  if (!val.scheduleEnabled) return
+  if (!val.scheduledDate) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Izaberite datum', path: ['scheduledDate'] })
+    return
+  }
+  // Compare against today's local date; the day must be after today.
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const picked = new Date(`${val.scheduledDate}T00:00:00`)
+  if (!(picked.getTime() > today.getTime())) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Datum mora biti u budućnosti', path: ['scheduledDate'] })
+  }
 })
 
 type FormValues = z.infer<typeof schema>
+
+// Pending submit payload: either an immediate payment or a scheduled one.
+// The VerificationDialog gates both (the scheduling step is
+// verification-gated per spec).
+type PendingSubmit =
+  | { mode: 'pay'; payload: v1CreatePaymentRequest }
+  | { mode: 'schedule'; payload: v1SchedulePaymentRequest }
 
 function NewPayment() {
   const navigate = useNavigate()
   const { recipientId: deepLinkRecipientId } = Route.useSearch()
   const userId = useAuthStore((s) => s.userId)
   const qc = useQueryClient()
-  const [pending, setPending] = useState<v1CreatePaymentRequest | null>(null)
+  const [pending, setPending] = useState<PendingSubmit | null>(null)
 
   const accounts = useQuery({
     queryKey: keys.account.list({ ownerClientId: userId }),
@@ -103,8 +129,12 @@ function NewPayment() {
       purpose: '',
       saveRecipient: false,
       recipientTemplateId: '',
+      scheduleEnabled: false,
+      scheduledDate: '',
     },
   })
+
+  const scheduleEnabled = form.watch('scheduleEnabled')
 
   const create = useMutation({
     mutationFn: ({ payload, proof }: { payload: v1CreatePaymentRequest; proof: VerificationProof }) =>
@@ -117,10 +147,29 @@ function NewPayment() {
     },
   })
 
+  const schedule = useMutation({
+    mutationFn: ({ payload, proof }: { payload: v1SchedulePaymentRequest; proof: VerificationProof }) =>
+      schedulePayment(payload, proof),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.scheduledPayment.all })
+      navigate({ to: '/banking/placanja/zakazana' })
+    },
+  })
+
   const onSubmit = form.handleSubmit((values) => {
-    const { recipientTemplateId, ...rest } = values
+    const { recipientTemplateId, scheduleEnabled: sched, scheduledDate, ...rest } = values
     void recipientTemplateId
-    setPending({ ...rest, toAccountNumber: normalizeAccountNumber(rest.toAccountNumber) })
+    const toAccountNumber = normalizeAccountNumber(rest.toAccountNumber)
+    if (sched && scheduledDate) {
+      const { saveRecipient, ...payFields } = rest
+      void saveRecipient
+      setPending({
+        mode: 'schedule',
+        payload: { ...payFields, toAccountNumber, scheduledDate: `${scheduledDate}T00:00:00Z` },
+      })
+      return
+    }
+    setPending({ mode: 'pay', payload: { ...rest, toAccountNumber } })
   })
 
   function applyTemplate(id: string) {
@@ -145,7 +194,12 @@ function NewPayment() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkRecipientId, recipientsLoaded])
 
-  const errMsg = create.error ? apiError(create.error, 'Greška pri kreiranju plaćanja.') : null
+  const errMsg = create.error
+    ? apiError(create.error, 'Greška pri kreiranju plaćanja.')
+    : schedule.error
+      ? apiError(schedule.error, 'Greška pri zakazivanju plaćanja.')
+      : null
+  const submitting = create.isPending || schedule.isPending
 
   // Pull payment-kind history for every account the client owns and
   // merge into one list, newest first. Per-account fetch is the only
@@ -182,7 +236,12 @@ function NewPayment() {
 
   return (
     <main className="container max-w-3xl space-y-6 py-8">
-      <h1 className="text-2xl font-semibold">Novo plaćanje</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Novo plaćanje</h1>
+        <Button variant="ghost" type="button" onClick={() => navigate({ to: '/banking/placanja/zakazana' })}>
+          Zakazana plaćanja
+        </Button>
+      </div>
       <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-border bg-surface p-6">
         <div>
           <Label>Račun pošiljaoca</Label>
@@ -253,11 +312,28 @@ function NewPayment() {
           Sačuvaj primaoca
         </label>
 
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input type="checkbox" {...form.register('scheduleEnabled')} />
+          Zakaži plaćanje
+        </label>
+
+        {scheduleEnabled && (
+          <div>
+            <Label>Datum izvršenja</Label>
+            <Input type="date" {...form.register('scheduledDate')} />
+            <FieldErr msg={form.formState.errors.scheduledDate?.message} />
+          </div>
+        )}
+
         {errMsg && <ErrorBanner>{errMsg}</ErrorBanner>}
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? 'Šaljem…' : 'Pošalji plaćanje'}
+          <Button type="submit" disabled={submitting}>
+            {submitting
+              ? 'Šaljem…'
+              : scheduleEnabled
+                ? 'Zakaži plaćanje'
+                : 'Pošalji plaćanje'}
           </Button>
         </div>
       </form>
@@ -318,12 +394,20 @@ function NewPayment() {
       <VerificationDialog
         open={!!pending}
         kind="payment"
-        title="Potvrda plaćanja"
-        description="Unesite verifikacioni kod kako biste potvrdili plaćanje."
+        title={pending?.mode === 'schedule' ? 'Potvrda zakazivanja' : 'Potvrda plaćanja'}
+        description={
+          pending?.mode === 'schedule'
+            ? 'Unesite verifikacioni kod kako biste potvrdili zakazivanje plaćanja.'
+            : 'Unesite verifikacioni kod kako biste potvrdili plaćanje.'
+        }
         onCancel={() => setPending(null)}
         onConfirm={async (proof) => {
           if (!pending) return
-          await create.mutateAsync({ payload: pending, proof })
+          if (pending.mode === 'schedule') {
+            await schedule.mutateAsync({ payload: pending.payload, proof })
+          } else {
+            await create.mutateAsync({ payload: pending.payload, proof })
+          }
           setPending(null)
         }}
       />

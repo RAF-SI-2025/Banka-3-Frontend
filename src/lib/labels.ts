@@ -14,6 +14,7 @@ import { v1InstallmentStatus } from './api/generated/models/v1InstallmentStatus'
 import { v1EmploymentStatus } from './api/generated/models/v1EmploymentStatus'
 import { v1TransactionKind } from './api/generated/models/v1TransactionKind'
 import { v1TransactionStatus } from './api/generated/models/v1TransactionStatus'
+import { v1ScheduledPaymentStatus } from './api/generated/models/v1ScheduledPaymentStatus'
 import { v1OrderType } from './api/generated/models/v1OrderType'
 import { v1OrderStatus } from './api/generated/models/v1OrderStatus'
 import { v1Direction } from './api/generated/models/v1Direction'
@@ -164,6 +165,14 @@ export const txStatusLabel: Record<v1TransactionStatus, string> = {
   [v1TransactionStatus.TRANSACTION_STATUS_REALIZED]: 'Realizovana',
   [v1TransactionStatus.TRANSACTION_STATUS_REJECTED]: 'Odbijena',
   [v1TransactionStatus.TRANSACTION_STATUS_PROCESSING]: 'U obradi',
+}
+
+export const scheduledPaymentStatusLabel: Record<v1ScheduledPaymentStatus, string> = {
+  [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_UNSPECIFIED]: '—',
+  [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_SCHEDULED]: 'Zakazano',
+  [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_COMPLETED]: 'Realizovano',
+  [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_FAILED]: 'Neuspešno',
+  [v1ScheduledPaymentStatus.SCHEDULED_PAYMENT_STATUS_CANCELLED]: 'Otkazano',
 }
 
 export const orderTypeLabel: Record<v1OrderType, string> = {
