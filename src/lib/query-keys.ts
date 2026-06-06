@@ -126,6 +126,7 @@ export const keys = {
       ['funds', 'performance', id, days ?? 0] as const,
     transactions: (id: string, args: object) =>
       ['funds', 'transactions', id, args] as const,
+    dividends: (id: string) => ['funds', 'dividends', id] as const,
   },
   profit: {
     all: ['profit'] as const,

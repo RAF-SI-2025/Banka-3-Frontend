@@ -33,5 +33,10 @@ export type v1Fund = {
     status?: v1FundStatus;
     createdAt?: string;
     updatedAt?: string;
+    /**
+     * When true, the quarterly dividend cron auto-places a MARKET BUY for
+     * any dividend the fund receives (todoSpec C4 S70 — compounding).
+     */
+    reinvestDividends?: boolean;
 };
 
