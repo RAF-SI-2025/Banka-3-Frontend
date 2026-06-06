@@ -27,6 +27,19 @@ COPY . .
 # the frontend nginx.
 ARG VITE_API_BASE=/api
 ENV VITE_API_BASE=${VITE_API_BASE}
+# Faro OTLP endpoint — Grafana Faro pushes browser traces + Web events
+# to this URL. Defaulted to the in-cluster external HTTPRoute on
+# alloy; override per environment if you stand up a separate Faro
+# instance. Same "empty ARG → empty string in import.meta.env"
+# materialization gotcha as VITE_API_BASE — the default has to live in
+# the Dockerfile, not just the TS fallback.
+ARG VITE_FARO_URL=https://otel.urosevicvuk.dev/v1/traces
+ENV VITE_FARO_URL=${VITE_FARO_URL}
+# Build version stamped into spans / Faro events so we can correlate
+# regressions with releases. CI sets this to the git short-sha;
+# locally it falls through to the in-TS '0.0.0-dev' fallback.
+ARG VITE_APP_VERSION
+ENV VITE_APP_VERSION=${VITE_APP_VERSION}
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.30.2-alpine3.23
