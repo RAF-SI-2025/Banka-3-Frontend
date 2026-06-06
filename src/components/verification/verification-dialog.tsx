@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ErrorBanner } from '@/components/ui/error'
-import { requestVerification, type VerificationKind, type VerificationProof } from '@/lib/api/verification'
+import {
+  getVerificationStatus,
+  requestVerification,
+  type VerificationKind,
+  type VerificationProof,
+} from '@/lib/api/verification'
 
 // VerificationDialog drives the 6-digit verification step (5-minute
 // TTL, 3-attempt budget, enforced server-side). Two delivery modes:
@@ -38,6 +43,10 @@ export function VerificationDialog({
   const [typed, setTyped] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Guards a single auto-submit once the phone approves (todoSpec S12) —
+  // the status poll keeps firing, so without this the gated mutation
+  // would be dispatched repeatedly.
+  const autoProceededRef = useRef(false)
 
   const issue = useQuery({
     queryKey: ['verification', kind, open],
@@ -48,6 +57,8 @@ export function VerificationDialog({
     retry: false,
   })
 
+  const verificationId = issue.data?.verificationId
+
   // Reset local UI state every time the dialog re-opens or a new code
   // is issued. Otherwise stale typed digits / errors leak between
   // sequential confirmations.
@@ -55,18 +66,22 @@ export function VerificationDialog({
     if (open) {
       setTyped('')
       setSubmitError(null)
+      autoProceededRef.current = false
     }
-  }, [open, issue.data?.verificationId])
+  }, [open, verificationId])
 
   useEffect(() => {
     if (open && issue.data) inputRef.current?.focus()
   }, [open, issue.data])
 
   const submit = useMutation({
-    mutationFn: async () => {
-      if (!issue.data) throw new Error('verification not issued')
-      if (typed.length !== 6) throw new Error('Unesite šestocifreni kod.')
-      await onConfirm({ id: issue.data.verificationId, code: typed })
+    // code === '' is the quick-approve path (todoSpec S12): the user
+    // tapped "Odobri" on the phone, so we proceed id-only (no 6-digit
+    // code). Otherwise the user typed the code and we send it.
+    mutationFn: async (code: string) => {
+      if (!verificationId) throw new Error('verification not issued')
+      if (code !== '' && code.length !== 6) throw new Error('Unesite šestocifreni kod.')
+      await onConfirm({ id: verificationId, code })
     },
     onError: (err) => {
       const msg = extractMsg(err) ?? 'Greška prilikom potvrde.'
@@ -75,6 +90,34 @@ export function VerificationDialog({
       inputRef.current?.focus()
     },
   })
+
+  // Poll the verification status while the dialog is open and a code has
+  // been issued, so the dialog can auto-proceed once the client approves
+  // on the mobile app (todoSpec S12). Stops once a terminal status is
+  // seen or the confirm mutation is in flight.
+  const status = useQuery({
+    queryKey: ['verification-status', verificationId],
+    queryFn: () => getVerificationStatus(verificationId as string),
+    enabled: open && !!verificationId && !submit.isPending,
+    refetchInterval: (q) =>
+      q.state.data && q.state.data.status !== 'pending' ? false : 2000,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+
+  // Auto-proceed when the phone approves. Fire once; the guard ref keeps
+  // the still-polling query from re-dispatching the gated mutation.
+  useEffect(() => {
+    if (!open) return
+    if (status.data?.status === 'approved' && !autoProceededRef.current && !submit.isPending) {
+      autoProceededRef.current = true
+      submit.mutate('')
+    }
+  }, [open, status.data?.status, submit])
+
+  const waitingApproval = status.data?.status === 'pending'
+  const expired = status.data?.status === 'expired'
 
   return (
     <Dialog
@@ -90,7 +133,7 @@ export function VerificationDialog({
             Otkaži
           </Button>
           <Button
-            onClick={() => submit.mutate()}
+            onClick={() => submit.mutate(typed)}
             disabled={!issue.data || typed.length !== 6 || submit.isPending}
           >
             {submit.isPending ? 'Potvrđivanje…' : 'Potvrdi'}
@@ -134,6 +177,21 @@ export function VerificationDialog({
             </div>
           )}
 
+          {waitingApproval && (
+            <div
+              className="mb-4 rounded-md bg-primary-soft p-3 text-sm text-primary-soft-foreground"
+              aria-label="ceka-odobrenje"
+            >
+              Čeka se odobrenje sa telefona. Otvorite mobilnu aplikaciju i
+              dodirnite „Odobri“ — ili unesite šestocifreni kod ispod.
+            </div>
+          )}
+          {expired && (
+            <ErrorBanner className="mb-4">
+              Zahtev za verifikaciju je istekao. Zatvorite i pokušajte ponovo.
+            </ErrorBanner>
+          )}
+
           <Label htmlFor="verif-code">Unesite kod</Label>
           <Input
             id="verif-code"
@@ -149,7 +207,7 @@ export function VerificationDialog({
               setSubmitError(null)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && typed.length === 6 && !submit.isPending) submit.mutate()
+              if (e.key === 'Enter' && typed.length === 6 && !submit.isPending) submit.mutate(typed)
             }}
           />
           {submitError && <ErrorBanner className="mt-2">{submitError}</ErrorBanner>}
