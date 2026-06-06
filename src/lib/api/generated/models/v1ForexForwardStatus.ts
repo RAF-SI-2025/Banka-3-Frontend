@@ -1,0 +1,11 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export enum v1ForexForwardStatus {
+    FOREX_FORWARD_STATUS_UNSPECIFIED = 'FOREX_FORWARD_STATUS_UNSPECIFIED',
+    FOREX_FORWARD_STATUS_ACTIVE = 'FOREX_FORWARD_STATUS_ACTIVE',
+    FOREX_FORWARD_STATUS_SETTLED = 'FOREX_FORWARD_STATUS_SETTLED',
+    FOREX_FORWARD_STATUS_CANCELLED = 'FOREX_FORWARD_STATUS_CANCELLED',
+    FOREX_FORWARD_STATUS_FAILED = 'FOREX_FORWARD_STATUS_FAILED',
+}

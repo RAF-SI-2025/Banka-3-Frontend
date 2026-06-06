@@ -25,6 +25,7 @@ function BankingLayout() {
     { to: '/banking/placanja', label: 'Plaćanja' },
     { to: '/banking/transferi', label: 'Transferi' },
     { to: '/banking/menjacnica', label: 'Menjačnica' },
+    { to: '/banking/terminski', label: '↳ Terminski ugovori' },
     { to: '/banking/primaoci', label: 'Primaoci' },
     { to: '/banking/krediti', label: 'Krediti' },
     { to: '/banking/portfolio', label: 'Portfolio', hidden: !has(perms, Permissions.TradingClient) },
