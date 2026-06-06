@@ -57,6 +57,11 @@ function PortalLayout() {
     },
     { to: '/portal/berze', label: 'Berze', hidden: !has(perms, Permissions.Admin) },
     {
+      to: '/portal/audit-log',
+      label: 'Audit log',
+      hidden: !hasAny(perms, [Permissions.Admin, Permissions.ActuarySupervisor]),
+    },
+    {
       to: '/portal/otc',
       label: 'OTC',
       hidden: !has(perms, Permissions.OTCTradeSupervisor),
