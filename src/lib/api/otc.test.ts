@@ -12,6 +12,8 @@ import {
   listOTCThreads,
   listPublicHoldings,
   withdrawOTCOffer,
+  cancelOTCOffer,
+  rejectOTCOffer,
 } from './otc'
 
 describe('otc wrappers', () => {
@@ -72,6 +74,26 @@ describe('otc wrappers', () => {
     })
     await withdrawOTCOffer('t-1')
     expect(url).toBe('/v1/otc/offers/t-1/withdraw')
+  })
+
+  it('cancelOTCOffer POSTs the cancel endpoint', async () => {
+    let url: string | undefined
+    mock.onPost(/\/v1\/otc\/offers\/t-1\/cancel$/).reply((cfg) => {
+      url = cfg.url
+      return [200, {}]
+    })
+    await cancelOTCOffer('t-1')
+    expect(url).toBe('/v1/otc/offers/t-1/cancel')
+  })
+
+  it('rejectOTCOffer POSTs the reject endpoint', async () => {
+    let url: string | undefined
+    mock.onPost(/\/v1\/otc\/offers\/t-1\/reject$/).reply((cfg) => {
+      url = cfg.url
+      return [200, {}]
+    })
+    await rejectOTCOffer('t-1')
+    expect(url).toBe('/v1/otc/offers/t-1/reject')
   })
 
   it('acceptOTCOffer POSTs the accept endpoint', async () => {

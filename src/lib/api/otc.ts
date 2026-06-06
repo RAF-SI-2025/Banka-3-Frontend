@@ -86,6 +86,26 @@ export async function withdrawOTCOffer(threadId: string): Promise<v1OTCOffer> {
   return data
 }
 
+// cancelOTCOffer — the originator (the party who proposed the live
+// iteration) cancels their own active offer. Flips it to `cancelled`.
+export async function cancelOTCOffer(threadId: string): Promise<v1OTCOffer> {
+  const { data } = await api.post<v1OTCOffer>(
+    `/v1/otc/offers/${encodeURIComponent(threadId)}/cancel`,
+    {},
+  )
+  return data
+}
+
+// rejectOTCOffer — the counterparty declines the latest open offer.
+// Flips it to `rejected`.
+export async function rejectOTCOffer(threadId: string): Promise<v1OTCOffer> {
+  const { data } = await api.post<v1OTCOffer>(
+    `/v1/otc/offers/${encodeURIComponent(threadId)}/reject`,
+    {},
+  )
+  return data
+}
+
 export async function acceptOTCOffer(threadId: string): Promise<v1AcceptOTCOfferResponse> {
   const { data } = await api.post<v1AcceptOTCOfferResponse>(
     `/v1/otc/offers/${encodeURIComponent(threadId)}/accept`,
