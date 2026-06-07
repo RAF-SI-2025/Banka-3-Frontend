@@ -40,6 +40,14 @@ function clearAuth(): void {
 describe('Celina 5 — inter-bank supervisor portal', () => {
   beforeEach(() => {
     cy.resetBackend()
+    // resetBackend's truncate list predates the inter-bank tables, so
+    // blacklist / protocol rows leak across specs and runs and break the
+    // empty-state assertions below. Clear them explicitly.
+    cy.pgSql(
+      'truncate "bank".interbank_blacklist, "bank".interbank_partner_failures, ' +
+        '"bank".interbank_protocol_messages, "bank".interbank_protocol_transactions ' +
+        'restart identity cascade',
+    )
   })
 
   it('transakcije + komunikacija stranice se učitavaju (prazno stanje)', () => {
