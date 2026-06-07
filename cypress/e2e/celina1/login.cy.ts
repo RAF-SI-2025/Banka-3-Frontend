@@ -7,23 +7,15 @@
 
 describe('Celina 1 — autentifikacija', () => {
   it('1: uspešno logovanje zaposlenog', () => {
-    cy.intercept('POST', '/api/v1/auth/login', {
-      statusCode: 200,
-      body: {
-        accessToken: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbXAtMSIsInBlcm1zIjpbImFkbWluIl19.dummy',
-        accessExpiresIn: 900,
-        userId: 'emp-1',
-        userKind: 'employee',
-        permissions: ['admin'],
-      },
-    }).as('login')
-
+    // Live login against the seeded bootstrap admin. A canned mock here is
+    // fragile: a dummy access token 401s on the post-login dashboard calls
+    // and the axios refresh-then-logout path bounces back to /login. The
+    // real backend issues a valid token so the redirect sticks.
     cy.visit('/login')
-    cy.findByLabelText('Email').type('marko@banka.rs')
-    cy.findByLabelText('Lozinka').type('marko123')
+    cy.findByLabelText('Email', { timeout: 30000 }).type('admin@banka.local')
+    cy.findByLabelText('Lozinka').type('Admin123!')
     cy.findByRole('button', { name: /Prijavi se/ }).click()
-    cy.wait('@login')
-    cy.url().should('not.include', '/login')
+    cy.url({ timeout: 30000 }).should('not.include', '/login')
   })
 
   it('2: pogrešna lozinka prikazuje "Neispravni kredencijali"', () => {
