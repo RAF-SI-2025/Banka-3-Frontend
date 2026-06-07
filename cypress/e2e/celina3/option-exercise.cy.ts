@@ -67,8 +67,10 @@ describe('Celina 3 (live) — agent iskorišćava ITM CALL', () => {
     cy.contains('Iskoristi opciju AAPL-C-190').should('be.visible')
     cy.contains('In the money').should('be.visible')
 
-    // Default qty=1; one contract of size 100 ⇒ 100 underlying shares
-    // bought at strike 190.00.
+    // The partial-exercise dialog (spec p.61.d) defaults to the FULL held
+    // position, so dial it down to 1 — one contract of size 100 ⇒ 100
+    // underlying shares bought at strike 190.00.
+    cy.get('[data-cy="exercise-qty"]').clear().type('1')
     cy.get('[data-cy="exercise-confirm"]').click()
 
     // Dialog closes on success.
