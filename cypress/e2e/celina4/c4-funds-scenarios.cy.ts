@@ -165,16 +165,18 @@ describe('Celina 4 — Investicioni fondovi: pristup i prikaz (S29-S32)', () => 
     cy.contains('5.000').should('exist')
   })
 
-  it('S30 — filter/sort izaziva re-fetch sa odgovarajućim query parametrima', () => {
+  it('S30 — sort po koloni preuređuje listu (klijentsko sortiranje)', () => {
     clearAuth()
     loginViaUi(CLIENT_EMAIL, CLIENT_PASSWORD)
-    cy.intercept('GET', '/api/v1/funds**').as('funds')
     cy.visit('/banking/fondovi')
-    cy.wait('@funds', { timeout: 15000 })
-    cy.get('[data-cy="funds-sort"]').select('total_value')
-    cy.get('[data-cy="funds-order"]').select('desc')
-    // Last @funds intercept must include sort=total_value + order=desc.
-    cy.wait('@funds').its('request.url').should('match', /sort=total_value/)
+    // Funds discovery now sorts CLIENT-SIDE: the list is fetched once with
+    // a stable order and every column header toggles the sort in place
+    // (no per-sort re-fetch). Clicking the "vrednost" header sorts by
+    // total_value desc, clicking again flips to asc.
+    cy.get('[data-cy="funds-sort-total-value"]', { timeout: 15000 }).should('be.visible').click()
+    cy.get('[data-cy="funds-sort-total-value"]').should('have.attr', 'data-cy-active', 'desc')
+    cy.get('[data-cy="funds-sort-total-value"]').click()
+    cy.get('[data-cy="funds-sort-total-value"]').should('have.attr', 'data-cy-active', 'asc')
   })
 
   it('S31 — klijent otvara detalj fonda i vidi sva propisana polja', () => {
