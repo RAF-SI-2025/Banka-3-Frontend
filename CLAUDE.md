@@ -96,11 +96,16 @@ overview; this file is the frontend-specific working memory.
   `src/lib/api/client.ts`.
 - **Verification (spec p.11)**: payments / transfers / FX / limit
   changes / card-issue mutations are gated by `VerificationDialog`.
-  The dialog requests a 6-digit code via
-  `POST /api/v1/verification/request` (returned in the response in
-  dev mode), shows it to the user behind a fake QR, and on confirm
-  attaches `X-Verification-Id` + `X-Verification-Code` headers to the
+  The dialog requests a verification id via
+  `POST /api/v1/verification/request` — the code is **not** returned
+  (the mobile app is the second factor, 2026-06-12). The user either
+  taps „Odobri“ in the mobile app (the dialog polls
+  `/verification/{id}/status` and auto-proceeds id-only) or types the
+  code shown on their phone; on confirm the dialog attaches
+  `X-Verification-Id` (+ `X-Verification-Code` when typed) to the
   downstream request. Backend gateway middleware consumes the headers.
+  Live Cypress specs read the code via `cy.issueVerification` (which
+  hits `/verification/pending`, like the phone) or approve out-of-band.
 
 ## Auth flow
 
@@ -313,9 +318,10 @@ The frontend is the only place users see Serbian copy. Watch for:
   `180.000,00 RSD`).
 - **Currency display order**: amount first, then currency code.
 - **Verification flow** issues a real 6-digit code via the gateway
-  (not just decorative). The dialog displays the code inline (mobile
-  app is c5); the user types it back to confirm. 5-min TTL, 3 retry
-  attempts enforced server-side.
+  (not just decorative). The code is **not** shown on the web — it
+  lives on the phone (mobile app). The user approves on the phone
+  (dialog auto-proceeds) or types the phone's code to confirm. 5-min
+  TTL, 3 retry attempts enforced server-side.
 - **Limit info popover** on payment forms must show "remaining" against
   daily/monthly limits — read from account detail, not recompute.
 - **Account list (client) sort**: spec p.19 mandates descending by

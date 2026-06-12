@@ -33,6 +33,18 @@ declare global {
       /** Run arbitrary SQL against the test Postgres. Returns rows as raw psql -A -t text (pipe-separated columns, newline-separated rows). */
       pgSql(sql: string): Chainable<string>
       /**
+       * Issue a verification code the way the mobile app sees it.
+       * POST /verification/request no longer returns the code (the phone
+       * is the second factor), so this reads it off
+       * GET /verification/pending — exactly what the mobile app polls.
+       * Returns the id + 6-digit code for live specs that attach
+       * X-Verification-* headers to a gated request.
+       */
+      issueVerification(
+        token: string,
+        actionKind: string,
+      ): Chainable<{ verificationId: string; code: string }>
+      /**
        * Advance the QA clock by `offset` (any time.ParseDuration
        * string, e.g. "24h", "-30m"). Admin-only at the BE; the
        * fixture pins an admin login + writes to Redis via the
@@ -129,6 +141,41 @@ Cypress.Commands.add('loginAsSupervisor', () => {
 
 Cypress.Commands.add('pgSql', (sql: string) => {
   return cy.task<string>('pgSql', { sql })
+})
+
+// Issue a verification, then read its code off the pending list — the
+// same source the mobile app uses. /verification/request stopped
+// returning the code in-body (the phone is the second factor), so live
+// specs simulate the phone here instead of reading r.body.code.
+Cypress.Commands.add('issueVerification', (token: string, actionKind: string) => {
+  return cy
+    .request({
+      method: 'POST',
+      url: '/api/v1/verification/request',
+      headers: { Authorization: `Bearer ${token}` },
+      body: { actionKind },
+    })
+    .then((reqRes) => {
+      const verificationId = reqRes.body.verificationId as string
+      expect(verificationId, `verification id for ${actionKind}`).to.be.a('string')
+      return cy
+        .request({
+          method: 'GET',
+          url: '/api/v1/verification/pending',
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((pendRes) => {
+          const pending = (pendRes.body.pending ?? []) as Array<{ id: string; code: string }>
+          const item = pending.find((p) => p.id === verificationId)
+          if (!item) {
+            throw new Error(
+              `pending verification ${verificationId} (${actionKind}) not found — ` +
+                `the phone never received the code`,
+            )
+          }
+          return { verificationId, code: item.code }
+        })
+    })
 })
 
 Cypress.Commands.add('captureLink', (to: string, marker: string) => {

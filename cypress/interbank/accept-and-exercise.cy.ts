@@ -63,22 +63,30 @@ function requestVerification(
   token: string,
   actionKind: string,
 ): Cypress.Chainable<{ verificationId: string; code: string }> {
+  // The phone is the second factor: /verification/request no longer
+  // returns the code, so read it off the pending list (what the mobile
+  // app polls) on the same bank's gateway.
   return cy
     .bankRequest(
       bank,
-      {
-        method: 'POST',
-        url: '/api/v1/verification/request',
-        body: { actionKind },
-      },
+      { method: 'POST', url: '/api/v1/verification/request', body: { actionKind } },
       token,
     )
     .then((r) => {
-      const body = r.body as VerifyResp
-      if (!body.verificationId || !body.code) {
+      const id = (r.body as VerifyResp).verificationId
+      if (!id) {
         throw new Error(`verification request failed: ${JSON.stringify(r.body)}`)
       }
-      return { verificationId: body.verificationId, code: body.code }
+      return cy
+        .bankRequest(bank, { method: 'GET', url: '/api/v1/verification/pending' }, token)
+        .then((p) => {
+          const pending = (p.body as { pending?: Array<{ id: string; code: string }> }).pending ?? []
+          const item = pending.find((v) => v.id === id)
+          if (!item) {
+            throw new Error(`pending verification ${id} not found on ${bank}`)
+          }
+          return { verificationId: id, code: item.code }
+        })
     })
 }
 

@@ -33,13 +33,16 @@ export interface VerificationProof {
 
 export interface IssuedVerification {
   verificationId: string
-  // For inline-delivery actions (payment/transfer/limit) the backend
-  // returns the code in the response and the FE renders it directly.
-  // For email-delivery actions (card issuance) the code is sent by
-  // email; this field is empty and `delivery` is "email".
-  code: string
+  // The code is NOT returned to the web app: it is delivered only to
+  // the mobile app (the second factor), which the user reads off their
+  // phone or approves there. This field is therefore empty for
+  // `delivery: 'mobile'`. It is only ever populated by Cypress stubs
+  // that fabricate a code; real backend responses leave it empty.
+  // (`'email'` is the card-issuance path: code sent by email, also no
+  // inline code.)
+  code?: string
   expiresAt: string
-  delivery: 'inline' | 'email'
+  delivery: 'mobile' | 'email'
 }
 
 export async function requestVerification(actionKind: VerificationKind): Promise<IssuedVerification> {

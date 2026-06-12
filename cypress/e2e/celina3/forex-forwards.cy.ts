@@ -47,16 +47,33 @@ describe('Celina 3 — terminski valutni ugovori (forex forwards)', () => {
     cy.contains('Provizija:').should('be.visible')
     cy.contains('Obaveza (rezerviše se):').should('be.visible')
 
-    // Capture the dev-mode verification code (spec p.11) then conclude.
+    // The phone is the second factor (spec p.11): the code is never
+    // returned to the web app. Simulate the "Odobri" tap — fetch a client
+    // token over the API, capture the issued id, and approve it
+    // out-of-band so the dialog's status poll auto-proceeds id-only.
+    cy.request('POST', '/api/v1/auth/login', {
+      email: 'klijent@banka.local',
+      password: 'Klijent123!',
+    }).then((login) => cy.wrap(login.body.accessToken as string).as('clientToken'))
+
     cy.intercept('POST', '/api/v1/verification/request').as('verifReq')
     cy.contains('button', /Zaključi ugovor/).click()
 
-    cy.wait('@verifReq').then((i) => {
-      const code = (i.response?.body as { code?: string })?.code as string
-      expect(code, 'dev-mode verification code').to.match(/^\d{6}$/)
-      cy.get('#verif-code').type(code)
-      cy.findByRole('button', { name: /^Potvrdi$/ }).click()
-    })
+    cy.wait('@verifReq')
+      .its('response.body.verificationId')
+      .then((verificationId) => {
+        expect(verificationId, 'verification id issued').to.be.a('string')
+        cy.get<string>('@clientToken').then((token) => {
+          cy.request({
+            method: 'POST',
+            url: `/api/v1/verification/${verificationId}/approve`,
+            headers: { Authorization: `Bearer ${token}` },
+            body: {},
+          })
+            .its('status')
+            .should('eq', 200)
+        })
+      })
 
     // The forward appears in the list with status "Aktivan".
     cy.contains('h2', 'Moji terminski ugovori').should('be.visible')

@@ -119,14 +119,11 @@ function setPublicCount(token: string, holdingId: string, count: number) {
 }
 
 function requestVerification(token: string, kind: string) {
+  // The phone is the second factor; cy.issueVerification reads the code
+  // off /verification/pending (the request response no longer carries it).
   return cy
-    .request({
-      method: 'POST',
-      url: '/api/v1/verification/request',
-      headers: { Authorization: `Bearer ${token}` },
-      body: { actionKind: kind },
-    })
-    .then((r) => ({ id: r.body.verificationId as string, code: r.body.code as string }))
+    .issueVerification(token, kind)
+    .then((v) => ({ id: v.verificationId, code: v.code }))
 }
 
 // fixtures captures the cross-cutting setup every scenario needs:

@@ -52,6 +52,8 @@ function pickPartnerEurAccount(): Cypress.Chainable<string> {
 }
 
 function issueCode(token: string, kind: 'payment' | 'interbank_payment'): Cypress.Chainable<VerificationResp> {
+  // The phone is the second factor: read the code off the pending list
+  // (what the mobile app polls), not the request response.
   return cy
     .bankRequest(
       'bank1',
@@ -64,7 +66,15 @@ function issueCode(token: string, kind: 'payment' | 'interbank_payment'): Cypres
     )
     .then((r) => {
       expect(r.status, `issue ${kind}`).to.eq(200)
-      return r.body as VerificationResp
+      const id = (r.body as VerificationResp).verificationId
+      return cy
+        .bankRequest('bank1', { method: 'GET', url: '/api/v1/verification/pending' }, token)
+        .then((p) => {
+          const pending = (p.body as { pending?: Array<{ id: string; code: string }> }).pending ?? []
+          const item = pending.find((v) => v.id === id)
+          if (!item) throw new Error(`pending verification ${id} not found`)
+          return { verificationId: id, code: item.code }
+        })
     })
 }
 

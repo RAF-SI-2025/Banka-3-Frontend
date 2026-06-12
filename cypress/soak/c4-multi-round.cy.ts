@@ -140,17 +140,9 @@ function pinListing(
 }
 
 function requestVerification(token: string, actionKind: string) {
-  return cy
-    .request({
-      method: 'POST',
-      url: '/api/v1/verification/request',
-      headers: { Authorization: `Bearer ${token}` },
-      body: { actionKind },
-    })
-    .then((r) => ({
-      verificationId: r.body.verificationId as string,
-      code: r.body.code as string,
-    }))
+  // The phone is the second factor; cy.issueVerification reads the code
+  // off /verification/pending (the request response no longer carries it).
+  return cy.issueVerification(token, actionKind)
 }
 
 function getListingPrice(token: string, securityId: string): Cypress.Chainable<number> {

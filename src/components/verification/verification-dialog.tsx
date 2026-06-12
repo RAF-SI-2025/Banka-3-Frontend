@@ -14,17 +14,20 @@ import {
 } from '@/lib/api/verification'
 
 // VerificationDialog drives the 6-digit verification step (5-minute
-// TTL, 3-attempt budget, enforced server-side). Two delivery modes:
-//   - inline: backend returns the code in the issue response; we
-//     render it next to the input (mobile-app placeholder).
-//   - email:  backend has emailed the code; we tell the user to check
-//     their inbox and only render the input.
+// TTL, 3-attempt budget, enforced server-side). The code is the user's
+// mobile app (the second factor), so the web app never displays it.
+// Two paths reach a confirmed action:
+//   - quick-approve: the user taps „Odobri“ in the mobile app; the
+//     status poll sees `approved` and the dialog auto-proceeds id-only.
+//   - typed code: the user reads the code off their phone (the mobile
+//     app's Verifikacija screen) and types it into the input here.
+// `delivery: 'email'` (card issuance) keeps the inbox messaging.
 //
 // Caller usage: gate the actual mutation behind onConfirm so the
-// proof arrives only after the user types the matching code. If the
-// downstream mutation rejects with a 401 (wrong / expired / mismatch),
-// the dialog stays open with the backend's Serbian message and the
-// user can retry or request a fresh code.
+// proof arrives only after the user approves on the phone or types the
+// matching code. If the downstream mutation rejects with a 401 (wrong /
+// expired / mismatch), the dialog stays open with the backend's Serbian
+// message and the user can retry or request a fresh code.
 export function VerificationDialog({
   open,
   kind,
@@ -157,7 +160,9 @@ export function VerificationDialog({
               Verifikacioni kod je poslat na vašu email adresu. Proverite
               poštu i unesite šestocifreni kod ispod.
             </div>
-          ) : (
+          ) : issue.data.code ? (
+            // A code in the response only happens under Cypress stubs;
+            // the real backend never sends one (see verification.ts).
             <div className="mb-4 flex items-center gap-4">
               <FakeQR />
               <div>
@@ -170,8 +175,19 @@ export function VerificationDialog({
                 >
                   {issue.data.code}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Mobilna aplikacija stiže u celini 5; do tada kod prikazujemo ovde.
+              </div>
+            </div>
+          ) : (
+            <div className="mb-4 flex items-center gap-4">
+              <FakeQR />
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Potvrda preko mobilne aplikacije
+                </p>
+                <p className="text-sm text-foreground">
+                  Otvorite Banka 3 aplikaciju na telefonu i dodirnite
+                  „Odobri“ — ili unesite šestocifreni kod prikazan na
+                  telefonu ispod.
                 </p>
               </div>
             </div>
@@ -233,9 +249,9 @@ function extractMsg(err: unknown): string | null {
   return null
 }
 
-// FakeQR is a decorative placeholder until the c5 mobile app provides
-// a real QR. It's just a checkerboard SVG; the dialog tells the user
-// what's going on.
+// FakeQR is a decorative cue that the confirmation lives on the phone.
+// It's just a checkerboard SVG (no real pairing payload); the dialog
+// copy tells the user what to do.
 function FakeQR() {
   return (
     <svg
