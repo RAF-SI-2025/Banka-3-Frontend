@@ -15,6 +15,10 @@ export type VerificationKind =
   | 'fund_withdraw'
   | 'external_otc_accept'
   | 'external_otc_exercise'
+  // c5 — user-initiated cross-bank cash payment. Distinct from
+  // 'payment' so an intra-bank code can't be replayed against the
+  // cross-bank route (gateway DefaultRules).
+  | 'interbank_payment'
 
 // VerificationProof is what the dialog hands back to the caller. The
 // caller passes it on to the gated mutation (payments, transfers,

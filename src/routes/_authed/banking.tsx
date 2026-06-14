@@ -23,6 +23,7 @@ function BankingLayout() {
     { to: '/banking/racuni', label: 'Računi' },
     { to: '/banking/kartice', label: 'Kartice' },
     { to: '/banking/placanja', label: 'Plaćanja' },
+    { to: '/banking/placanja/inostrane', label: '↳ Međubankarsko plaćanje' },
     { to: '/banking/placanja/inostrane-zakazane', label: '↳ Zakazane inostrane uplate' },
     { to: '/banking/transferi', label: 'Transferi' },
     { to: '/banking/menjacnica', label: 'Menjačnica' },
