@@ -7,7 +7,7 @@
 # the backend `seed.sh` — pulling that into a container needs the
 # docker socket + repo plumbing and is intentionally out of scope.
 
-FROM node:20-alpine
+FROM node:26-alpine
 
 RUN apk add --no-cache bash git
 
