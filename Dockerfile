@@ -10,7 +10,7 @@
 #
 # Dev image (vite dev server, vitest, eslint) lives in Dockerfile.dev.
 
-FROM node:24.16.0-alpine AS build
+FROM node:26.3.0-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -42,7 +42,7 @@ ARG VITE_APP_VERSION
 ENV VITE_APP_VERSION=${VITE_APP_VERSION}
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.30.2-alpine3.23
+FROM nginxinc/nginx-unprivileged:1.31.1-alpine3.23
 # nginx 1.30.2 (current stable) on Alpine 3.23. Moved off 3.21 because
 # Alpine flagged CVE-2026-6732 (libxml2) won't-fix on 3.21 — the backport
 # only exists on 3.22+, where libxml2 is 2.13.9-r1. 3.23 carries the fix.
